@@ -27,7 +27,6 @@ from tests.conftest import _TestSession, auth_headers, register_user
 
 # Filler shares no tokens with the needle (mirrors test_p32_hybrid_rag)
 # so keyword pre-filtering can't pull fillers into the candidate window.
-_NEEDLE = "唯一研究词xyz"
 _FILLER = "第{i}段与问题无关的正文内容"
 
 
@@ -46,72 +45,9 @@ def _no_embeddings(monkeypatch):
     )
 
 
-async def _seed_user(session) -> str:
-    uid = uuid4()
-    # PG enforces FKs — insert the owner row before books.
-    await session.execute(
-        text(
-            "INSERT INTO users (id, email, password_hash, name, created_at, updated_at) "
-            "VALUES (:u, :e, 'h', 'S', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
-        ),
-        {"u": uid, "e": f"{uid}@research-test"},
-    )
-    return uid
+from tests.fixtures.seeds import _NEEDLE, _seed_book, _seed_user  # noqa: E402
 
 
-async def _seed_book(
-    session,
-    uid,
-    *,
-    title,
-    chunks,
-    status="completed",
-    current_segment=None,
-) -> str:
-    """Seed one book + document + chunks; returns the book id (str UUID)."""
-    from app.models.book import Book, BookFileType
-    from app.models.document import Document
-    from app.models.book_chunk import BookChunk
-
-    book_id = uuid4()
-    doc_id = uuid4()
-    session.add(
-        Book(
-            id=book_id,
-            user_id=uid,
-            title=title,
-            author="Author",
-            file_type=BookFileType.epub,
-            file_size=1,
-            total_pages=100,
-            status=status,
-            current_segment=current_segment or 0,
-        )
-    )
-    session.add(
-        Document(
-            id=doc_id,
-            book_id=book_id,
-            user_id=uid,
-            content="x",
-            chapters=[],
-        )
-    )
-    await session.flush()
-    session.add_all(
-        [
-            BookChunk(
-                book_id=book_id,
-                document_id=doc_id,
-                chapter_index=chapter_index,
-                chunk_index=0,
-                content=content,
-            )
-            for chapter_index, content in chunks
-        ]
-    )
-    await session.commit()
-    return str(book_id)
 
 
 def _populated_brief() -> dict:

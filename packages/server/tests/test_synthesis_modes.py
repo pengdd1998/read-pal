@@ -28,7 +28,7 @@ from app.services.agent.synthesis_modes import (
     run_synthesis_mode,
 )
 from tests.conftest import _TestSession, auth_headers, register_user
-from tests.test_research_agent import _NEEDLE, _seed_book, _seed_user
+from tests.fixtures.seeds import _NEEDLE, _seed_book, _seed_user
 
 
 def _body(**kwargs) -> SynthesisRequest:

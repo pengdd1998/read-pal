@@ -14,7 +14,7 @@ from app.prompts import ALL_TEMPLATES, COACH_ASSESSMENT_HUMAN, COACH_ASSESSMENT_
 from app.schemas.llm_outputs import CoachReport
 from app.services.agent.coach import run_coach_report
 from tests.conftest import _TestSession, auth_headers, register_user
-from tests.test_research_agent import _NEEDLE, _seed_book, _seed_user
+from tests.fixtures.seeds import _NEEDLE, _seed_book, _seed_user
 
 
 def _populated_report() -> dict:

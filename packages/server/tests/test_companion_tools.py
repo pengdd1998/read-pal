@@ -19,7 +19,7 @@ from app.services.companion.tools import (
     render_tool_results,
 )
 from tests.conftest import _TestSession
-from tests.test_research_agent import _NEEDLE, _seed_book, _seed_user
+from tests.fixtures.seeds import _NEEDLE, _seed_book, _seed_user
 
 
 class TestRegistry:

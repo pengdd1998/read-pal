@@ -177,7 +177,7 @@ class TestInteractionStylePrompt:
     @pytest.mark.asyncio
     async def test_minimal_style_appends_directive(self):
         from app.services.companion.context_prompts import build_system_prompt
-        from tests.test_p34_token_budget_ranking import FakeBook
+        from tests.fixtures.seeds import FakeBook
 
         prompt = build_system_prompt(FakeBook(), '', interaction='minimal', lang='zh')
         assert '安静' in prompt and '不要主动追加' in prompt
@@ -185,7 +185,7 @@ class TestInteractionStylePrompt:
     @pytest.mark.asyncio
     async def test_normal_and_frequent_and_none(self):
         from app.services.companion.context_prompts import build_system_prompt
-        from tests.test_p34_token_budget_ranking import FakeBook
+        from tests.fixtures.seeds import FakeBook
 
         assert '友好' in build_system_prompt(FakeBook(), '', interaction='normal', lang='zh')
         assert '活跃' in build_system_prompt(FakeBook(), '', interaction='frequent', lang='zh')

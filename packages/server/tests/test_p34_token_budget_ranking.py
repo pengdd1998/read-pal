@@ -14,24 +14,12 @@ remaining budget, in priority order.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 
 import pytest
 
 from app.services.companion.context_prompts import build_system_prompt
 from app.utils.token_budget import TokenBudget
-
-
-@dataclass
-class FakeBook:
-    """Minimal Book stand-in — only the fields build_system_prompt reads."""
-    title: str = 'Test Book'
-    author: str = 'Test Author'
-    progress: float = 50.0
-    current_page: int = 100
-    total_pages: int = 200
-    current_segment: int = 5
-    status: str = 'reading'
+from tests.fixtures.seeds import FakeBook
 
 
 # ---------------------------------------------------------------------------
