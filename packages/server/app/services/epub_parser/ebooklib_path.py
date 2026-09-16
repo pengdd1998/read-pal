@@ -11,7 +11,10 @@ from typing import Any
 
 from app.services.epub_parser.constants import IMAGE_MIME_MAP, MAX_IMAGE_SIZE, NS_DC, OUTER_DOC_WRAPPER
 from app.services.epub_parser.css import sanitize_epub_css
-from app.services.epub_parser.footnote_defs import extract_footnote_definitions
+from app.services.epub_parser.footnote_defs import (
+    MAX_FOOTNOTE_DEFS,
+    extract_footnote_definitions,
+)
 from app.services.epub_parser.footnotes import annotate_footnotes
 from app.services.epub_parser.html_helpers import (
     count_images, extract_html_heading, extract_html_title,
@@ -36,7 +39,7 @@ def process_epub_ebooklib(file_path: str) -> dict | None:
     image_map = _extract_images(book)
     css_str = _extract_css(book)
 
-    chapters, full_text_parts = _build_chapters(
+    chapters, full_text_parts, footnote_defs = _build_chapters(
         book, toc_map, image_map, css_str,
     )
 
@@ -49,7 +52,7 @@ def process_epub_ebooklib(file_path: str) -> dict | None:
         'metadata': {
             **metadata,
             'cover_data_uri': cover_uri,
-            **({'footnote_definitions': _last_footnote_defs[0]} if _last_footnote_defs[0] else {}),
+            **({'footnote_definitions': footnote_defs} if footnote_defs else {}),
         },
     }
 
@@ -220,23 +223,12 @@ def _strip_duplicate_heading(
     return text, enriched_html
 
 
-_last_footnote_defs: list[dict[str, str]] = [{}]
-
-
-def _store_footnote_definitions(defs: dict[str, str]) -> None:
-    """Store the footnote definition map via context-local variable
-    (same channel as cover_data_uri in the zipfile fallback path)."""
-    import app.services.epub_parser as pkg
-
-    pkg._set_metadata({**pkg._epub_metadata_var.get({}), 'footnote_definitions': defs})
-
-
 def _build_chapters(
     book: Any,
     toc_map: dict[str, tuple[str, int]],
     image_map: dict[str, str],
     css_str: str,
-) -> tuple[list[dict], list[str]]:
+) -> tuple[list[dict], list[str], dict[str, str]]:
     """Build spine-ordered chapter list from ebooklib book."""
     ordered_items = _ordered_spine_items(book)
 
@@ -251,14 +243,11 @@ def _build_chapters(
             continue
         chapters.append(chapter)
         full_text_parts.append(text)
-        if raw_html:
+        if raw_html and len(footnote_defs) < MAX_FOOTNOTE_DEFS:
             footnote_defs.update(extract_footnote_definitions(raw_html, item.get_name()))
         order += 1
 
-    if footnote_defs:
-        _store_footnote_definitions(footnote_defs)
-        _last_footnote_defs[0] = footnote_defs
-    return chapters, full_text_parts
+    return chapters, full_text_parts, footnote_defs
 
 
 _DANGEROUS_TAG_RE = re.compile(

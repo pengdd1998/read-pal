@@ -257,11 +257,34 @@ class TestOpsKeyGlobalScope:
             ])
             await session.commit()
         resp = await client.get(
-            '/api/v1/stats/llm?hours=24&ops_key=secret-ops-key',
-            headers=auth_headers(user['token']),
+            '/api/v1/stats/llm?hours=24',
+            headers={
+                **auth_headers(user['token']),
+                'X-Ops-Key': 'secret-ops-key',
+            },
         )
         assert resp.status_code == 200
         assert resp.json()['data']['total_calls'] == 2  # platform-wide
+
+    @pytest.mark.asyncio
+    async def test_ops_key_in_query_is_ignored(self, client, monkeypatch):
+        """The key travels in X-Ops-Key only: query params land in nginx
+        access logs verbatim (24h-review finding 4), so a query key must
+        NOT unlock the global view."""
+        monkeypatch.setenv('OPS_KEY', 'secret-ops-key')
+        user = await register_user(client)
+        stranger = await register_user(client, email='stranger4@example.com')
+        async with _TestSession() as session:
+            session.add_all([
+                _trace(label='l', user_id=str(user['user']['id'])),
+                _trace(label='l', user_id=str(stranger['user']['id'])),
+            ])
+            await session.commit()
+        resp = await client.get(
+            '/api/v1/stats/llm?hours=24&ops_key=secret-ops-key',
+            headers=auth_headers(user['token']),
+        )
+        assert resp.json()['data']['total_calls'] == 1  # query key ignored
 
     @pytest.mark.asyncio
     async def test_wrong_key_stays_user_scoped(self, client, monkeypatch):
@@ -275,7 +298,10 @@ class TestOpsKeyGlobalScope:
             ])
             await session.commit()
         resp = await client.get(
-            '/api/v1/stats/llm?hours=24&ops_key=wrong',
-            headers=auth_headers(user['token']),
+            '/api/v1/stats/llm?hours=24',
+            headers={
+                **auth_headers(user['token']),
+                'X-Ops-Key': 'wrong',
+            },
         )
         assert resp.json()['data']['total_calls'] == 1

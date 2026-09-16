@@ -34,22 +34,23 @@ export default function OpsLlmPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const k = url.searchParams.get('key') || '';
-    if (k) {
-      setKey(k);
-      sessionStorage.setItem('ops-key', k);
-    } else {
-      const saved = sessionStorage.getItem('ops-key');
-      if (saved) setKey(saved);
-    }
+    // Key lives in sessionStorage only — a ?key= URL would persist the
+    // secret in browser history and nginx access logs (page navigation).
+    const saved = sessionStorage.getItem('ops-key');
+    if (saved) setKey(saved);
   }, []);
 
   const load = useCallback(async (h: number, k: string) => {
     if (!k) return;
     setLoading(true);
     try {
-      const res = await api.get<MetricsData>(`/api/v1/stats/llm?hours=${h}&ops_key=${encodeURIComponent(k)}`);
+      // Header, not query param: nginx access logs record the full request
+      // line, so a query key would be persisted server-side on every call.
+      const res = await api.get<MetricsData>(
+        '/api/v1/stats/llm',
+        { hours: h },
+        { headers: { 'X-Ops-Key': k } },
+      );
       if (res.success && res.data) {
         setData(res.data);
         setAuthed(true);

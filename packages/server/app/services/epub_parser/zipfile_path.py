@@ -11,7 +11,10 @@ from xml.etree.ElementTree import ParseError as XMLParseError
 
 from app.services.epub_parser.css import extract_epub_css
 from app.services.epub_parser.footnotes import annotate_footnotes
-from app.services.epub_parser.footnote_defs import extract_footnote_definitions
+from app.services.epub_parser.footnote_defs import (
+    MAX_FOOTNOTE_DEFS,
+    extract_footnote_definitions,
+)
 from app.services.epub_parser.html_helpers import (
     count_images,
     extract_html_heading,
@@ -267,7 +270,8 @@ def _build_chapters(
             continue
 
         enriched = _enrich_html(raw_html, resolved, image_map, css_str)
-        footnote_defs.update(extract_footnote_definitions(raw_html, resolved))
+        if len(footnote_defs) < MAX_FOOTNOTE_DEFS:
+            footnote_defs.update(extract_footnote_definitions(raw_html, resolved))
 
         text = html_to_structured_text(enriched)
         title = _resolve_title(resolved, raw_html, toc_map)

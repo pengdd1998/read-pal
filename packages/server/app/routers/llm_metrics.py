@@ -40,7 +40,6 @@ def _ops_key_valid(provided: str | None) -> bool:
 @router.get('', response_model=GenericResponse)
 async def get_llm_metrics(
     hours: int = Query(24, ge=1, le=MAX_METRICS_WINDOW_HOURS),
-    ops_key: str | None = Query(None),
     x_ops_key: str | None = Header(None, alias='X-Ops-Key'),
     _current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -48,10 +47,12 @@ async def get_llm_metrics(
     """Success rate, p50/p95/p99 latency, token cost, error breakdown,
     guardrail hits, and a per-label drilldown over the last ``hours``.
 
-    User-scoped by default (24h-review R2). A valid ops key (query param
-    or header) unlocks the platform-wide view for the /ops/llm page.
+    User-scoped by default (24h-review R2). A valid ops key (X-Ops-Key
+    header) unlocks the platform-wide view for the /ops/llm page. The key
+    must not travel in the URL: nginx access logs record the full request
+    line, so a query param would persist the secret on disk.
     """
-    ops_ok = _ops_key_valid(ops_key or x_ops_key)
+    ops_ok = _ops_key_valid(x_ops_key)
     data = await compute_llm_metrics(
         hours=hours, session=db,
         user_id=None if ops_ok else str(_current_user['id']),

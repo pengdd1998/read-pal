@@ -40,6 +40,11 @@ _DEF_ELEMENT_RE = re.compile(
 )
 _TAG_RE = re.compile(r'<[^>]+>')
 
+# Total-size valve: each definition is already capped at 2000 chars; this
+# bounds the whole map (<= ~1 MB) so a pathological EPUB cannot balloon
+# Book.metadata_ and every book-detail response.
+MAX_FOOTNOTE_DEFS = 500
+
 
 def _strip_tags(html: str) -> str:
     return re.sub(r'\s+', ' ', _TAG_RE.sub('', html)).strip()

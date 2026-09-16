@@ -151,8 +151,9 @@ app.add_middleware(
     # Idempotency-Key: the web client auto-attaches it on every mutation
     # (api/interceptors.ts) — same-origin deployments never notice, but any
     # cross-origin client (dev direct-URL, Capacitor) fails its preflight
-    # with 400 without this entry.
-    allow_headers=['Authorization', 'Content-Type', 'Idempotency-Key'],
+    # with 400 without this entry. X-Ops-Key: /ops/llm global metrics view
+    # (kept out of the URL so nginx access logs never record the secret).
+    allow_headers=['Authorization', 'Content-Type', 'Idempotency-Key', 'X-Ops-Key'],
 )
 
 # GZip for large responses — book content endpoints ship MB-scale Chinese
