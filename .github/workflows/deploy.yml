@@ -12,38 +12,18 @@ on:
 
 concurrency:
   group: deploy-${{ github.ref }}
-  cancel-in-progress: true
+  # Queue, never cancel (M0.6): a cancelled deploy can die mid
+  # `docker compose up`, leaving mixed-version containers with no
+  # health-check pass — the marker only guards missed ranges, not
+  # half-executed switches. CI keeps cancel-in-progress semantics;
+  # deploys must run to completion.
+  cancel-in-progress: false
 
 jobs:
-  # Check if deploy is needed based on changed files
-  check-changes:
-    name: Check Changes
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    outputs:
-      should-deploy: ${{ steps.filter.outputs.api == 'true' || steps.filter.outputs.web == 'true' || steps.filter.outputs.deploy == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          filters: |
-            api:
-              - 'packages/server/**'
-              - 'docker-compose.yml'
-              - 'docker/**'
-            web:
-              - 'packages/web/**'
-            deploy:
-              - '.github/workflows/deploy.yml'
-              - 'docker-compose.yml'
-
   # Gate: wait for the CI run of this exact commit to succeed before deploying.
   ci-gate:
     name: Wait for CI
-    needs: check-changes
-    if: github.event_name == 'push' && needs.check-changes.outputs.should-deploy == 'true'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -90,14 +70,18 @@ jobs:
 
   deploy:
     name: Deploy to VPS
-    needs: [check-changes, ci-gate]
-    # Manual dispatch bypasses the paths-filter/CI gates: paths-filter cannot
-    # diff on a dispatch event, and a dry-run must be launchable from any
-    # branch for rehearsal without waiting for CI of that branch.
+    needs: [ci-gate]
+    # Deploy on every push (inverted default, M0.6): the old paths-filter
+    # gate let server-side fixes stranded between skipped commits stay out
+    # of prod (2026-09-16: eb582e83 never shipped until a later web commit
+    # carried it; `gh run watch` reported the skipped deploy as success).
+    # What gets REBUILT is decided VPS-side by the deploy-marker diff — an
+    # empty run costs only fetch/compose-up/health-checks (~2-3 min).
+    # Manual dispatch skips the CI gate (operator-controlled).
     if: >-
       always() &&
       (github.event_name == 'workflow_dispatch' ||
-       (needs.check-changes.outputs.should-deploy == 'true' && needs.ci-gate.result == 'success'))
+       (github.event_name == 'push' && needs.ci-gate.result == 'success'))
     runs-on: ubuntu-latest
     timeout-minutes: 100
 
@@ -245,8 +229,18 @@ jobs:
             echo ">>> Starting containers..."
             docker compose up -d --remove-orphans
 
-            sleep 3
-            docker compose restart nginx
+            # Restart nginx only when containers were actually recreated:
+            # api/web rebuilds change the upstream container IPs. A no-op
+            # deploy (marker-advancing push that rebuilt nothing) must not
+            # drop edge connections — with the inverted default, deploys
+            # run on every push. nginx.conf / compose changes route through
+            # the docker/** filter → REBUILD_API=true → covered here.
+            if [ "$REBUILD_API" = true ] || [ "$REBUILD_WEB" = true ]; then
+              sleep 3
+              docker compose restart nginx
+            else
+              echo ">>> Skipping nginx restart (nothing rebuilt)"
+            fi
 
             # -------------------------------------------------------
             # 6. Health checks with retry
