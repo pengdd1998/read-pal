@@ -3,13 +3,52 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
-import { useBackgroundApi } from '@/hooks/useApi';
 import type {
   BookData,
   AnnotationStats,
   AnnotationItem,
   ReadingLogEntry,
 } from '@/types/book';
+
+
+/**
+ * Fire-and-forget API call for secondary/non-critical data.
+ * Silently handles errors (no console noise).
+ * The generic is on the fetch method, not the hook, so you can call
+ * fetch<DifferentType> for each background request.
+ */
+export function useBackgroundApi() {
+  const cancelledRef = useRef(false);
+
+  useEffect(() => {
+    // Reset on every (re)mount so the cancel flag survives React StrictMode's
+    // mount→cleanup→remount cycle in dev. Without this, the cleanup sets the
+    // ref true and the second mount never resets it, leaving every background
+    // fetch permanently cancelled (tags, flashcards, reading-speed, etc. would
+    // never populate on the book-detail page in dev).
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, []);
+
+  const fetch = useCallback(
+    <T>(url: string, setter: (data: T) => void): void => {
+      api.get<T>(url)
+        .then((res) => {
+          if (!cancelledRef.current && res.success && res.data != null) {
+            setter(res.data);
+          }
+        })
+        .catch((err) => {
+          warn('[useBackgroundApi]', url, err);
+        });
+    },
+    [],
+  );
+
+  return { fetch };
+}
 
 export function useBookDetail(bookId: string, t: (key: string) => string) {
   const tRef = useRef(t);

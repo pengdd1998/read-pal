@@ -39,9 +39,9 @@ store.
 - `packages/server/app/eval/judges.py:1` — L2 LLM-as-judge rubric (anti-sycophancy; explicit `--judge` only, never in CI)
 
 **Memory + context**:
-- `packages/server/app/services/conversation_memory.py:53` — staleness check (P3.1)
+- `packages/server/app/services/conversation_memory.py:71` — staleness check (P3.1)
 - `packages/server/app/services/companion/context.py:65` — budget reserve order (P1.6)
-- `packages/server/app/utils/token_budget.py:30` — CJK/Latin-aware estimation
+- `packages/server/app/utils/token_budget.py:100` — CJK/Latin-aware estimation
 - `packages/server/app/services/memory_book/checkpoint.py:1` — Redis checkpoints (P3.3)
 
 **Middleware**:
