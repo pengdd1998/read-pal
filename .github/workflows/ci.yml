@@ -103,7 +103,7 @@ jobs:
           uv run python scripts/check_no_raw_book_fields.py app/services/
           uv run python scripts/check_token_budget_model.py app/services/ app/eval/
           uv run python scripts/check_services_flat_freeze.py app/services/
-          uv run python scripts/check_inflight_streams_encapsulation.py app/services/agent_service.py
+          uv run python scripts/check_inflight_streams_encapsulation.py app/services/agent/gateway.py
 
       - run: cd packages/server && uv run pytest --tb=short -v --durations=10
 
