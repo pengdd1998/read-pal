@@ -61,7 +61,7 @@ async def epub_zip_fallback(file_path: str) -> tuple[list[dict], list[str], int]
 
         spine_hrefs = _resolve_spine(zf, opf_data, opf_path)
 
-        chapters, full_text_parts = _build_chapters(
+        chapters, full_text_parts, footnote_defs = _build_chapters(
             zf, spine_hrefs, opf_path, toc_map, image_map, css_str,
         )
 
@@ -74,6 +74,10 @@ async def epub_zip_fallback(file_path: str) -> tuple[list[dict], list[str], int]
             except (KeyError, zipfile.BadZipFile, ValueError) as exc:
                 logger.warning('epub_parser.cover_image_extraction_failed: %s', str(exc)[:200])
 
+    # Single final store: merging footnote_defs here (not storing them inside
+    # _build_chapters) keeps store_metadata from clobbering the context var.
+    if footnote_defs:
+        metadata = {**metadata, 'footnote_definitions': footnote_defs}
     from app.services.epub_parser.metadata_store import store_metadata
     store_metadata(metadata, cover_uri)
     return chapters, full_text_parts, max(1, len(chapters))
@@ -245,7 +249,7 @@ def _build_chapters(
     toc_map: dict[str, tuple[str, int]],
     image_map: dict[str, str],
     css_str: str,
-) -> tuple[list[dict], list[str]]:
+) -> tuple[list[dict], list[str], dict[str, str]]:
     """Build chapters in spine order from ZIP entries."""
     from app.services.text_helpers import html_to_structured_text
 
@@ -300,10 +304,7 @@ def _build_chapters(
         })
         order += 1
 
-    if footnote_defs:
-        from app.services.epub_parser.metadata_store import store_footnote_definitions
-        store_footnote_definitions(footnote_defs)
-    return chapters, full_text_parts
+    return chapters, full_text_parts, footnote_defs
 
 
 _DANGEROUS_TAG_RE = re.compile(
