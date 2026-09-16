@@ -1,28 +1,28 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/capacitor', () => ({
+vi.mock('@/lib/offline/capacitor', () => ({
   isCapacitor: vi.fn(() => false),
 }));
 
-vi.mock('@/lib/native-storage', () => ({
+vi.mock('@/lib/offline/native-storage', () => ({
   getItem: vi.fn(() => Promise.resolve(null)),
   setItem: vi.fn(() => Promise.resolve()),
 }));
 
-vi.mock('@/lib/api', () => ({
+vi.mock('@/lib/api/client', () => ({
   api: {
     post: vi.fn(),
   },
 }));
 
-import { isCapacitor } from '@/lib/capacitor';
+import { isCapacitor } from '@/lib/offline/capacitor';
 import {
   requestNotificationPermission,
   registerPushToken,
   handleForegroundNotification,
   isPushEnabled,
 } from '@/lib/notifications';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 
 describe('notifications', () => {
   beforeEach(() => {

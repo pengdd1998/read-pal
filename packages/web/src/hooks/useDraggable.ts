@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem } from '@/lib/offline/safe-storage';
 import { warn } from '@/lib/logger';
 
 const DRAG_THRESHOLD = 6; // px movement to distinguish drag from click

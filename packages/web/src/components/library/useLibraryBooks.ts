@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { bookListResponseSchema } from '@/lib/api/schemas';
 import type { Book } from '@read-pal/shared';
 import { warn } from '@/lib/logger';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/components/shared/Toast';
 
 interface UseLibraryBooksReturn {
   books: Book[];

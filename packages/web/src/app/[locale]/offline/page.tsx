@@ -5,7 +5,7 @@ import { usePageTitle } from '@/hooks/usePageTitle';
 import { warn } from '@/lib/logger';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { openOfflineDB } from '@/lib/offline-queue';
+import { openOfflineDB } from '@/lib/offline/offline-queue';
 
 interface CachedBook {
   bookId: string;

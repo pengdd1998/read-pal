@@ -7,7 +7,7 @@ const { mockGet, mockFetch, mockAuthToken } = vi.hoisted(() => ({
   mockAuthToken: { value: null as string | null },
 }));
 
-vi.mock('@/lib/api', () => ({
+vi.mock('@/lib/api/client', () => ({
   api: { get: mockGet },
   API_BASE_URL: 'http://test-api',
 }));
@@ -16,7 +16,7 @@ vi.mock('@/lib/auth-fetch', () => ({
   getAuthToken: () => mockAuthToken.value,
 }));
 
-vi.mock('@/lib/safe-storage', () => ({
+vi.mock('@/lib/offline/safe-storage', () => ({
   safeSetItem: vi.fn(),
 }));
 

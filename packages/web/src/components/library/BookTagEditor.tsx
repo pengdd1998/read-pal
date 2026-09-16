@@ -2,8 +2,8 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
-import { useToast } from '@/components/Toast';
+import { api } from '@/lib/api/client';
+import { useToast } from '@/components/shared/Toast';
 import { warn } from '@/lib/logger';
 
 interface BookTagEditorProps {

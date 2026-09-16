@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect, memo } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { copyToClipboard } from '@/lib/clipboard';
 import { isDisplayableAuthor } from '@/lib/book-cover';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/components/shared/Toast';
 import { warn } from '@/lib/logger';
 
 interface ReadingCardData {

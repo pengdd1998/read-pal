@@ -2,12 +2,12 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { DM_Sans, Crimson_Pro, Source_Serif_4, Literata, Fira_Code, Noto_Serif_SC } from 'next/font/google';
-import { AuthProvider } from '@/lib/auth';
-import { AppShell } from '@/components/AppShell';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { ServiceWorkerRegistrar } from '@/components/ServiceWorkerRegistrar';
-import { NetworkStatus } from '@/components/NetworkStatus';
-import { AnalyticsProvider } from '@/components/AnalyticsProvider';
+import { AuthProvider } from '@/components/AuthProvider';
+import { AppShell } from '@/components/shared/AppShell';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { ServiceWorkerRegistrar } from '@/components/shared/ServiceWorkerRegistrar';
+import { NetworkStatus } from '@/components/shared/NetworkStatus';
+import { AnalyticsProvider } from '@/components/shared/AnalyticsProvider';
 import { routing } from '@/i18n/routing';
 
 const dmSans = DM_Sans({

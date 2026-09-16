@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { SkeletonPulse } from './SkeletonPulse';
 import type { FlashcardStats } from './types';
 import { warn } from '@/lib/logger';

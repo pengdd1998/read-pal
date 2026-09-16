@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { API_BASE_URL, api } from '@/lib/api';
+import { API_BASE_URL, api } from '@/lib/api/client';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { warn } from '@/lib/logger';
 

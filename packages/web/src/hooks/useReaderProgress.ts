@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { getAuthToken } from '@/lib/auth-fetch';
-import { API_BASE_URL, api } from '@/lib/api';
+import { API_BASE_URL, api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
-import { safeSetItem } from '@/lib/safe-storage';
+import { safeSetItem } from '@/lib/offline/safe-storage';
 
 interface UseReaderProgressOptions {
   bookId: string;

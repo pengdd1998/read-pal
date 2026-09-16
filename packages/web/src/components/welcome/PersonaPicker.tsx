@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Check } from '@/components/icons';
+import { Check } from '@/components/shared/icons';
 
 interface PersonaInfo {
   readonly id: string;

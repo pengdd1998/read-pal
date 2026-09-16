@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
-import { useToast } from '@/components/Toast';
+import { api } from '@/lib/api/client';
+import { useToast } from '@/components/shared/Toast';
 import type { Collection } from '@read-pal/shared';
 import { warn } from '@/lib/logger';
 

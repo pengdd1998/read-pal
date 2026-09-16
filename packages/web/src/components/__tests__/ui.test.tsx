@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
-import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '../ui';
+import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '../shared/ui';
 
 const messages = {
   common: {

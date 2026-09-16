@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Flame } from '@/components/icons';
+import { Flame } from '@/components/shared/icons';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { DayCell, SkeletonHeatmap } from './StreakDayCell';
 import { warn } from '@/lib/logger';
 

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { analytics } from '@/lib/analytics';
 import { warn } from '@/lib/logger';
-import { splitChapterIntoPages, DEFAULT_MAX_CHARS_PER_PAGE, type PageSegment } from '@/lib/chapter-paginator';
+import { splitChapterIntoPages, DEFAULT_MAX_CHARS_PER_PAGE, type PageSegment } from '@/lib/reader/chapter-paginator';
 import type { Book, Chapter, Annotation } from '@read-pal/shared';
 
 interface BookContentState {

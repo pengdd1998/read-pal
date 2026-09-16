@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
 import type { ClubDetail, MemberProgress, DiscussionMessage } from './types';
 

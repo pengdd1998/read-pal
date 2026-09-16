@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
+import type { CompanionChatHandle } from '@/components/reading/chat/CompanionChat';
 import type { MutableRefObject } from 'react';
 
 interface ReaderCallbacksDeps {

@@ -3,9 +3,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { api } from '@/lib/api';
-import { safeSetItem } from '@/lib/safe-storage';
-import { useToast } from '@/components/Toast';
+import { api } from '@/lib/api/client';
+import { safeSetItem } from '@/lib/offline/safe-storage';
+import { useToast } from '@/components/shared/Toast';
 import { warn } from '@/lib/logger';
 
 const ONBOARDING_KEY = 'read-pal-onboarding-complete';

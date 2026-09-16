@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 

@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/components/shared/Toast';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { analytics } from '@/lib/analytics';
-import { type ExportFormat, CITATION_FORMATS, SHAREABLE_FORMATS } from '../ExportPreviewModal.constants';
+import { type ExportFormat, CITATION_FORMATS, SHAREABLE_FORMATS } from '../share/ExportPreviewModal.constants';
 import { warn } from '@/lib/logger';
 
 const DEFAULT_TYPES = new Set(['highlight', 'note', 'bookmark']);

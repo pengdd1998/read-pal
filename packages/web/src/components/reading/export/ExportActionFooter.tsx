@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/components/shared/Toast';
 
 interface ExportActionFooterProps {
   loading: boolean;

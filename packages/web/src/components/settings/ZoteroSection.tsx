@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
-import { useToast } from '@/components/Toast';
+import { api } from '@/lib/api/client';
+import { useToast } from '@/components/shared/Toast';
 
 import { UserSettings } from './types';
 import { warn } from '@/lib/logger';

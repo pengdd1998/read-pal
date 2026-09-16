@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import type { Collection } from '@read-pal/shared';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/components/shared/Toast';
 import { CollectionCreateForm } from './CollectionCreateForm';
 import { CollectionItem } from './CollectionItem';
 import { warn } from '@/lib/logger';

@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { formatRelativeTime } from '@/lib/date';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/components/shared/Toast';
 import { warn } from '@/lib/logger';
 
 interface Notification {

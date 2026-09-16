@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
-import { FRIEND_PERSONAS, DEFAULT_PERSONA } from '@/lib/companion-personas';
+import { FRIEND_PERSONAS, DEFAULT_PERSONA } from '@/lib/companion/companion-personas';
 
 interface UseCompanionPersonaReturn {
   friendName: string;

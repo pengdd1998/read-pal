@@ -3,14 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
 import { authFetch } from '@/lib/auth-fetch';
 import type { Book } from '@read-pal/shared';
 import { usePageTitle } from '@/hooks/usePageTitle';
-import { useAuth } from '@/lib/auth';
-import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
-import { useToast } from '@/components/Toast';
+import { useAuth } from '@/components/AuthProvider';
+import { safeGetItem, safeSetItem } from '@/lib/offline/safe-storage';
+import { useToast } from '@/components/shared/Toast';
 import { WelcomeIntro } from '@/components/welcome/WelcomeIntro';
 import { WhatWeDoSection } from '@/components/welcome/WhatWeDoSection';
 import { PersonaPicker } from '@/components/welcome/PersonaPicker';

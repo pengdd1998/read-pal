@@ -1,0 +1,229 @@
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
+import { safeGetItem, safeSetItem, safeRemoveItem } from '@/lib/offline/safe-storage';
+
+const TOUR_KEY = 'read-pal-tour-complete';
+const TOUR_STEP_KEY = 'read-pal-tour-step';
+
+const STEP_KEYS: { targetId: string; titleKey: string; descKey: string; position: 'top' | 'bottom' | 'left' | 'right' }[] = [
+ { targetId: 'tour-ai-companion', titleKey: 'tour_step1_title', descKey: 'tour_step1_desc', position: 'left' },
+ { targetId: 'tour-annotations', titleKey: 'tour_step2_title', descKey: 'tour_step2_desc', position: 'bottom' },
+ { targetId: 'tour-progress', titleKey: 'tour_step4_title', descKey: 'tour_step4_desc', position: 'bottom' },
+];
+
+/**
+ * Lightweight feature tour for first-time readers.
+ * Shows sequential tooltips pointing to key UI elements.
+ * Persists completion in localStorage so it only shows once.
+ */
+export const FeatureTour = React.memo(function FeatureTour() {
+ const t = useTranslations('reader');
+ const [step, setStep] = useState<number | null>(null);
+ const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+
+ useEffect(() => {
+ const completed = safeGetItem(TOUR_KEY);
+ if (completed === 'true') return;
+
+ // Restore saved step or start at 0
+ const savedStep = safeGetItem(TOUR_STEP_KEY);
+ const startStep = savedStep ? parseInt(savedStep, 10) : 0;
+ if (startStep >= STEP_KEYS.length) {
+  safeSetItem(TOUR_KEY, 'true');
+  return;
+ }
+
+ // Wait for layout to settle, then start tour
+ // UI-R-15: 1.5s fired mid-orientation; wait 8s of idle instead
+ const timer = setTimeout(() => setStep(startStep), 8000);
+ return () => clearTimeout(timer);
+ }, []);
+
+ // Update target position when step changes
+ useEffect(() => {
+ if (step === null) return;
+
+ const el = document.getElementById(STEP_KEYS[step].targetId);
+ if (!el) {
+  // Target not rendered yet — retry after a short delay
+  const retryTimer = setTimeout(() => {
+  const retry = document.getElementById(STEP_KEYS[step].targetId);
+  if (retry) setTargetRect(retry.getBoundingClientRect());
+  }, 500);
+  return () => clearTimeout(retryTimer);
+ }
+
+ setTargetRect(el.getBoundingClientRect());
+
+ // Re-position on resize
+ const onResize = () => setTargetRect(el.getBoundingClientRect());
+ window.addEventListener('resize', onResize);
+ return () => window.removeEventListener('resize', onResize);
+ }, [step]);
+
+ const handleNext = useCallback(() => {
+ const next = step !== null ? step + 1 : 0;
+ if (next >= STEP_KEYS.length) {
+  safeSetItem(TOUR_KEY, 'true');
+  safeRemoveItem(TOUR_STEP_KEY);
+  setStep(null);
+ } else {
+  safeSetItem(TOUR_STEP_KEY, String(next));
+  setStep(next);
+ }
+ }, [step]);
+
+ const handleSkip = useCallback(() => {
+ safeSetItem(TOUR_KEY, 'true');
+ safeRemoveItem(TOUR_STEP_KEY);
+ setStep(null);
+ }, []);
+
+ // Close on Escape key
+ useEffect(() => {
+ if (step === null) return;
+ const onKey = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') handleSkip();
+ };
+ window.addEventListener('keydown', onKey);
+ return () => window.removeEventListener('keydown', onKey);
+ }, [step, handleSkip]);
+
+ if (step === null || !targetRect) return null;
+
+ const current = STEP_KEYS[step];
+ const isLast = step === STEP_KEYS.length - 1;
+
+ // Compute tooltip position
+ const tooltipW = 288; // w-72 = 18rem = 288px
+ const tooltipH = 160; // estimated tooltip height
+ const gap = 12;
+ const pad = 8; // viewport padding
+ const vw = window.innerWidth;
+ const vh = window.innerHeight;
+
+ let top = 0;
+ let left = 0;
+ let translateX = '';
+ let translateY = '';
+
+ switch (current.position) {
+ case 'bottom':
+  top = targetRect.bottom + gap;
+  left = targetRect.left + targetRect.width / 2;
+  translateX = '-translate-x-1/2';
+  break;
+ case 'top':
+  top = targetRect.top - gap - tooltipH;
+  left = targetRect.left + targetRect.width / 2;
+  translateX = '-translate-x-1/2';
+  break;
+ case 'left':
+  top = targetRect.top + targetRect.height / 2;
+  left = targetRect.left - gap - tooltipW;
+  translateY = '-translate-y-1/2';
+  break;
+ case 'right':
+  top = targetRect.top + targetRect.height / 2;
+  left = targetRect.right + gap;
+  translateY = '-translate-y-1/2';
+  break;
+ }
+
+ // Clamp to viewport — prevent tooltip from going off-screen
+ // Account for the translate transforms
+ const effectiveLeft = translateX === '-translate-x-1/2' ? left - tooltipW / 2 : left;
+ const effectiveTop = translateY === '-translate-y-1/2' ? top - tooltipH / 2 : top;
+
+ if (effectiveLeft < pad) {
+ left = translateX === '-translate-x-1/2' ? pad + tooltipW / 2 : pad;
+ } else if (effectiveLeft + tooltipW > vw - pad) {
+ left = translateX === '-translate-x-1/2' ? vw - pad - tooltipW / 2 : vw - pad - tooltipW;
+ }
+
+ if (current.position === 'bottom' && top + tooltipH > vh - pad) {
+ // Flip to top if no room below
+ top = targetRect.top - gap - tooltipH;
+ } else if (current.position === 'top' && effectiveTop < pad) {
+ // Flip to bottom if no room above
+ top = targetRect.bottom + gap;
+ }
+
+ if (top < pad) top = pad;
+ if (top + tooltipH > vh - pad) top = vh - pad - tooltipH;
+
+ const alignClass = `${translateX} ${translateY}`.trim();
+
+ return (
+ <>
+  {/* Spotlight overlay */}
+  <div className="fixed inset-0 z-[60] pointer-events-none">
+  {/* Dark overlay with cutout */}
+  <div className="absolute inset-0 bg-[rgba(26,20,16,0.5)] animate-fade-in" />
+  {/* Highlight ring around target */}
+  <div
+   className="absolute rounded-lg ring-2 ring-amber-400 ring-offset-2 ring-offset-transparent shadow-[0_0_20px_rgba(251,191,36,0.3)] transition-all duration-300"
+   style={{
+   top: targetRect.top - 4,
+   left: targetRect.left - 4,
+   width: targetRect.width + 8,
+   height: targetRect.height + 8,
+   }}
+  />
+  </div>
+
+  {/* Tooltip card */}
+  <div
+  className={`fixed z-[70] w-72 pointer-events-auto animate-scale-in ${alignClass}`}
+  style={{ top, left }}
+  onClick={(e) => e.stopPropagation()}
+  >
+  <div className="bg-surface-0 rounded-xl shadow-2xl border border-surface-2 overflow-hidden">
+   <div className="px-4 pt-3 pb-2">
+   <div className="flex items-center gap-2 mb-1">
+    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
+    {step + 1}
+    </span>
+    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t(current.titleKey)}</h4>
+   </div>
+   <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{t(current.descKey)}</p>
+   </div>
+
+   <div className="px-4 py-2.5 bg-surface-1 flex items-center justify-between border-t border-surface-2">
+   <button type="button"
+    onClick={handleSkip}
+    className="text-sm px-3 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-amber-400 rounded"
+   >
+    {t('tour_skip')}
+   </button>
+
+   <div className="flex items-center gap-2">
+    {/* Step dots */}
+    <div className="flex gap-1 mr-2">
+    {STEP_KEYS.map((s, i) => (
+     <div
+     key={s.targetId}
+     aria-hidden="true"
+     aria-label={t('tour_step_label', { step: i + 1 })}
+     className={`w-1.5 h-1.5 rounded-full transition-colors ${
+      i === step ? 'bg-amber-500' : 'bg-gray-300 dark:bg-gray-600'
+     }`}
+     />
+    ))}
+    </div>
+
+    <button type="button"
+    onClick={handleNext}
+    className="px-3 py-1 rounded-lg text-[11px] font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors min-h-[44px] inline-flex items-center focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+    >
+    {isLast ? t('tour_got_it') : t('tour_next')}
+    </button>
+   </div>
+   </div>
+  </div>
+  </div>
+ </>
+ );
+});

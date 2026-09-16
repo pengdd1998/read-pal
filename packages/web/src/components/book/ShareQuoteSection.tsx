@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import type { AnnotationItem } from '@/types/book';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/components/shared/Toast';
 import { warn } from '@/lib/logger';
 
 interface QuoteRowProps {
@@ -91,7 +91,7 @@ export const ShareQuoteSection = React.memo(function ShareQuoteSection({
   try {
    const canvas = document.createElement('canvas');
    const { renderCardToCanvas } = await import(
-   '@/components/reading/QuoteCard'
+   '@/components/reading/share/QuoteCard'
    );
    if (!mountedRef.current) return;
    renderCardToCanvas(canvas, text, bookTitle, bookAuthor, 'warm');

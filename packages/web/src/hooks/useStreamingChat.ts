@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { API_BASE_URL } from '@/lib/api';
-import { api } from '@/lib/api';
+import { API_BASE_URL } from '@/lib/api/client';
+import { api } from '@/lib/api/client';
 import { consumeSSEStream } from '@/lib/sse';
-import { purifySync } from '@/lib/dompurify';
+import { purifySync } from '@/lib/render/dompurify';
 import { generateId, randomIdempotencyKey } from '@read-pal/shared';
 import { authFetchWithRefresh } from '@/lib/auth-fetch';
 import { warn } from '@/lib/logger';

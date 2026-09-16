@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { getColor } from '@/lib/knowledge-colors';
+import { getColor } from '@/lib/render/knowledge-colors';
 import type { SimNode, VisualizationEdge } from '@/types/knowledge';
 
 interface KnowledgeGraphProps {

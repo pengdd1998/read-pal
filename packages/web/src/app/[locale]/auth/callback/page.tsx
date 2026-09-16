@@ -4,7 +4,7 @@ import { useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/components/AuthProvider';
 import { warn } from '@/lib/logger';
 import { usePageTitle } from '@/hooks/usePageTitle';
 

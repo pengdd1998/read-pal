@@ -13,7 +13,7 @@ import { LibraryStatus } from '@/components/stats/LibraryStatus';
 import { WeeklyActivity } from '@/components/stats/WeeklyActivity';
 import { ReadingSpeed } from '@/components/stats/ReadingSpeed';
 import { RecentSessions } from '@/components/stats/RecentSessions';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 const FlashcardMetrics = dynamic(
   () => import('@/components/stats/FlashcardMetrics').then((m) => m.FlashcardMetrics),

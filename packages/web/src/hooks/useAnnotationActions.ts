@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { analytics } from '@/lib/analytics';
 import { warn } from '@/lib/logger';
 import type { Chapter, Annotation } from '@read-pal/shared';

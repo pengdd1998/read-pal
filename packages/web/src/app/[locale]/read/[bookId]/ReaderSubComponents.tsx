@@ -4,7 +4,7 @@ import React, { type ReactNode } from 'react';
 import { Link } from '@/i18n/navigation';
 import {
   BookCompletionModal, SessionSummaryModal, MobileSettingsSheet,
-} from '@/components/reading/ReaderDynamicImports';
+} from '@/components/reading/core/ReaderDynamicImports';
 
 // ---------------------------------------------------------------------------
 // Loading skeleton

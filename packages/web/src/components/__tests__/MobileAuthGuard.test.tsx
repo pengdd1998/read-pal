@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/capacitor', () => ({
+vi.mock('@/lib/offline/capacitor', () => ({
  isCapacitor: vi.fn(() => false),
 }));
 
@@ -18,7 +18,7 @@ vi.mock('@/lib/auth', () => ({
  })),
 }));
 
-import { isCapacitor } from '@/lib/capacitor';
+import { isCapacitor } from '@/lib/offline/capacitor';
 
 describe('MobileAuthGuard', () => {
  beforeEach(() => {
@@ -26,7 +26,7 @@ describe('MobileAuthGuard', () => {
  });
 
  it('is importable without errors', async () => {
- const mod = await import('@/components/MobileAuthGuard');
+ const mod = await import('@/components/shared/MobileAuthGuard');
  expect(mod.MobileAuthGuard).toBeDefined();
  expect(typeof mod.MobileAuthGuard).toBe('function');
  });

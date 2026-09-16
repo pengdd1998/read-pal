@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_MAX_CHARS_PER_PAGE,
   splitChapterIntoPages,
-} from '../chapter-paginator';
+} from '../reader/chapter-paginator';
 
 /** Every tag in a fragment must be balanced (no dangling open/close). */
 function isBalanced(fragment: string): boolean {

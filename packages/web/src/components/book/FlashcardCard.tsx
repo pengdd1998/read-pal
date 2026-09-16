@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
 
 interface FlashcardCardProps {

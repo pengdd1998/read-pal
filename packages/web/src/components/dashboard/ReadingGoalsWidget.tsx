@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, memo } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { SkeletonPulse } from './SkeletonPulse';
 import { warn } from '@/lib/logger';
 

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/components/shared/Toast';
 import { useTextSelection } from '@/hooks/useTextSelection';
 import { useAnnotationHighlights } from '@/hooks/useAnnotationHighlights';
 import { useReaderSettings } from '@/hooks/useReaderSettings';
@@ -21,9 +21,9 @@ import { useReaderMilestones } from '@/hooks/useReaderMilestones';
 import { useReaderSelectionState } from '@/hooks/useReaderSelectionState';
 import { useReaderActions } from '@/hooks/useReaderActions';
 import { useStatusBar } from '@/hooks/useStatusBar';
-import { api } from '@/lib/api';
-import { detectGenre, type BookGenre } from '@/lib/companion-prompts';
-import type { CompanionChatHandle } from '@/components/reading/CompanionChat';
+import { api } from '@/lib/api/client';
+import { detectGenre, type BookGenre } from '@/lib/companion/companion-prompts';
+import type { CompanionChatHandle } from '@/components/reading/chat/CompanionChat';
 import { warn } from '@/lib/logger';
 
 const STATUS_BAR_COLORS: Record<string, string> = {

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
 
-vi.mock('@/lib/capacitor', () => ({
+vi.mock('@/lib/offline/capacitor', () => ({
   isCapacitor: vi.fn(() => false),
 }));
 
 import { useStatusBar } from '../useStatusBar';
-import { isCapacitor } from '@/lib/capacitor';
+import { isCapacitor } from '@/lib/offline/capacitor';
 
 describe('useStatusBar', () => {
   beforeEach(() => {

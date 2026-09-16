@@ -12,7 +12,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useStreamingChat, type Message } from '../useStreamingChat';
 
-vi.mock('@/lib/api', () => ({
+vi.mock('@/lib/api/client', () => ({
   API_BASE_URL: 'http://testserver',
   api: { post: vi.fn().mockResolvedValue({}) },
 }));
@@ -22,7 +22,7 @@ vi.mock('@/lib/auth-fetch', () => ({
   authFetchWithRefresh: (...args: unknown[]) => authFetchMock(...args),
 }));
 
-vi.mock('@/lib/dompurify', () => ({
+vi.mock('@/lib/render/dompurify', () => ({
   purifySync: (s: string) => s,
 }));
 

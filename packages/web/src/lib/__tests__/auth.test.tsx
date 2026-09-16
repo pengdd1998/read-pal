@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
-import { AuthProvider, useAuth } from '../auth';
+import { AuthProvider, useAuth } from '../../components/AuthProvider';
 
 // Mock next-intl navigation — avoids loading next/navigation in vitest
 const mockPush = vi.fn();
@@ -10,13 +10,13 @@ vi.mock('@/i18n/navigation', () => ({
 
 // Mock the api module
 const mockPost = vi.fn();
-vi.mock('../api', () => ({
+vi.mock('@/lib/api/client', () => ({
  api: { post: (...args: unknown[]) => mockPost(...args) },
 }));
 
 // Mock the auth-fetch module — keep real storage behavior, only stub sync getter
 const mockGetAuthToken = vi.fn();
-vi.mock('../auth-fetch', async (importOriginal) => {
+vi.mock('@/lib/auth-fetch', async (importOriginal) => {
  const actual = await importOriginal<typeof import('../auth-fetch')>();
  return {
  ...actual,

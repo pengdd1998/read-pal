@@ -10,7 +10,7 @@ import { ClubHeaderCard } from './ClubHeaderCard';
 import { ClubCurrentReading } from './ClubCurrentReading';
 import { ClubMembersList } from './ClubMembersList';
 import { ClubDiscussionPanel } from './ClubDiscussionPanel';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
 
 export default function BookClubDetailPage() {

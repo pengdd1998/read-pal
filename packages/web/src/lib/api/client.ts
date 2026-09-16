@@ -10,10 +10,10 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import type { ZodType } from 'zod';
 import type { ApiResponse } from '@read-pal/shared';
-import { queueMutation } from '@/lib/offline-queue';
+import { queueMutation } from '@/lib/offline/offline-queue';
 import { getAuthToken } from '@/lib/auth-fetch';
-import { isCapacitor } from '@/lib/capacitor';
-import { getCachedContent } from '@/lib/mobile-cache';
+import { isCapacitor } from '@/lib/offline/capacitor';
+import { getCachedContent } from '@/lib/offline/mobile-cache';
 
 import {
   MAX_RETRIES,

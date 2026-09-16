@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import { safeGetItem, safeSetItem } from '@/lib/safe-storage';
+import { safeGetItem, safeSetItem } from '@/lib/offline/safe-storage';
 import { warn } from '@/lib/logger';
 
 interface UseScrollPersistenceOptions {

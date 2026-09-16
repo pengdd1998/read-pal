@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import type { ApiResponse } from '@read-pal/shared';
 import { warn } from '@/lib/logger';
 

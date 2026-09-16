@@ -7,9 +7,9 @@
  * cannot be used.
  */
 
-import { getItem, setItem, removeItem } from './native-storage';
-import { isCapacitor } from './capacitor';
-import { safeGetItem, safeSetItem, safeRemoveItem } from './safe-storage';
+import { getItem, setItem, removeItem } from './offline/native-storage';
+import { isCapacitor } from './offline/capacitor';
+import { safeGetItem, safeSetItem, safeRemoveItem } from './offline/safe-storage';
 import { warn } from './logger';
 
 /** Get the auth token from localStorage (SSR-safe, synchronous). */

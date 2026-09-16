@@ -1,0 +1,268 @@
+/**
+ * Lazy-loaded Prism.js syntax highlighting for reader code blocks.
+ *
+ * Strategy:
+ *  - Import Prism + language components on demand (keeps initial bundle small).
+ *  - On first call, configure Prism to not auto-highlight the whole page.
+ *  - `highlightCodeBlocks(root)` finds all `<pre><code>` elements under `root`
+ *    and applies highlighting.  If no `language-xxx` class is present the
+ *    autoloader will attempt to detect the language from content.
+ *  - Adds a copy-to-clipboard button to each highlighted block.
+ */
+
+import { warn } from '@/lib/logger';
+let prismReady = false;
+let prismPromise: Promise<void> | null = null;
+
+/** Pre-load Prism so the next call to highlightCodeBlocks is synchronous-ish. */
+export function preloadPrism(): void {
+  if (!prismPromise) loadPrism();
+}
+
+async function loadPrism(): Promise<void> {
+  if (prismReady) return;
+
+  if (!prismPromise) {
+    prismPromise = (async () => {
+      // Dynamic imports — tree-shaken away when no code blocks are present
+      const Prism = (await import('prismjs')).default;
+
+      // Load sequentially — many languages depend on earlier ones (e.g. cpp→c, ts→js)
+      await import('prismjs/components/prism-clike');
+      await import('prismjs/components/prism-markup');
+      await import('prismjs/components/prism-css');
+      await import('prismjs/components/prism-javascript');
+      await import('prismjs/components/prism-typescript');
+      await import('prismjs/components/prism-java');
+      await import('prismjs/components/prism-c');
+      await import('prismjs/components/prism-cpp');
+      await import('prismjs/components/prism-python');
+      await import('prismjs/components/prism-bash');
+      await import('prismjs/components/prism-sql');
+      await import('prismjs/components/prism-json');
+      await import('prismjs/components/prism-go');
+      await import('prismjs/components/prism-rust');
+      await import('prismjs/components/prism-yaml');
+      await import('prismjs/components/prism-shell-session');
+
+      // Never auto-highlight the entire document — we do it manually per container
+      Prism.manual = true;
+      prismReady = true;
+    })();
+  }
+
+  await prismPromise;
+}
+
+/**
+ * Detect the language from a code element's class list.
+ * Looks for `language-xxx` patterns as set by EPUB source or Prism.
+ */
+function detectLanguage(el: HTMLElement): string | null {
+  const match = el.className.match(/(?:^|\s)language-(\S+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Heuristic language detection from code content when no class hint is present.
+ * Uses pattern matching to identify common languages — falls back to 'clike' (C-like).
+ */
+function guessLanguage(text: string): string {
+  const t = text.trim();
+  if (!t) return 'clike';
+
+  // SQL — starts with SELECT/INSERT/UPDATE/DELETE/CREATE/ALTER/DROP/WITH
+  if (/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|WITH\s+\w+\s+AS)\b/i.test(t)) return 'sql';
+  // JSON — starts with { or [
+  if (/^\s*[\{\[]/.test(t) && /"[^"]+"\s*:/.test(t)) return 'json';
+  // YAML — key: value at start, no semicolons
+  if (/^\s*\w[\w-]*\s*:\s*\S/m.test(t) && !/[{;]/.test(t) && /^\s*---/.test(t)) return 'yaml';
+  // Python — def/class/lambda, significant whitespace
+  if (/^\s*(def|class|import|from|lambda|if\s+__name__)\b/m.test(t)) return 'python';
+  // Bash/Shell — shebang or common shell patterns
+  if (/^#!\s*\/(bin|usr)\//.test(t) || /^\s*\$\s/.test(t) || /^\s*(echo|cd|mkdir|chmod|export|source)\b/m.test(t)) return 'bash';
+  // Go — func/package/import, := operator
+  if (/^\s*(func|package|import)\b/m.test(t) || /:=/.test(t)) return 'go';
+  // Rust — fn/let/mut/pub/use, ->  or =>  arrows
+  if (/^\s*(fn|let\s+mut|pub\s+fn|use\s+|impl\s+)/m.test(t)) return 'rust';
+  // Java — public/private/protected class/interface, System.out
+  if (/^\s*(public|private|protected)\s+(class|interface|static)/m.test(t) || /System\.(out|err)\./.test(t)) return 'java';
+  // TypeScript — type annotations with : and import/export
+  if (/\binterface\s+\w+/.test(t) || /:\s*(string|number|boolean|void)\b/.test(t)) return 'typescript';
+  // JavaScript — const/let/var, arrow functions, require()
+  if (/^\s*(const|let|var|function|export|import)\b/m.test(t) || /=>/.test(t) || /require\s*\(/.test(t)) return 'javascript';
+  // CSS — selectors and properties
+  if (/^\s*[.#@]?[\w-]+\s*\{/.test(t) || /\b(margin|padding|color|display|position)\s*:/.test(t)) return 'css';
+  // C/C++ — #include, printf, int main
+  if (/^\s*#include/.test(t) || /\bint\s+main\s*\(/.test(t)) return 'cpp';
+
+  return 'clike';
+}
+
+/** Human-readable names for common language identifiers. */
+const LANGUAGE_LABELS: Record<string, string> = {
+  js: 'JavaScript',
+  javascript: 'JavaScript',
+  ts: 'TypeScript',
+  typescript: 'TypeScript',
+  py: 'Python',
+  python: 'Python',
+  go: 'Go',
+  rs: 'Rust',
+  rust: 'Rust',
+  java: 'Java',
+  c: 'C',
+  cpp: 'C++',
+  bash: 'Bash',
+  shell: 'Shell',
+  sh: 'Shell',
+  sql: 'SQL',
+  json: 'JSON',
+  yaml: 'YAML',
+  yml: 'YAML',
+  css: 'CSS',
+  html: 'HTML',
+  markup: 'HTML',
+  xml: 'XML',
+};
+
+/**
+ * Add a line-number gutter to a `<pre>` element.
+ * Counts lines from the `<code>` text content and inserts a left-side gutter.
+ * Idempotent — skips if a gutter is already present.
+ */
+function addLineNumbers(pre: HTMLPreElement): void {
+  if (pre.querySelector('.line-numbers-gutter')) return;
+
+  const code = pre.querySelector('code');
+  if (!code) return;
+
+  const text = code.textContent ?? '';
+  const lineCount = text.split('\n').length;
+  // Don't show gutter for single-line code
+  if (lineCount <= 1) return;
+
+  const gutter = document.createElement('span');
+  gutter.className = 'line-numbers-gutter';
+  gutter.setAttribute('aria-hidden', 'true');
+
+  for (let i = 1; i <= lineCount; i++) {
+    const span = document.createElement('span');
+    span.textContent = String(i);
+    gutter.appendChild(span);
+  }
+
+  pre.classList.add('has-line-numbers');
+  pre.insertBefore(gutter, pre.firstChild);
+}
+
+/**
+ * Insert a copy-to-clipboard button into a `<pre>` element.
+ * Idempotent — skips if a button is already present.
+ */
+function addCopyButton(pre: HTMLPreElement, language: string | null): void {
+  if (pre.querySelector('.code-copy-btn')) return;
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'code-header';
+
+  // Language label
+  if (language) {
+    const label = document.createElement('span');
+    label.className = 'code-lang-label';
+    label.textContent = LANGUAGE_LABELS[language] ?? language;
+    wrapper.appendChild(label);
+  }
+
+  // Copy button
+  const btn = document.createElement('button');
+  btn.className = 'code-copy-btn';
+  btn.textContent = 'Copy';
+  btn.setAttribute('aria-label', 'Copy code to clipboard');
+  btn.addEventListener('click', async () => {
+    const code = pre.querySelector('code');
+    const text = code?.textContent ?? '';
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    } catch (err) {
+      warn('Code block copy failed:', err);
+      btn.textContent = 'Failed';
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    }
+  });
+  wrapper.appendChild(btn);
+  pre.appendChild(wrapper);
+}
+
+/**
+ * Highlight all `<pre><code>` blocks under `rootElement`.
+ * Safe to call repeatedly (idempotent — skips already-highlighted blocks).
+ */
+export async function highlightCodeBlocks(rootElement: HTMLElement): Promise<void> {
+  await loadPrism();
+
+  const Prism = await import('prismjs').then(m => m.default);
+
+  // 1. Highlight standard <pre><code> blocks
+  const blocks = rootElement.querySelectorAll('pre code');
+
+  blocks.forEach((block) => {
+    const el = block as HTMLElement;
+    // Skip if already highlighted
+    if (el.classList.contains('prism-highlighted')) return;
+
+    // If no language class, guess from content before highlighting
+    const existingLang = detectLanguage(el);
+    if (!existingLang) {
+      const guessed = guessLanguage(el.textContent ?? '');
+      el.classList.add(`language-${guessed}`);
+    }
+
+    Prism.highlightElement(el);
+    el.classList.add('prism-highlighted');
+
+    // Add copy button to the parent <pre>
+    const pre = el.parentElement;
+    if (pre?.tagName === 'PRE') {
+      const lang = detectLanguage(el);
+      addLineNumbers(pre as HTMLPreElement);
+      addCopyButton(pre as HTMLPreElement, lang);
+    }
+  });
+
+  // 2. Handle standalone <pre> blocks without a <code> child (common in some EPUBs)
+  const standalonePres = rootElement.querySelectorAll('pre');
+  standalonePres.forEach((preEl) => {
+    const pre = preEl as HTMLPreElement;
+    // Skip if this <pre> already contains a <code> element (handled above)
+    if (pre.querySelector('code')) return;
+    // Skip if already processed
+    if (pre.classList.contains('prism-highlighted')) return;
+
+    // Wrap text content in a <code> element so Prism can highlight it
+    const code = document.createElement('code');
+    // Transfer any language-* class from <pre> to <code>
+    const langClass = Array.from(pre.classList).find((c) => c.startsWith('language-'));
+    if (langClass) {
+      code.classList.add(langClass);
+      pre.classList.remove(langClass);
+    } else {
+      // No class hint — guess from content
+      const guessed = guessLanguage(pre.textContent ?? '');
+      code.classList.add(`language-${guessed}`);
+    }
+    code.textContent = pre.textContent;
+    pre.textContent = '';
+    pre.appendChild(code);
+
+    Prism.highlightElement(code);
+    code.classList.add('prism-highlighted');
+    pre.classList.add('prism-highlighted');
+
+    const lang = detectLanguage(code);
+    addLineNumbers(pre);
+    addCopyButton(pre, lang);
+  });
+}

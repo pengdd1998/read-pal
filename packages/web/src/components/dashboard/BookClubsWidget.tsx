@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { BookClubCard } from './BookClubCard';
 import { CreateClubForm } from './CreateClubForm';
 import { JoinClubForm } from './JoinClubForm';

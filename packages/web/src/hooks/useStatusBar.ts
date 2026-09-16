@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { isCapacitor } from '@/lib/capacitor';
+import { isCapacitor } from '@/lib/offline/capacitor';
 import { warn } from '@/lib/logger';
 
 type StatusBarStyle = 'LIGHT' | 'DARK';

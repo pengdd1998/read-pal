@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { AnalysisResultView } from '@/components/synthesis/AnalysisResultView';
 import type { AnalysisResult } from '@/components/synthesis/types';
 import { mapCrossBookResult } from '@/components/synthesis/mapping';

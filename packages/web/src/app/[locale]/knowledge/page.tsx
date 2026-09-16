@@ -14,7 +14,7 @@ import { KnowledgeErrorState } from '@/components/knowledge/KnowledgeErrorState'
 import { KnowledgeNotConfigured } from '@/components/knowledge/KnowledgeNotConfigured';
 import { KnowledgeEmptyState } from '@/components/knowledge/KnowledgeEmptyState';
 import { KnowledgeSidebarSkeleton } from '@/components/knowledge/KnowledgeSidebarSkeleton';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import type { SimNode } from '@/types/knowledge';
 
 const NodeDetailPanel = dynamic(

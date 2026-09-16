@@ -3,9 +3,9 @@
 import React, { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
-import { API_BASE_URL } from '@/lib/api';
+import { API_BASE_URL } from '@/lib/api/client';
 import { authFetch } from '@/lib/auth-fetch';
-import { safeGetItem, safeRemoveItem } from '@/lib/safe-storage';
+import { safeGetItem, safeRemoveItem } from '@/lib/offline/safe-storage';
 import { warn } from '@/lib/logger';
 import { useModalFocus } from '@/hooks/useModalFocus';
 

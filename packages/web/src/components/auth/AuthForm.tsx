@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/components/AuthProvider';
 import { authFetch } from '@/lib/auth-fetch';
 import { analytics } from '@/lib/analytics';
-import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/ui';
-import { useToast } from '@/components/Toast';
+import { LoadingSpinner, ErrorAlert, getUserFriendlyError } from '@/components/shared/ui';
+import { useToast } from '@/components/shared/Toast';
 import { warn } from '@/lib/logger';
 
 type AuthMode = 'login' | 'register';

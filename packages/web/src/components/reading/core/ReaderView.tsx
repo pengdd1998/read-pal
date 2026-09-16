@@ -1,0 +1,209 @@
+'use client';
+
+import React, { useEffect, type RefObject } from 'react';
+import { useTranslations } from 'next-intl';
+import { themeClasses, type ReaderTheme } from '@/lib/reader/reader-theme';
+import { FootnotePopover } from '../annotations/FootnotePopover';
+import { ChapterDropdown } from '@/components/reading/core/ChapterDropdown';
+import { ReaderFooter } from '@/components/reading/core/ReaderFooter';
+import {
+  ChapterProgressBar,
+  ChapterHeader,
+  EmptyChapterState,
+  ChapterEndMarker,
+  useReaderViewLogic,
+} from '@/components/reading/core/ReaderViewParts';
+
+interface ChapterItem {
+  title: string;
+}
+
+const OVERSCROLL_STYLE: React.CSSProperties = { overscrollBehavior: 'contain' };
+
+interface ReaderViewProps {
+  bookId: string;
+  chapterContent: string;
+  chapterTitle: string;
+  currentPage: number;
+  totalPages: number;
+  chapters: ChapterItem[];
+  onPageChange: (page: number) => void;
+  contentRef?: RefObject<HTMLElement | null>;
+  fontSize: number;
+  theme: ReaderTheme;
+  fontFamily?: string;
+  lineHeight?: number;
+  readingWidth?: 'comfortable' | 'wide';
+  showControls?: boolean;
+  onToggleControls?: () => void;
+  externalTocOpen?: boolean;
+  onTocClose?: () => void;
+  highlightMode?: boolean;
+  onScrollProgress?: (progress: number) => void;
+  onPauseAutoHide?: () => void;
+  onResumeAutoHide?: () => void;
+  currentSegment?: number;
+  totalSegments?: number;
+  onSegmentChange?: (segment: number) => void;
+}
+
+export const ReaderView = React.memo(function ReaderView({
+  bookId,
+  chapterContent,
+  chapterTitle,
+  currentPage,
+  totalPages,
+  chapters,
+  onPageChange,
+  contentRef,
+  fontSize,
+  theme,
+  fontFamily,
+  lineHeight,
+  readingWidth = 'comfortable',
+  showControls = true,
+  onToggleControls,
+  externalTocOpen,
+  onTocClose,
+  highlightMode: _highlightMode,
+  onScrollProgress,
+  onPauseAutoHide,
+  onResumeAutoHide,
+  currentSegment = 0,
+  totalSegments = 1,
+  onSegmentChange,
+}: ReaderViewProps) {
+  const t = useTranslations('reader');
+
+  const {
+    scrollProgress,
+    selectingRef,
+    articleRef,
+    contentDivRef,
+    containerRef,
+    articleStyle,
+    updateScrollProgress,
+    goNextPage,
+    goPrevPage,
+    overallProgress,
+    chapterMinutesLeft,
+    footnotePopover,
+    setFootnotePopover,
+  } = useReaderViewLogic({
+    bookId,
+    chapterContent,
+    chapterTitle,
+    currentPage,
+    totalPages,
+    onPageChange,
+    contentRef,
+    fontSize,
+    fontFamily,
+    lineHeight,
+    onScrollProgress,
+    currentSegment,
+    totalSegments,
+    onSegmentChange,
+  });
+
+  // Width transitions only after mount: flag the article as ready so the
+  // first paint never animates max-width, only user toggles do.
+  useEffect(() => {
+    const el = articleRef.current;
+    if (el) el.classList.add('data-width-ready');
+  }, []);
+
+  return (
+    <div
+      className={`relative flex flex-col h-full overflow-hidden ${themeClasses[theme]} transition-colors duration-200`}
+      onClick={(e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('button, a, [data-selection-toolbar], footer')) return;
+        if (selectingRef.current) return;
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed && sel.toString().trim()) return;
+        onToggleControls?.();
+      }}
+    >
+      {/* Screen reader chapter announcement */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {chapterTitle && t('chapter_announcement', { num: currentPage + 1, title: chapterTitle })}
+      </div>
+
+      <ChapterProgressBar scrollProgress={scrollProgress} theme={theme} />
+
+      {/* Scrollable reading area */}
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-auto min-h-0 reading-scroll-container"
+        style={OVERSCROLL_STYLE}
+        onScroll={updateScrollProgress}
+      >
+        <article
+          ref={articleRef}
+          className="reading-mode select-text animate-chapter-fade"
+          data-theme={theme}
+          data-width={readingWidth}
+          style={articleStyle}
+        >
+          {chapterTitle && currentSegment === 0 && (
+            <ChapterHeader chapterTitle={chapterTitle} />
+          )}
+
+          {footnotePopover && (
+            <FootnotePopover data={footnotePopover} onClose={() => setFootnotePopover(null)} />
+          )}
+
+          {!chapterContent?.trim() ? (
+            <EmptyChapterState />
+          ) : (
+            <div
+              ref={(el) => {
+                contentDivRef.current = el;
+                if (contentRef) {
+                  (contentRef as React.MutableRefObject<HTMLElement | null>).current = el;
+                }
+              }}
+              className={`prose prose-lg max-w-none reader-content ${theme === 'dark' ? 'prose-invert' : ''}`}
+              suppressHydrationWarning
+            />
+          )}
+
+          <ChapterEndMarker
+            hasNextChapter={currentPage < totalPages - 1}
+            nextChapterTitle={chapters[currentPage + 1]?.title}
+            onNextChapter={goNextPage}
+          />
+        </article>
+      </div>
+
+      <ReaderFooter
+        currentPage={currentPage}
+        totalPages={totalPages}
+        theme={theme}
+        overallProgress={overallProgress}
+        showControls={showControls}
+        onPauseAutoHide={onPauseAutoHide}
+        onResumeAutoHide={onResumeAutoHide}
+        onPrevPage={goPrevPage}
+        onNextPage={goNextPage}
+        chapterMinutesLeft={chapterMinutesLeft}
+        chapterDropdown={
+          <ChapterDropdown
+            currentPage={currentPage}
+            totalPages={totalPages}
+            currentSegment={currentSegment}
+            totalSegments={totalSegments}
+            chapters={chapters}
+            theme={theme}
+            onPageChange={onPageChange}
+            externalTocOpen={externalTocOpen}
+            onTocClose={onTocClose}
+          />
+        }
+      />
+    </div>
+  );
+});
+
+export type { ReaderViewProps };

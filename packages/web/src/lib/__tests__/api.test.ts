@@ -24,7 +24,7 @@ vi.mock('axios', () => ({
   },
 }));
 
-vi.mock('../offline-queue', () => ({
+vi.mock('../offline/offline-queue', () => ({
   queueMutation: vi.fn().mockResolvedValue(true),
 }));
 

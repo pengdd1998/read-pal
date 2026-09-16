@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { SkeletonPulse } from './SkeletonPulse';
 import { warn } from '@/lib/logger';
 

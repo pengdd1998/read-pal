@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/i18n/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/components/AuthProvider';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { ProfileSection } from '@/components/settings/ProfileSection';
 import { ReadingPrefsSection } from '@/components/settings/ReadingPrefsSection';

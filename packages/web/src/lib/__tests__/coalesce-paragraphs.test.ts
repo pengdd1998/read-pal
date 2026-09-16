@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { coalesceHtml } from '../coalesce-paragraphs';
-import { splitChapterIntoPages } from '../chapter-paginator';
+import { coalesceHtml } from '../reader/coalesce-paragraphs';
+import { splitChapterIntoPages } from '../reader/chapter-paginator';
 
 describe('coalesceHtml — 上游断段合并（设计评审 P0：giga/ntic 腰斩）', () => {
   it('小写开头且前段非句末 → 合并为一个 <p>', () => {

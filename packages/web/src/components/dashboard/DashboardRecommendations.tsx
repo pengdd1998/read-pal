@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, memo } from 'react';
-import { BookOpen } from '@/components/icons';
+import { BookOpen } from '@/components/shared/icons';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { isDisplayableAuthor } from '@/lib/book-cover';
 import { SkeletonPulse } from './SkeletonPulse';
 import type { RecommendationItem } from './types';

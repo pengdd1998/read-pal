@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
-import { useAuth } from '@/lib/auth';
-import { useToast } from '@/components/Toast';
+import { useAuth } from '@/components/AuthProvider';
+import { useToast } from '@/components/shared/Toast';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { WelcomeSection } from '@/components/dashboard/WelcomeSection';

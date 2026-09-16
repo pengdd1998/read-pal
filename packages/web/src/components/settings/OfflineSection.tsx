@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { isDisplayableAuthor } from '@/lib/book-cover';
-import { useToast } from '@/components/Toast';
-import { getQueueCount, clearQueue, cacheBookForOffline, openOfflineDB } from '@/lib/offline-queue';
+import { useToast } from '@/components/shared/Toast';
+import { getQueueCount, clearQueue, cacheBookForOffline, openOfflineDB } from '@/lib/offline/offline-queue';
 import { warn } from '@/lib/logger';
 
 interface CachedBook {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { PageError } from '@/components/PageError';
+import { PageError } from '@/components/shared/PageError';
 
 export default function BookError(props: { error: Error & { digest?: string }; reset: () => void }) {
  const t = useTranslations('errors');

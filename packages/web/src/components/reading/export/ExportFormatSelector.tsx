@@ -6,7 +6,7 @@ import {
   type ExportFormat,
   FORMATS,
   CATEGORIES,
-} from '../ExportPreviewModal.constants';
+} from '../share/ExportPreviewModal.constants';
 
 interface FormatButtonProps {
  f: { value: ExportFormat; label: string; description: string; category: string };

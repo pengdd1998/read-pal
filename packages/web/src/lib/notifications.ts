@@ -1,7 +1,7 @@
 'use client';
 
-import { isCapacitor } from './capacitor';
-import { getItem, setItem } from './native-storage';
+import { isCapacitor } from './offline/capacitor';
+import { getItem, setItem } from './offline/native-storage';
 import { api } from './api';
 import { warn } from './logger';
 

@@ -2,23 +2,23 @@
 
 import { useEffect } from 'react';
 import { useReaderPage } from '@/hooks/useReaderPage';
-import { pageThemeClasses, type ReaderTheme } from '@/lib/reader-theme';
-import { SelectionHint } from '@/components/reading/SelectionHint';
-import { CompanionNudge } from '@/components/reading/CompanionNudge';
-import { ShortcutsHelp } from '@/components/reading/ShortcutsHelp';
-import { ReaderHeader } from '@/components/reading/ReaderHeader';
-import { ReaderSettingsMenu } from '@/components/reading/ReaderSettingsMenu';
+import { pageThemeClasses, type ReaderTheme } from '@/lib/reader/reader-theme';
+import { SelectionHint } from '@/components/reading/annotations/SelectionHint';
+import { CompanionNudge } from '@/components/reading/chat/CompanionNudge';
+import { ShortcutsHelp } from '@/components/reading/core/ShortcutsHelp';
+import { ReaderHeader } from '@/components/reading/core/ReaderHeader';
+import { ReaderSettingsMenu } from '@/components/reading/core/ReaderSettingsMenu';
 import {
   ReaderView, CompanionChatDynamic, SelectionToolbar, AnnotationsSidebar,
   ReadingBackground, InterventionToast, SearchOverlay, SynthesisPanel,
   ReadingPlanPanel, StudyModePanel, FictionPanel, ChapterTimeline, FeatureTour,
-} from '@/components/reading/ReaderDynamicImports';
+} from '@/components/reading/core/ReaderDynamicImports';
 import {
   ReaderLoadingSkeleton, ReaderErrorState, StudyModeOverlay,
   ReaderStatusIndicators, ShortcutsHelpButton, ReaderModals,
 } from './ReaderSubComponents';
 import { useReaderCallbacks } from './useReaderCallbacks';
-import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 export default function ReadPage() {
   const {

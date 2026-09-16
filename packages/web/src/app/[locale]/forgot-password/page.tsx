@@ -2,9 +2,9 @@
 
 import { useState, FormEvent } from 'react';
 import { Link } from '@/i18n/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
-import { LoadingSpinner, ErrorAlert } from '@/components/ui';
+import { LoadingSpinner, ErrorAlert } from '@/components/shared/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useTranslations } from 'next-intl';
 

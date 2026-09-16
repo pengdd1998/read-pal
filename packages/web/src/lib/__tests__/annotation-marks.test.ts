@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { createMark } from '../annotation-marks';
+import { createMark } from '../reader/annotation-marks';
 import type { Annotation } from '@read-pal/shared';
 
 function makeAnnotation(start: number, end: number): Annotation {

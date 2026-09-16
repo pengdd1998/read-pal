@@ -1,20 +1,20 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 // Mock capacitor detection
-vi.mock('@/lib/capacitor', () => ({
+vi.mock('@/lib/offline/capacitor', () => ({
   isCapacitor: vi.fn(() => true),
 }));
 
 // Mock API client
-vi.mock('@/lib/api', () => ({
+vi.mock('@/lib/api/client', () => ({
   api: {
     get: vi.fn(),
   },
 }));
 
-import { isCapacitor } from '@/lib/capacitor';
-import { cacheBook, getCachedContent, isCached, removeCachedBook, getCachedBookIds, getCachedChapter } from '@/lib/mobile-cache';
-import { api } from '@/lib/api';
+import { isCapacitor } from '@/lib/offline/capacitor';
+import { cacheBook, getCachedContent, isCached, removeCachedBook, getCachedBookIds, getCachedChapter } from '@/lib/offline/mobile-cache';
+import { api } from '@/lib/api/client';
 
 describe('mobile-cache', () => {
   beforeEach(() => {

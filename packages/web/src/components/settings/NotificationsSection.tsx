@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { useToast } from '@/components/Toast';
+import { useToast } from '@/components/shared/Toast';
 import type { UserSettings } from '@/components/settings/types';
-import { isCapacitor } from '@/lib/capacitor';
+import { isCapacitor } from '@/lib/offline/capacitor';
 import { isPushEnabled, setPushEnabled } from '@/lib/notifications';
 import { warn } from '@/lib/logger';
 

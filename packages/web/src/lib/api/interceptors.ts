@@ -15,8 +15,8 @@ import {
   tryFetchRefresh,
   clearAuthTokens,
 } from '@/lib/auth-fetch';
-import { isCapacitor } from '@/lib/capacitor';
-import { safeRemoveItem } from '@/lib/safe-storage';
+import { isCapacitor } from '@/lib/offline/capacitor';
+import { safeRemoveItem } from '@/lib/offline/safe-storage';
 
 const NON_CRITICAL_PREFIXES = [
   '/api/notifications',

@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
-import { runForceSimulation } from '@/lib/force-simulation';
+import { runForceSimulation } from '@/lib/render/force-simulation';
 import type {
   VisualizationNode,
   VisualizationEdge,

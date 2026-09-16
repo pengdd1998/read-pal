@@ -1,4 +1,4 @@
-import { isCapacitor } from '@/lib/capacitor';
+import { isCapacitor } from '@/lib/offline/capacitor';
 
 let Haptics: typeof import('@capacitor/haptics').Haptics | null = null;
 let ImpactStyle: typeof import('@capacitor/haptics').ImpactStyle | null = null;

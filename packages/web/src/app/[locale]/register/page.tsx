@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { LoadingSpinner } from '@/components/ui';
+import { LoadingSpinner } from '@/components/shared/ui';
 import { usePageTitle } from '@/hooks/usePageTitle';
 
 /**

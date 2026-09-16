@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { renderCardToCanvas } from '@/components/reading/QuoteCard';
+import { renderCardToCanvas } from '@/components/reading/share/QuoteCard';
 import { warn } from '@/lib/logger';
 
 export function useShareAsImage(

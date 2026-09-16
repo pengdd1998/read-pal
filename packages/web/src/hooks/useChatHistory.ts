@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api/client';
 import { chatHistoryResponseSchema, type ChatHistoryResponse } from '@/lib/api/schemas';
 import { warn } from '@/lib/logger';
 import { generateId } from '@read-pal/shared';
 import type { Message } from '@/hooks/useStreamingChat';
-import type { BookGenre, TranslateFn } from '@/lib/companion-prompts';
-import { getGenreTemplate } from '@/lib/companion-prompts';
+import type { BookGenre, TranslateFn } from '@/lib/companion/companion-prompts';
+import { getGenreTemplate } from '@/lib/companion/companion-prompts';
 
 interface UseChatHistoryOptions {
   isOpen: boolean;

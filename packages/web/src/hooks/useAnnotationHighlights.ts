@@ -7,10 +7,10 @@ import {
   batchCreateMarks,
   hexToRgba,
   unwrapAnnotationMarks,
-} from '@/lib/annotation-marks';
-import type { MarkEntry, ApplyStyleFn } from '@/lib/annotation-marks';
+} from '@/lib/reader/annotation-marks';
+import type { MarkEntry, ApplyStyleFn } from '@/lib/reader/annotation-marks';
 
-export type { MarkEntry } from '@/lib/annotation-marks';
+export type { MarkEntry } from '@/lib/reader/annotation-marks';
 
 /**
  * Renders annotation highlights as <mark> elements in the DOM.

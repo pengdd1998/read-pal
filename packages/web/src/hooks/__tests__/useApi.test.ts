@@ -5,7 +5,7 @@ import { useApi } from '../useApi';
 // Mock the api module
 const mockGet = vi.fn();
 
-vi.mock('@/lib/api', () => ({
+vi.mock('@/lib/api/client', () => ({
   api: {
     get: (...args: unknown[]) => mockGet(...args),
   },
