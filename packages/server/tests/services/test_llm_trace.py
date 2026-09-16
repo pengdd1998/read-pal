@@ -44,7 +44,7 @@ class TestTraceWriter:
     # to repeat it. Tests that exercise ``add`` directly must enable the
     # flag, otherwise the gate no-ops and the buffer stays empty.
     _ENABLED = patch(
-        'app.services.llm.observability.get_settings',
+        'app.services.llm.observability._writer.get_settings',
         return_value=MagicMock(llm_log_enabled=True),
     )
 
@@ -105,7 +105,7 @@ class TestTraceWriter:
         assert len(writer._buf) == 2
 
     @patch(
-        'app.services.llm.observability.get_settings',
+        'app.services.llm.observability._writer.get_settings',
         return_value=MagicMock(llm_log_enabled=False),
     )
     def test_add_skipped_when_feature_disabled(self, _mock_settings):
@@ -122,7 +122,7 @@ class TestTraceWriter:
 class TestLogCallIntegration:
     """Test that _log_call triggers trace persistence."""
 
-    @patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+    @patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
     def test_log_call_appends_to_trace_writer(self, mock_settings):
         with patch.object(_trace_writer.__class__, 'add') as mock_add:
             _log_call(
@@ -141,7 +141,7 @@ class TestLogCallIntegration:
             assert trace['prompt_tokens'] == 100
             assert trace['estimated_cost_usd'] > 0
 
-    @patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+    @patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
     def test_log_call_with_error(self, mock_settings):
         with patch.object(_trace_writer.__class__, 'add') as mock_add:
             _log_call(
@@ -169,7 +169,7 @@ class TestStreamingTraceMirror:
         from app.services.llm.observability import _trace_writer
 
         _trace_writer._buf.clear()
-        with patch('app.services.llm.observability.get_settings') as ms:
+        with patch('app.services.llm.observability._writer.get_settings') as ms:
             ms.return_value.llm_log_enabled = True
             persist_stream_log(
                 request_id='req123456789',

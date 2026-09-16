@@ -196,7 +196,7 @@ def test_classify_type_check_wins_over_substring():
 # ---------------------------------------------------------------------------
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_call_classifies_error_from_exc(mock_settings):
     """Passing exc= through propagates a classified error_type into the trace."""
     from openai import RateLimitError
@@ -214,7 +214,7 @@ def test_log_call_classifies_error_from_exc(mock_settings):
     assert trace['cache_hit'] is False
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_call_classifies_error_from_message_when_no_exc(mock_settings):
     """error_message alone (no exc) still classifies via substring fallback."""
     trace = _capture_trace(
@@ -226,7 +226,7 @@ def test_log_call_classifies_error_from_message_when_no_exc(mock_settings):
     assert trace['error_type'] == 'network'
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_call_success_has_no_error_type(mock_settings):
     """Successful call → error_type is None, not 'unknown'."""
     trace = _capture_trace(
@@ -240,7 +240,7 @@ def test_log_call_success_has_no_error_type(mock_settings):
     assert trace['cache_hit'] is False
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_call_explicit_error_type_kwarg_wins(mock_settings):
     """Caller can pass error_type= explicitly to skip re-classification.
 
@@ -262,7 +262,7 @@ def test_log_call_explicit_error_type_kwarg_wins(mock_settings):
 # ---------------------------------------------------------------------------
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_cache_hit_emits_trace_with_cache_hit_true(mock_settings):
     """The whole point: cache hits now produce a trace row."""
     trace = _capture_trace(
@@ -277,7 +277,7 @@ def test_log_cache_hit_emits_trace_with_cache_hit_true(mock_settings):
     assert trace['error_message'] is None
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_cache_hit_costs_zero_tokens(mock_settings):
     """Cache hit costs nothing and consumes no tokens — for cost dashboards."""
     trace = _capture_trace(
@@ -290,7 +290,7 @@ def test_log_cache_hit_costs_zero_tokens(mock_settings):
     assert trace['estimated_cost_usd'] == 0.0
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_cache_hit_finish_reason_is_cache_marker(mock_settings):
     """finish_reason='cache' lets queries exclude cache rows from per-model stats.
 
@@ -305,7 +305,7 @@ def test_log_cache_hit_finish_reason_is_cache_marker(mock_settings):
     assert trace['model'] == 'cached'
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_cache_hit_preserves_provenance_fields(mock_settings):
     """prompt_version / user_id / book_id / lang flow through for triage."""
     trace = _capture_trace(
@@ -325,7 +325,7 @@ def test_log_cache_hit_preserves_provenance_fields(mock_settings):
 # ---------------------------------------------------------------------------
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_call_defaults_cache_hit_false_when_unspecified(mock_settings):
     """Old call sites that don't pass cache_hit must still work — defaults False."""
     trace = _capture_trace(
@@ -338,7 +338,7 @@ def test_log_call_defaults_cache_hit_false_when_unspecified(mock_settings):
     assert trace['cache_hit'] is False
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_log_call_defaults_error_type_none_on_success(mock_settings):
     """Successful call with no error info → error_type None."""
     trace = _capture_trace(
@@ -392,7 +392,7 @@ def test_extract_finish_reason_handles_missing_response_metadata():
     assert _extract_finish_reason(response) is None
 
 
-@patch('app.services.llm.observability.get_settings', return_value=MagicMock(llm_log_enabled=True))
+@patch('app.services.llm.observability._jsonl.get_settings', return_value=MagicMock(llm_log_enabled=True))
 def test_record_success_passes_finish_reason_to_log_call(mock_settings):
     """_record_success extracts finish_reason from response and threads it through.
 
@@ -453,7 +453,7 @@ async def test_safe_llm_invoke_emits_cache_hit_trace_on_cache_hit():
     ), patch.object(
         _trace_writer.__class__, 'add',
     ) as mock_add, patch(
-        'app.services.llm.observability.get_settings',
+        'app.services.llm.observability._writer.get_settings',
         return_value=MagicMock(llm_log_enabled=True),
     ):
         result = await safe_invoke.safe_llm_invoke(
@@ -487,7 +487,7 @@ async def test_safe_llm_invoke_skips_cache_trace_when_cache_miss():
     ), patch.object(
         _trace_writer.__class__, 'add',
     ) as mock_add, patch(
-        'app.services.llm.observability.get_settings',
+        'app.services.llm.observability._writer.get_settings',
         return_value=MagicMock(llm_log_enabled=True),
     ):
         await safe_invoke.safe_llm_invoke(

@@ -37,7 +37,7 @@ def _reset_jsonl_buf():
 class TestJSONLSink:
     def test_off_by_default(self, tmp_path: Path):
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._jsonl.get_settings',
             return_value=_settings_mock(jsonl_path=''),
         ):
             _jsonl_sink.write({'request_id': 'r1'})
@@ -46,7 +46,7 @@ class TestJSONLSink:
     def test_writes_json_line_with_ts(self, tmp_path: Path):
         target = tmp_path / 'traces.jsonl'
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._jsonl.get_settings',
             return_value=_settings_mock(jsonl_path=str(target)),
         ):
             _jsonl_sink.write({'request_id': 'r1', 'success': True})
@@ -63,7 +63,7 @@ class TestJSONLSink:
     def test_existing_ts_not_overwritten(self, tmp_path: Path):
         target = tmp_path / 'traces.jsonl'
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._jsonl.get_settings',
             return_value=_settings_mock(jsonl_path=str(target)),
         ):
             _jsonl_sink.write({'ts': '2026-09-05T00:00:00+00:00'})
@@ -72,7 +72,7 @@ class TestJSONLSink:
 
     def test_unwritable_path_never_raises(self):
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._jsonl.get_settings',
             return_value=_settings_mock(jsonl_path='/nonexistent-dir/x/traces.jsonl'),
         ):
             _jsonl_sink.write({'request_id': 'r1'})  # must swallow OSError
@@ -95,7 +95,7 @@ class TestCaptureLLMContent:
     def test_disabled_by_default(self, tmp_path: Path):
         target = tmp_path / 'traces.jsonl'
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._jsonl.get_settings',
             return_value=_settings_mock(jsonl_path=str(target), capture=False),
         ):
             capture_llm_content(
@@ -108,7 +108,7 @@ class TestCaptureLLMContent:
     def test_captures_truncated_previews_to_file_only(self, tmp_path: Path):
         target = tmp_path / 'traces.jsonl'
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._jsonl.get_settings',
             return_value=_settings_mock(jsonl_path=str(target), capture=True, chars=40),
         ):
             capture_llm_content(
@@ -128,7 +128,7 @@ class TestCaptureLLMContent:
     def test_no_file_channel_means_no_capture(self, tmp_path: Path):
         # capture flag on but no JSONL path — content must not reach any other channel.
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._jsonl.get_settings',
             return_value=_settings_mock(jsonl_path='', capture=True),
         ):
             capture_llm_content(
@@ -145,7 +145,7 @@ class TestJSONLRotation:
         target = tmp_path / 'traces.jsonl'
         with (
             patch(
-                'app.services.llm.observability.get_settings',
+                'app.services.llm.observability._jsonl.get_settings',
                 return_value=_settings_mock(jsonl_path=str(target)),
             ),
             patch.object(
@@ -170,7 +170,7 @@ class TestJSONLPeriodicFlush:
 
         target = tmp_path / 'traces.jsonl'
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._jsonl.get_settings',
             return_value=_settings_mock(jsonl_path=str(target)),
         ):
             _jsonl_sink.write({'request_id': 'lonely'})

@@ -65,7 +65,7 @@ def _reset_jsonl_buf():
 class TestNewTraceColumns:
     def test_user_book_reach_persisted_trace_dict(self):
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._writer.get_settings',
             return_value=_settings(),
         ), patch('app.services.llm.observability._trace_writer') as writer:
             structlog.contextvars.clear_contextvars()
@@ -82,7 +82,7 @@ class TestNewTraceColumns:
         structlog.contextvars.bind_contextvars(request_id='http-abc123')
         try:
             with patch(
-                'app.services.llm.observability.get_settings',
+                'app.services.llm.observability._writer.get_settings',
                 return_value=_settings(),
             ), patch('app.services.llm.observability._trace_writer') as writer:
                 _call_log()
@@ -97,7 +97,10 @@ class TestParamsChannel:
     def test_params_go_to_jsonl_only_not_db_dict(self, tmp_path: Path):
         sink_file = tmp_path / 'traces.jsonl'
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._writer.get_settings',
+            return_value=_settings(jsonl_path=str(sink_file)),
+        ), patch(
+            'app.services.llm.observability._jsonl.get_settings',
             return_value=_settings(jsonl_path=str(sink_file)),
         ), patch('app.services.llm.observability._trace_writer') as writer:
             _call_log(params={'temperature': 0.3, 'max_tokens': 2000})
@@ -135,7 +138,7 @@ class TestRetentionPrune:
         writer = _TraceWriter()
         writer._last_prune_monotonic = time.monotonic() - writer.PRUNE_CHECK_INTERVAL - 1  # interval elapsed (portable across monotonic origins)
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._writer.get_settings',
             return_value=_settings(retention=90, enabled=True),
         ):
             deleted = await writer._maybe_prune(session_factory=_TestSession)
@@ -157,7 +160,7 @@ class TestRetentionPrune:
         writer = _TraceWriter()
         writer._last_prune_monotonic = time.monotonic() - writer.PRUNE_CHECK_INTERVAL - 1
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._writer.get_settings',
             return_value=_settings(retention=0, enabled=True),
         ):
             assert await writer._maybe_prune(session_factory=_TestSession) == 0
@@ -179,7 +182,7 @@ class TestRetentionPrune:
         writer = _TraceWriter()
         writer._last_prune_monotonic = time.monotonic() - writer.PRUNE_CHECK_INTERVAL - 1
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._writer.get_settings',
             return_value=_settings(retention=90, enabled=False),
         ):
             assert await writer._maybe_prune(session_factory=_TestSession) == 0
@@ -192,7 +195,7 @@ class TestRetentionPrune:
         writer = _TraceWriter()
         writer._last_prune_monotonic = time.monotonic() - writer.PRUNE_CHECK_INTERVAL - 1
         with patch(
-            'app.services.llm.observability.get_settings',
+            'app.services.llm.observability._writer.get_settings',
             return_value=_settings(retention=90, enabled=True),
         ):
             first = await writer._maybe_prune(session_factory=_TestSession)
