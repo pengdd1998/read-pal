@@ -22,4 +22,4 @@ jobs:
       - name: Start stack (placeholder — replace with compose/services when CI DB is provisioned)
         run: echo " Requires api:8000 + web:3000; wire docker compose here "
       - name: Capture or check baseline
-        run: node scripts/visual-baseline.mjs $( [ -d test-results/visual/baseline ] && echo --check )
+        run: node .github/scripts/visual-baseline.mjs $( [ -d test-results/visual/baseline ] && echo --check )
