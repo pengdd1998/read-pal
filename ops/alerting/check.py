@@ -41,6 +41,13 @@ SSH = ['ssh', '-i', SSH_KEY, '-o', 'StrictHostKeyChecking=accept-new',
 
 def ssh(cmd: str, timeout: int = 30) -> str:
     r = subprocess.run(SSH + [cmd], capture_output=True, text=True, timeout=timeout)
+    if r.returncode != 0:
+        # Empty stdout on SSH failure used to parse as "healthy" in every
+        # caller (int(x or 0) -> 0, not '' -> True) — the checker went
+        # all-green exactly when it could see nothing. Fail loudly instead.
+        raise RuntimeError(
+            f'ssh failed (rc={r.returncode}): {(r.stderr or "").strip()[:200]}'
+        )
     return (r.stdout or '').strip()
 
 

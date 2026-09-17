@@ -23,7 +23,7 @@ from sqlalchemy import select
 
 from app.db import async_session
 from app.models import Book, Document
-from app.services.epub_parser.footnote_defs import extract_footnote_definitions
+from app.services.parsers.epub.footnote_defs import extract_footnote_definitions
 from app.services.stats.dashboard_cache import invalidate_user_caches
 
 logger = logging.getLogger('read-pal.backfill_footnote_defs')

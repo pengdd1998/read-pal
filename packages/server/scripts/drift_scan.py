@@ -159,9 +159,9 @@ async def check_live_drift() -> int:
     mock gate but broke against the real provider.
     """
     try:
-        from app.eval.live_runner import print_live_report, run_live_eval
+        from app.eval.live import print_live_report, run_live_eval
     except ImportError as exc:
-        print(f'ERROR: live_runner import failed: {exc}')
+        print(f'ERROR: app.eval.live import failed: {exc}')
         return 2
 
     import os
