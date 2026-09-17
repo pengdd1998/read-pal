@@ -103,8 +103,10 @@ services:
           cpus: '1.0'
     restart: unless-stopped
     networks:
-      - default
-      - shared-infra
+      default: {}
+      shared-infra: {}
+      edge-net:
+        aliases: [readpal-api]
 
   web:
     build:
@@ -130,6 +132,10 @@ services:
           memory: 512M
           cpus: '0.5'
     restart: unless-stopped
+    networks:
+      default: {}
+      edge-net:
+        aliases: [readpal-web]
 
   nginx:
     image: nginx:alpine
@@ -156,6 +162,8 @@ services:
 
 networks:
   shared-infra:
+    external: true
+  edge-net:
     external: true
 
 # No local volumes needed - all data services are external infrastructure
