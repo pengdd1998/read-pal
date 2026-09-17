@@ -141,8 +141,9 @@ services:
       # 解析 infra-minio 等数据面容器（跨服务代理, 如 /covers/）
       - shared-infra
     healthcheck:
-      # admin API 仅容器内 localhost:2019 可达（默认）, 兼作容器存活探针
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:2019/config/"]
+      # admin API 仅容器内 127.0.0.1:2019 可达（默认）。显式 IPv4：busybox wget
+      # 会把 localhost 解析成 ::1 而 Caddy 只听 IPv4, 探针被拒（实测 09-17）。
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
       interval: 30s
       timeout: 5s
       retries: 3

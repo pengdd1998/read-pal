@@ -42,10 +42,13 @@ SSH = ['ssh', '-i', SSH_KEY, '-o', 'StrictHostKeyChecking=accept-new',
 
 def ssh(cmd: str, timeout: int = 30) -> str:
     r = subprocess.run(SSH + [cmd], capture_output=True, text=True, timeout=timeout)
-    if r.returncode != 0:
-        # Empty stdout on SSH failure used to parse as "healthy" in every
-        # caller (int(x or 0) -> 0, not '' -> True) — the checker went
-        # all-green exactly when it could see nothing. Fail loudly instead.
+    if r.returncode != 0 and not (r.stdout or '').strip():
+        # Connection-level failure: no stdout at all. It used to parse as
+        # "healthy" in every caller (int(x or 0) -> 0, not '' -> True) —
+        # the checker went all-green exactly when it could see nothing.
+        # Command-level non-zero exits WITH output stay fine: check
+        # commands legitimately use grep -c, which exits 1 on zero
+        # matches (a healthy count of 0).
         raise RuntimeError(
             f'ssh failed (rc={r.returncode}): {(r.stderr or "").strip()[:200]}'
         )
