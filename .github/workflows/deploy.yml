@@ -173,6 +173,14 @@ jobs:
             # Also rebuild if deploy config changed
             echo "$CHANGED" | grep -qE '^\.github/workflows/deploy\.yml$' && REBUILD_API=true && REBUILD_WEB=true
 
+            # Edge fragment (docker/edge.caddy) changed -> converge to the
+            # platform edge (cp + validate + reload). Runs AFTER up in this
+            # phase (nginx still terminates the 8090 chain); the phase-C
+            # cutover PR moves this block BEFORE up for a zero-window switch
+            # — each ordering is correct for its own direction.
+            EDGE_FRAG_CHANGED=false
+            echo "$CHANGED" | grep -qE '^docker/edge\.caddy$' && EDGE_FRAG_CHANGED=true
+
             # -------------------------------------------------------
             # 2.5 Dry-run stop: everything above is reversible (checkout
             #     advance without a marker write is exactly the case the
@@ -240,6 +248,18 @@ jobs:
               docker compose restart nginx
             else
               echo ">>> Skipping nginx restart (nothing rebuilt)"
+            fi
+
+            # -------------------------------------------------------
+            # 5.5 Edge fragment converge (phase B: after up)
+            # -------------------------------------------------------
+            if [ "$EDGE_FRAG_CHANGED" = true ]; then
+              echo ">>> Edge fragment changed — converge + atomic reload..."
+              cp docker/edge.caddy /srv/infra/sites/readpal.caddy
+              docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile
+              docker exec edge-caddy caddy reload --config /etc/caddy/Caddyfile
+            else
+              echo ">>> Skipping edge reload (fragment unchanged)"
             fi
 
             # -------------------------------------------------------
