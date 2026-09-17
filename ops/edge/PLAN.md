@@ -15,7 +15,7 @@
 > （四服务 compose + Caddyfile 骨架）与平台运维方案在
 > [ops/infra/](../infra/)。
 
-- 状态：方案定稿，未实施
+- 状态：**已实施完毕（2026-09-17/18），执行记录见文末**
 - 数据面容器零影响（caddy 与数据面同 compose，但收养/并入均 per-service
   操作，数据面三服务 config hash 不变、零重建）；what-to-eat 需两次小改动
   （A0 网络、A 后清理）
@@ -378,6 +378,21 @@ C-4 完成即具备执行条件（/covers/ 内网化使 9000 的浏览器消费�
 | compose 项目名漂移（更名即破坏数据面零重建收养） | 低 | canonical 钉死 `name: infra` + 决策记录 1 + compose 头注三重提示 |
 | 边缘单点 | 低中 | healthcheck + unless-stopped + check.py containers_healthy 自动覆盖 |
 | Caddy 语法熟悉度 | 低 | 片段模板 + 常用对照表已入平台 README; RESTORE.md 同步改写 |
+
+
+## 执行记录（2026-09-17/18，开发 agent 实施）
+
+全部阶段落地：A0（edge-net + 双方别名）→ 数据面收养（/srv/infra；postgres 因 init-db.sh bind-mount 源路径变化触发一次 Recreate，零数据损失，两消费项目健康）→ 阶段 A（证书卷迁移未重签、三站点验收全绿；首次 up caddy 未挂 edge-net、force-recreate 修复）→ 阶段 B（骨架/片段 + CD 钩子）→ C-2 影子验证 → C-3 割接（nginx 下线、8090 关闭）→ C-6（四公网端口回环）。终态验证：全套 e2e 5 passed（IP 入口）、SSE 流式对话正常、告警工作流绿、八项信号全 OK。
+
+**影子验证抓到两个方案未预见的真 bug（已修）**：Caddy 默认指令序在 handle 内先跑 rewrite 后跑 uri，/api/* 与 /covers/* 两处两步重写序被颠倒——均用 route{} 锁书写序修复，影子实测通过后才上线。
+
+**执行期四起事件与处置**：
+1. **备案现实**：read.chishenma.top 的 ACME 签发一直被 DNSPod 备案阻断页拦截（域名无证书且不可签）——健康检查/告警/mobile 默认全部改 IP 自签入口（-k / SSL 容忍），备案通过后再切回域名。
+2. **lighthouse 覆盖事件**：what-to-eat 所有者（用户 lighthouse）23:35 重部署并覆盖 compose 文件，抹掉 A0-3 的 edge-net 配置 → chishenma.top 502。已重新应用并恢复；**遗留协调项：该项目下次重部署会再次覆盖，需通知其所有者将 edge-net 片段纳入其部署清单**。
+3. **95min SSH 超时**：首次割接部署因前置 prune 清光构建缓存，web 全量构建超 95min 被杀（构建阶段失败、零容器变更）——dispatch 重跑，缓存已暖完成。
+4. **告警 ssh() 加固误伤**：grep -c 零匹配合法返回 rc=1 被当连接失败炸掉——精确化为"非零退出+空 stdout 才是连接失败"；另发现 caddy healthcheck 的 localhost→::1 解析陷阱（改 127.0.0.1）。
+
+其它偏差：影子容器需 http:// 前缀站点地址（否则绑 https_port 而非 http_port）与挂载路径差（方案原文写的 /srv/infra/sites 容器内不存在）——均已在执行中修正。
 
 ## 与废弃方案（edge-nginx）的资产继承
 
