@@ -37,7 +37,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
     ports:
-      - "${POSTGRES_PORT:-35551}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-35551}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-readpal}"]
       interval: 5s
@@ -66,7 +66,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "${REDIS_PORT:-35552}:6379"
+      - "127.0.0.1:${REDIS_PORT:-35552}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -92,8 +92,8 @@ services:
       - minio_data:/data
     command: server /data --console-address ":9001"
     ports:
-      - "${MINIO_API_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "127.0.0.1:${MINIO_API_PORT:-9000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 10s
