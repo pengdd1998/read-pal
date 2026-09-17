@@ -1,0 +1,164 @@
+# 平台层 /srv/infra — 数据面 + 边缘路由面（手动管理）
+#
+# 2026-09-17 中立化：数据面（postgres/redis/minio）自 anynote 仓库
+# infra/docker-compose.yml 独立收养；边缘（caddy）自 what-to-eat 迁入并入
+# （并入决策与残余权衡见 ../PLAN.md 决策链）。均不随任何项目 CD 收敛。
+#
+# canonical 版本在 read-pal 仓库 ops/infra/files/；现场改动需回写。
+# 变更流程与验收见 ../PLAN.md。
+#
+# 使用（仅平台组，手动）：
+#   cd /srv/infra && docker compose up -d <服务名>
+# ⚠ 运行纪律：永远 per-service 操作，禁止裸 docker compose down
+#   （合并后其爆炸半径 = 数据面+路由面全站）。
+# ⚠ compose 项目名钉死 name: infra —— 数据面零重建收养依赖容器标签匹配，
+#   不可更名（如 platform）。
+# ⚠ 端口绑定保持与现场运行一致（0.0.0.0）——收养零重建的前提；公网收紧
+#   是 ops/edge/PLAN.md C-6 的显式步骤（回环绑定），届时变更并回写本文件。
+name: infra
+
+services:
+  # ==================== 数据面（2026-09 自 anynote 收养）====================
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: infra-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-readpal}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-readpal}
+      # Trust auth for Docker internal network: the database is only
+      # accessible within the shared-infra Docker network (not exposed to
+      # the internet). Password rotation is unnecessary — the security
+      # boundary is the Docker network isolation itself. For the existing
+      # database, run the pg_hba.conf migration command once (see deploy docs).
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/01-init-db.sh:ro
+    ports:
+      - "${POSTGRES_PORT:-35551}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-readpal}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    mem_limit: 1024m
+    shm_size: 256mb
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - shared-infra
+
+  redis:
+    image: redis:7-alpine
+    container_name: infra-redis
+    command: >
+      redis-server
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-35552}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - shared-infra
+
+  minio:
+    image: minio/minio:latest
+    container_name: infra-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - shared-infra
+
+  # ================ 边缘路由面（2026-09 自 what-to-eat 迁入）================
+  # 迁移步骤（证书卷迁移/割接/验收/回退）见 ops/edge/PLAN.md 阶段 A。
+  # 高频变更（各项目路由片段）走 sites/ 拷贝 + caddy reload，不动本文件；
+  # 本文件级变更（镜像/端口/网络/挂载）低频，per-service up -d。
+
+  caddy:
+    image: caddy:2
+    container_name: edge-caddy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"        # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # 各项目路由片段。内容由各项目 CD 从其仓库拷贝收敛（只读挂载）——
+      # 禁止手改此目录下任何文件（不变式 1, 见 ops/edge/README.md）。
+      - ./sites:/etc/caddy/sites:ro
+      # ACME 证书与运行状态（迁入时从 what-to-eat_caddy-* 命名卷 cp -a 而来）
+      - ./caddy-data:/data
+      - ./caddy-config:/config
+    networks:
+      # 解析各项目 <project>-<service> 别名（项目接入时在各自 compose 声明）
+      - edge-net
+      # 解析 infra-minio 等数据面容器（跨服务代理, 如 /covers/）
+      - shared-infra
+    healthcheck:
+      # admin API 仅容器内 localhost:2019 可达（默认）, 兼作容器存活探针
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    mem_limit: 256m
+
+volumes:
+  postgres_data:
+    name: read-pal_postgres_data
+  redis_data:
+    name: read-pal_redis_data
+  minio_data:
+    name: shared-minio-data
+
+networks:
+  shared-infra:
+    name: shared-infra
+    driver: bridge
+  edge-net:
+    external: true

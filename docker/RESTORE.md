@@ -6,7 +6,9 @@ archive, and how to verify the result. Read this **before** you need it.
 ## Context
 
 - There is **no `postgres` service in `docker-compose.yml`** — the database is
-  external infrastructure on the VPS (`DB_HOST` in `.env`).
+  external infrastructure on the VPS (`DB_HOST` in `.env` is a container DNS
+  name). From the HOST, reach the DB via the loopback binding
+  `127.0.0.1:35551` (C-6) — the container name does not resolve on the host.
 - The `api` container image is `python:3.12-slim` and does **not** contain
   `pg_dump` / `psql`. All dump/restore commands run from the **host** with
   `postgresql-client` installed.
@@ -18,7 +20,8 @@ archive, and how to verify the result. Read this **before** you need it.
 ```bash
 sudo apt-get install -y postgresql-client   # provides pg_dump and psql
 cd /home/ubuntu/projects/read-pal
-source .env                                  # exports DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD
+source .env                                  # exports DB_NAME/DB_USER/DB_PASSWORD
+                                             # (host connection is 127.0.0.1:35551, see Context)
 ```
 
 ## 1. Take a safety dump BEFORE restoring
@@ -29,7 +32,7 @@ state — even a broken one may hold data the archive does not.
 ```bash
 cd /home/ubuntu/projects/read-pal
 source .env
-PGPASSWORD="$DB_PASSWORD" pg_dump -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+PGPASSWORD="$DB_PASSWORD" pg_dump -h 127.0.0.1 -p 35551 -U "$DB_USER" -d "$DB_NAME" \
   --no-owner --no-privileges | gzip > "backups/pre_restore_$(date +%Y%m%d_%H%M%S).sql.gz"
 ```
 
@@ -42,8 +45,9 @@ restoring so it cannot interleave writes into the restore.
 docker compose stop api web
 ```
 
-(Leave `nginx` running if you want to serve a maintenance page; it will return
-502s, which is correct during a restore.)
+(The platform edge — `edge-caddy` in `/srv/infra` — stays up and will return
+502s while the API is stopped, which is correct during a restore; nothing to
+do on the edge.)
 
 ## 3. Restore
 
@@ -54,7 +58,7 @@ cd /home/ubuntu/projects/read-pal
 source .env
 
 gunzip -c backups/readpal_<TIMESTAMP>.sql.gz \
-  | PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" \
+  | PGPASSWORD="$DB_PASSWORD" psql -h 127.0.0.1 -p 35551 -U "$DB_USER" -d "$DB_NAME" \
     --set ON_ERROR_STOP=on -v verbosity=verbose
 ```
 
@@ -67,19 +71,19 @@ and producing a silently half-restored database.
 cd /home/ubuntu/projects/read-pal
 source .env
 
-psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres \
+psql -h 127.0.0.1 -p 35551 -U "$DB_USER" -d postgres \
   -c "DROP DATABASE IF EXISTS ${DB_NAME}_restored;"
-psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres \
+psql -h 127.0.0.1 -p 35551 -U "$DB_USER" -d postgres \
   -c "CREATE DATABASE ${DB_NAME}_restored;"
 
 gunzip -c backups/readpal_<TIMESTAMP>.sql.gz \
-  | PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" \
+  | PGPASSWORD="$DB_PASSWORD" psql -h 127.0.0.1 -p 35551 -U "$DB_USER" \
     -d "${DB_NAME}_restored" --set ON_ERROR_STOP=on
 
 # Verify against the scratch DB first (step 4), then swap:
-psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres \
+psql -h 127.0.0.1 -p 35551 -U "$DB_USER" -d postgres \
   -c "ALTER DATABASE ${DB_NAME} RENAME TO ${DB_NAME}_old;"
-psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres \
+psql -h 127.0.0.1 -p 35551 -U "$DB_USER" -d postgres \
   -c "ALTER DATABASE ${DB_NAME}_restored RENAME TO ${DB_NAME};"
 ```
 
@@ -92,7 +96,7 @@ cd /home/ubuntu/projects/read-pal
 source .env
 
 # a) Row counts for the core tables (compare against expectations / old DB)
-psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
+psql -h 127.0.0.1 -p 35551 -U "$DB_USER" -d "$DB_NAME" -c "
   SELECT 'users' t, count(*) FROM users
   UNION ALL SELECT 'books', count(*) FROM books
   UNION ALL SELECT 'annotations', count(*) FROM annotations
@@ -104,8 +108,8 @@ docker compose run --rm api python -m alembic current
 # c) Application-level health check
 docker compose up -d api web
 sleep 15
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8090/api/v1/health   # expect 200
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8090/en              # expect 200
+curl -sk -o /dev/null -w '%{http_code}\n' https://175.178.66.207/api/v1/health   # expect 200
+curl -sk -o /dev/null -w '%{http_code}\n' https://175.178.66.207/en              # expect 200
 ```
 
 Expected: (a) counts match the pre-incident state; (b) alembic reports the head

@@ -14,7 +14,7 @@ Your AI reading companion — ask questions, explore ideas, and remember every i
 [![GitHub stars](https://img.shields.io/github/stars/pengdd1998/read-pal?style=social)](https://github.com/pengdd1998/read-pal)
 [![Status](https://img.shields.io/badge/status-beta%20live-orange)]()
 
-[Live Demo](http://175.178.66.207:8090) · [Get Started](#quickstart) · [Features](#features) · [Architecture](#architecture) · [Deploy](#deployment) · [Contributing](CONTRIBUTING.md)
+[Live Demo](https://read.chishenma.top) · [Get Started](#quickstart) · [Features](#features) · [Architecture](#architecture) · [Deploy](#deployment) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
@@ -35,7 +35,7 @@ Think of it as a friend who's always read the same book and loves talking about 
 
 Curated screenshots are not yet checked in — see the app live instead:
 
-> Try the [live demo](http://175.178.66.207:8090) to see the full experience.
+> Try the [live demo](https://read.chishenma.top) to see the full experience.
 
 ## Features
 
@@ -117,7 +117,12 @@ cp .env.example packages/server/.env   # edit with your DB credentials + GLM API
 docker compose up -d
 ```
 
-Open http://localhost:8090 — that's it.
+Open http://localhost:3000 — that's it.
+
+(The compose stack no longer bundles a reverse proxy — TLS/routing is the
+platform edge in production. Locally the web app runs on :3000 and the API
+on :8000; point `NEXT_PUBLIC_API_URL` at the API when building for direct
+access.)
 
 ### Prerequisites
 

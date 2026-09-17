@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import os
+import ssl
 import subprocess
 import sys
 import time
@@ -52,8 +53,14 @@ def ssh(cmd: str, timeout: int = 30) -> str:
 
 
 def http_ok(url: str, timeout: int = 15) -> bool:
+    # The live entry is the IP site with a self-signed cert until ICP
+    # filing clears (the domain cannot obtain an ACME cert today), so
+    # TLS verification is disabled deliberately for these probes.
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as resp:
+        with urllib.request.urlopen(url, timeout=timeout, context=ctx) as resp:
             return resp.status == 200
     except Exception:
         return False

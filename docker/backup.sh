@@ -22,11 +22,15 @@ if [ -f "${PROJECT_DIR}/.env" ]; then
     source "${PROJECT_DIR}/.env"
 fi
 
-DB_HOST="${DB_HOST:-localhost}"
-DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-readpal}"
 DB_USER="${DB_USER:-readpal}"
 DB_PASSWORD="${DB_PASSWORD:-}"
+# Host-side connection targets (C-6): the infra DB binds 127.0.0.1:35551 on
+# the VPS — the .env DB_HOST (infra-postgres) is a container DNS name that
+# does NOT resolve on the host (this path never worked before the loopback
+# fix; RESTORE.md §6 admits cron was never wired for the same reason).
+HOST_DB_HOST="${HOST_DB_HOST:-127.0.0.1}"
+HOST_DB_PORT="${HOST_DB_PORT:-35551}"
 
 # ---------------------------------------------------------------------------
 # Preflight: pg_dump must exist on the host. Fail loudly — a silent fallback
@@ -50,7 +54,7 @@ BACKUP_FILE="${BACKUP_DIR}/${DB_NAME}_${TIMESTAMP}.sql.gz"
 # Dump the external database from the host (write to temp file, verify, rename)
 TMP_FILE="${BACKUP_FILE}.partial"
 PGPASSWORD="${DB_PASSWORD}" pg_dump \
-    -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
+    -h "${HOST_DB_HOST}" -p "${HOST_DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
     --no-owner --no-privileges \
     | gzip > "${TMP_FILE}"
 

@@ -1,0 +1,11 @@
+# edge-caddy 骨架 — 只允许平台组（read-pal 仓库 ops/infra/）修改。
+# 各项目路由一律放 sites/<project>.caddy（由各项目 CD 从其仓库拷贝收敛）。
+# 现场文件: /srv/infra/Caddyfile（与本存档同步）。
+#
+# 注意: 全局选项（global block）只能写在这里, 片段中写 site 块。
+{
+	# IP 直连（无 SNI）时用 IP 站点证书完成握手；带 SNI 的域名流量不受影响
+	default_sni 175.178.66.207
+}
+
+import sites/*.caddy

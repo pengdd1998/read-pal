@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry run: fetch/reset/diff on the VPS but touch no containers (no build, no migration, no nginx restart, no marker write)'
+        description: 'Dry run: fetch/reset/diff on the VPS but touch no containers (no build, no migration, no edge reload, no marker write)'
         type: boolean
         default: false
 
@@ -174,10 +174,10 @@ jobs:
             echo "$CHANGED" | grep -qE '^\.github/workflows/deploy\.yml$' && REBUILD_API=true && REBUILD_WEB=true
 
             # Edge fragment (docker/edge.caddy) changed -> converge to the
-            # platform edge (cp + validate + reload). Runs AFTER up in this
-            # phase (nginx still terminates the 8090 chain); the phase-C
-            # cutover PR moves this block BEFORE up for a zero-window switch
-            # — each ordering is correct for its own direction.
+            # platform edge (cp + validate + reload) BEFORE `up -d` (C-3):
+            # traffic switches to the alias routes while the old chain is
+            # still intact, making the cutover zero-window. validate failure
+            # aborts BEFORE any container change — prod untouched.
             EDGE_FRAG_CHANGED=false
             echo "$CHANGED" | grep -qE '^docker/edge\.caddy$' && EDGE_FRAG_CHANGED=true
 
@@ -194,7 +194,7 @@ jobs:
               echo "Would rebuild WEB: $REBUILD_WEB"
               echo "Changed files since deploy marker (${DEPLOY_BASE}):"
               echo "$CHANGED" | head -40
-              echo "Touched: git fetch/reset only. NOT touched: builds, migrations, containers, nginx, marker."
+              echo "Touched: git fetch/reset only. NOT touched: builds, migrations, edge, containers, marker."
               exit 0
             fi
 
@@ -232,26 +232,17 @@ jobs:
             fi
 
             # -------------------------------------------------------
-            # 5. Start containers (recreates changed services)
-            # -------------------------------------------------------
-            echo ">>> Starting containers..."
-            docker compose up -d --remove-orphans
-
-            # Restart nginx only when containers were actually recreated:
-            # api/web rebuilds change the upstream container IPs. A no-op
-            # deploy (marker-advancing push that rebuilt nothing) must not
-            # drop edge connections — with the inverted default, deploys
-            # run on every push. nginx.conf / compose changes route through
-            # the docker/** filter → REBUILD_API=true → covered here.
-            if [ "$REBUILD_API" = true ] || [ "$REBUILD_WEB" = true ]; then
-              sleep 3
-              docker compose restart nginx
-            else
-              echo ">>> Skipping nginx restart (nothing rebuilt)"
-            fi
-
-            # -------------------------------------------------------
-            # 5.5 Edge fragment converge (phase B: after up)
+            # 4.5 Edge fragment converge — BEFORE `up -d` (cutover zero-
+            #     window, C-3): reload switches traffic to the alias routes
+            #     (readpal-api/readpal-web exist since A0, not dependent on
+            #     any container swap); the old chain keeps running but gets
+            #     no traffic. Only runs when docker/edge.caddy changed.
+            #     Ordering note (deliberate): the REVERT of the cutover PR
+            #     restores the pre-cutover deploy.yml where this hook runs
+            #     AFTER up — which is exactly the order the rollback
+            #     direction needs (nginx back in place before the dumb-
+            #     forward fragment is reloaded). Do not "fix" this ordering
+            #     on one side only.
             # -------------------------------------------------------
             if [ "$EDGE_FRAG_CHANGED" = true ]; then
               echo ">>> Edge fragment changed — converge + atomic reload..."
@@ -263,6 +254,12 @@ jobs:
             fi
 
             # -------------------------------------------------------
+            # 5. Start containers (recreates changed services)
+            # -------------------------------------------------------
+            echo ">>> Starting containers..."
+            docker compose up -d --remove-orphans
+
+            # -------------------------------------------------------
             # 6. Health checks with retry
             # -------------------------------------------------------
             echo ">>> Waiting for services to be ready..."
@@ -272,7 +269,11 @@ jobs:
               local url="$2"
               local status="000"
               for i in 1 2 3 4 5 6; do
-                status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$url" || echo "000")
+                # -k: the only live entry today is the IP site with its
+                # self-signed cert (read.chishenma.top cannot obtain one
+                # until ICP filing passes — DNSPod serves a block page to
+                # the ACME challenge). Revisit when the filing clears.
+                status=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 10 "$url" || echo "000")
                 if [ "$status" = "200" ]; then
                   echo "  $name OK (attempt $i)"
                   return 0
@@ -301,9 +302,16 @@ jobs:
               docker compose build web || true
               echo ">>> Restarting containers at rollback commit..."
               docker compose up -d --remove-orphans
+              # Fragment re-converge AFTER up — the rollback direction needs
+              # the pre-cutover chain (nginx on 8090) back in place before
+              # the dumb-forward fragment is reloaded (C-5 rationale). The
+              # checkout already holds the rolled-back fragment.
+              cp docker/edge.caddy /srv/infra/sites/readpal.caddy \
+                && docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile \
+                && docker exec edge-caddy caddy reload --config /etc/caddy/Caddyfile || true
               sleep 10
-              if check_health "API (rollback)" "http://localhost:8090/api/v1/health" \
-                 && check_health "Web (rollback)" "http://localhost:8090/en"; then
+              if check_health "API (rollback)" "https://175.178.66.207/api/v1/health" \
+                 && check_health "Web (rollback)" "https://175.178.66.207/en"; then
                 echo "✅ Rollback successful — service restored to ${PREV_SHA}"
               else
                 echo "❌ Rollback ALSO failed health checks — manual intervention required."
@@ -311,8 +319,12 @@ jobs:
               fi
             }
 
-            if ! check_health "API" "http://localhost:8090/api/v1/health" || \
-               ! check_health "Web" "http://localhost:8090/en"; then
+            # Health checks target the platform edge (the only entry after
+            # the cutover): the IP site with its self-signed cert — the
+            # domain cannot get a cert until ICP filing passes (DNSPod
+            # blocks the ACME challenge), so -k in check_health and IP URLs.
+            if ! check_health "API" "https://175.178.66.207/api/v1/health" || \
+               ! check_health "Web" "https://175.178.66.207/en"; then
               rollback
               exit 1
             fi
