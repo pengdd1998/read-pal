@@ -2,7 +2,7 @@
 // create→list, library→book detail. Requires the local stack (backend :8000,
 // web :3000) with a working LLM key for the chat chain.
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from 'playwright/test';
 
 const WEB = process.env.E2E_WEB || 'http://localhost:3000';
 const API = process.env.E2E_API || 'http://localhost:8000';

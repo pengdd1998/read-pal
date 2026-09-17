@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig } from 'playwright/test';
 
 // M3.3: core-chain e2e specs. Local runs against dev servers; the
 // deploy.yml Phase-5 browser gate consumes this config once the staging

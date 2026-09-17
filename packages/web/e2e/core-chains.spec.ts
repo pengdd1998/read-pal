@@ -6,7 +6,7 @@
 // Requirements: backend + web dev servers running; a fresh account is
 // registered per run (no shared state).
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from 'playwright/test';
 
 const WEB = process.env.E2E_WEB || 'http://localhost:3000';
 
