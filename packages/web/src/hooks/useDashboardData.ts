@@ -31,7 +31,7 @@ export function useDashboardData() {
       const now = Date.now();
       if (now - lastFetchTime < 5000) return;
       lastFetchTime = now;
-      api.get<DashboardData>('/api/stats/dashboard')
+      api.get<DashboardData>('/api/v1/stats/dashboard')
         .then((res) => {
           if (!cancelled) {
             if (res.success) {

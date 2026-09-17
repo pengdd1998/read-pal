@@ -125,7 +125,7 @@ export const ChapterTimeline = React.memo(function ChapterTimeline({
   const reqId = ++reqIdRef.current;
   setLoading(true);
   setError(false);
-  api.get<ChapterStat[]>(`/api/annotations/stats/chapters?book_id=${bookId}`)
+  api.get<ChapterStat[]>(`/api/v1/annotations/stats/chapters?book_id=${bookId}`)
   .then((res) => {
   if (!mountedRef.current || reqId !== reqIdRef.current) return;
   if (res.success && res.data) {

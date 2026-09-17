@@ -54,7 +54,7 @@ function ResetPasswordForm() {
  setLoading(true);
 
  try {
-  const res = await api.post('/api/auth/reset-password', { token, password });
+  const res = await api.post('/api/v1/auth/reset-password', { token, password });
   if (res.success) {
   setSuccess(true);
   redirectTimer.current = setTimeout(() => router.push('/auth?mode=login'), 3000);

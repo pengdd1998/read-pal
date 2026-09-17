@@ -118,7 +118,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
   const handleFinish = useCallback(async () => {
     setSaving(true);
     try {
-      await authFetch('/api/settings', {
+      await authFetch('/api/v1/settings', {
         method: 'PATCH',
         body: JSON.stringify({ friendPersona: selectedPersona }),
       });

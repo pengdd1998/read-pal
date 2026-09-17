@@ -23,7 +23,7 @@ export function useBookClubDetail(clubId: string) {
       setLoading(true);
       setError(null);
       try {
-        const res = await api.get<ClubDetail>(`/api/book-clubs/${clubId}`);
+        const res = await api.get<ClubDetail>(`/api/v1/book-clubs/${clubId}`);
         if (cancelled) return;
         if (res.success && res.data) {
           setClub(res.data);
@@ -62,7 +62,7 @@ export function useBookClubProgress(clubId: string, currentBookId?: string) {
     setError(null);
 
     api
-      .get<{ hasBook: boolean; progress: MemberProgress[] }>(`/api/book-clubs/${clubId}/progress`)
+      .get<{ hasBook: boolean; progress: MemberProgress[] }>(`/api/v1/book-clubs/${clubId}/progress`)
       .then((res) => {
         if (cancelled) return;
         if (res.success && res.data?.progress) {
@@ -106,7 +106,7 @@ export function useBookClubDiscussion(clubId: string) {
     setLoading(true);
 
     api
-      .get<{ items: DiscussionMessage[] } | DiscussionMessage[]>(`/api/book-clubs/${clubId}/discussions?limit=50`)
+      .get<{ items: DiscussionMessage[] } | DiscussionMessage[]>(`/api/v1/book-clubs/${clubId}/discussions?limit=50`)
       .then((res) => {
         if (cancelled) return;
         if (res.success && res.data) {
@@ -135,7 +135,7 @@ export function useBookClubDiscussion(clubId: string) {
     setSending(true);
     setSendError(null);
     try {
-      const res = await api.post<DiscussionMessage>(`/api/book-clubs/${clubId}/discussions`, {
+      const res = await api.post<DiscussionMessage>(`/api/v1/book-clubs/${clubId}/discussions`, {
         content: newMessage.trim(),
       });
       if (res.success && res.data) {

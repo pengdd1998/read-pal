@@ -52,7 +52,7 @@ export default function WelcomePage() {
 
   const fetchBooks = useCallback(async (signal: { stale: boolean }) => {
     try {
-      const res = await api.get<Book[]>('/api/books');
+      const res = await api.get<Book[]>('/api/v1/books');
       if (signal.stale) return;
       if (res.success && res.data) {
         const books = res.data || [];
@@ -94,7 +94,7 @@ export default function WelcomePage() {
   const handleFinish = async () => {
     setFinishing(true);
     try {
-      await authFetch('/api/settings', {
+      await authFetch('/api/v1/settings', {
         method: 'PATCH',
         body: JSON.stringify({ friendPersona: selectedPersona }),
       });

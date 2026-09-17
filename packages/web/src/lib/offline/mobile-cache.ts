@@ -68,7 +68,7 @@ export async function cacheBook(
         content: string;
         rawContent?: string;
       }>;
-    }>(`/api/upload/books/${bookId}/content`);
+    }>(`/api/v1/upload/books/${bookId}/content`);
 
     if (!res.success || !res.data) {
       return { cached: -1, total: 0 };

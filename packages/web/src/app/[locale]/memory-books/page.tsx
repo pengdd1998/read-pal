@@ -147,7 +147,7 @@ export default function MemoryBooksPage() {
     setError(null);
     Promise.all([
       api.get<MemoryBook[]>('/api/v1/reading-book'),
-      api.get<Book[]>('/api/books'),
+      api.get<Book[]>('/api/v1/books'),
     ])
       .then(([mbRes, booksRes]) => {
         if (!mountedRef.current) return;

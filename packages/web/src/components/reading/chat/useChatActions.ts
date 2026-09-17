@@ -36,7 +36,7 @@ export function useChatActions({
     const idx = modes.indexOf(companionMode);
     const newMode = modes[(idx + 1) % modes.length];
     setCompanionMode(newMode);
-    api.patch('/api/settings', { companionMode: newMode })
+    api.patch('/api/v1/settings', { companionMode: newMode })
       .then((res) => {
         if (!res.success) {
           setCompanionMode(companionMode);
@@ -66,9 +66,9 @@ export function useChatActions({
     try {
       if (rating === null) {
         // Toggle-off: remove the rating entirely (ordinary CRUD delete).
-        await api.delete(`/api/agents/feedback?message_id=${encodeURIComponent(messageId)}`);
+        await api.delete(`/api/v1/agents/feedback?message_id=${encodeURIComponent(messageId)}`);
       } else {
-        await api.post('/api/agents/feedback', {
+        await api.post('/api/v1/agents/feedback', {
           book_id: bookId,
           message_id: messageId,
           rating,

@@ -66,7 +66,7 @@ export default function FlashcardsPage() {
 
  const fetchDecks = useCallback(async () => {
  try {
-  const res = await api.get<{ decks: DeckInfo[]; totalCards: number; totalDue: number; totalReviewed: number }>('/api/flashcards/decks');
+  const res = await api.get<{ decks: DeckInfo[]; totalCards: number; totalDue: number; totalReviewed: number }>('/api/v1/flashcards/decks');
   if (!mountedRef.current) return;
   if (res.success && res.data) {
   setDecks(res.data.decks);
@@ -87,8 +87,8 @@ export default function FlashcardsPage() {
  setLoading(true);
  try {
   const url = bookId
-  ? `/api/flashcards/review?limit=20&bookId=${bookId}`
-  : '/api/flashcards/review?limit=20';
+  ? `/api/v1/flashcards/review?limit=20&bookId=${bookId}`
+  : '/api/v1/flashcards/review?limit=20';
   const res = await api.get<{ flashcards: FlashcardData[]; stats: ReviewStats }>(url);
   // Stale if a newer fetchCards started, or if the component unmounted.
   if (!mountedRef.current || myReqId !== fetchCardsReqId.current) return;
@@ -122,7 +122,7 @@ export default function FlashcardsPage() {
  if (!card) return;
  setReviewing(true);
  try {
-  const res = await api.post(`/api/flashcards/${card.id}/review`, { rating });
+  const res = await api.post(`/api/v1/flashcards/${card.id}/review`, { rating });
   if (!mountedRef.current) return;
   if (!res.success) {
   warn('FlashcardsPage: handleRate returned success=false', res.error);

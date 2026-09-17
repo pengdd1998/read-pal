@@ -62,7 +62,7 @@ export function useStudyMode(bookId: string) {
 
     try {
       // Generate objectives
-      const objRes = await api.post<ChapterObjective[]>('/api/study-mode/objectives', {
+      const objRes = await api.post<ChapterObjective[]>('/api/v1/study-mode/objectives', {
         bookId,
         chapterIndex,
         chapterTitle,
@@ -78,7 +78,7 @@ export function useStudyMode(bookId: string) {
       setObjectives(newObjectives);
 
       // Generate concept checks
-      const checkRes = await api.post<ConceptCheck[]>('/api/study-mode/concept-checks', {
+      const checkRes = await api.post<ConceptCheck[]>('/api/v1/study-mode/concept-checks', {
         bookId,
         chapterIndex,
         chapterTitle,
@@ -118,7 +118,7 @@ export function useStudyMode(bookId: string) {
   const saveChecks = useCallback(async (checksToSave: ConceptCheck[]) => {
     setSaveStatus('saving');
     try {
-      await api.post('/api/study-mode/save-checks', {
+      await api.post('/api/v1/study-mode/save-checks', {
         bookId,
         checks: checksToSave,
       });
@@ -134,7 +134,7 @@ export function useStudyMode(bookId: string) {
   const loadMastery = useCallback(async () => {
     setError(null);
     try {
-      const res = await api.get<MasteryReport>(`/api/study-mode/mastery/${bookId}`);
+      const res = await api.get<MasteryReport>(`/api/v1/study-mode/mastery/${bookId}`);
       if (!mountedRef.current) return;
       if (res.success && res.data) {
         setMastery(res.data);

@@ -23,7 +23,7 @@ export const LibraryEmptyState = React.memo(function LibraryEmptyState({ onBookA
  setError('');
  try {
   setSeeding(true);
-  const res = await api.post<{ book: Book }>('/api/books/seed-sample');
+  const res = await api.post<{ book: Book }>('/api/v1/books/seed-sample');
   if (!mountedRef.current) return;
   if (res.success && res.data?.book) {
   onBookAdded(res.data.book);

@@ -22,7 +22,7 @@ export default function ForgotPasswordPage() {
  setLoading(true);
 
  try {
-  await api.post('/api/auth/forgot-password', { email });
+  await api.post('/api/v1/auth/forgot-password', { email });
   setSubmitted(true);
  } catch (err) {
   warn('ForgotPassword: request failed', err);

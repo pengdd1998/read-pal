@@ -46,7 +46,7 @@ export const ShareReadingCard = memo(function ShareReadingCard() {
  const generateCard = async () => {
  setLoading(true);
  try {
-  const res = await api.get<ReadingCardData>('/api/share/reading-card');
+  const res = await api.get<ReadingCardData>('/api/v1/share/reading-card');
   if (!mountedRef.current) return;
   if (res.success && res.data) {
   setCard(res.data);

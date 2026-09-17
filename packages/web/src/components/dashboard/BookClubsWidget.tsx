@@ -85,7 +85,7 @@ function BookClubsWidgetInner() {
  useEffect(() => {
  let cancelled = false;
  api
-  .get<{ items: BookClub[] }>('/api/book-clubs')
+  .get<{ items: BookClub[] }>('/api/v1/book-clubs')
   .then((res) => {
   if (cancelled) return;
   if (res.success && res.data) {
@@ -107,7 +107,7 @@ function BookClubsWidgetInner() {
  setCreating(true);
  setError(null);
  try {
-  const res = await api.post<BookClub>('/api/book-clubs', {
+  const res = await api.post<BookClub>('/api/v1/book-clubs', {
   name: newName.trim(),
   description: newDesc.trim() || undefined,
   });
@@ -135,7 +135,7 @@ function BookClubsWidgetInner() {
  setError(null);
  try {
   const res = await api.post<{ clubId: string; clubName: string }>(
-  '/api/book-clubs/join-code',
+  '/api/v1/book-clubs/join-code',
   { inviteCode: joinCode.trim().toUpperCase() },
   );
   if (!mountedRef.current) return;
@@ -144,7 +144,7 @@ function BookClubsWidgetInner() {
   // array. Match the shape used in the initial load to avoid setting clubs
   // to an object — which would silently break the render because clubs.map
   // would no longer exist.
-  const listRes = await api.get<{ items: BookClub[] }>('/api/book-clubs');
+  const listRes = await api.get<{ items: BookClub[] }>('/api/v1/book-clubs');
   if (listRes.success && listRes.data) {
    const list = Array.isArray(listRes.data) ? listRes.data : (listRes.data.items ?? []);
    setClubs(list);

@@ -57,7 +57,7 @@ export function useReadingSession({
     const startSession = async () => {
       try {
         const result = await api.post<{ id: string }>(
-          '/api/reading-sessions/start',
+          '/api/v1/reading-sessions/start',
           { bookId },
           { signal: controller.signal },
         );
@@ -77,7 +77,7 @@ export function useReadingSession({
             lastHeartbeatRef.current = { chapter, scroll };
             try {
               await api.patch(
-                `/api/reading-sessions/${sessionIdRef.current}/heartbeat`,
+                `/api/v1/reading-sessions/${sessionIdRef.current}/heartbeat`,
                 {
                   pagesRead: chapter + 1,
                   scrollProgress: scroll,
@@ -121,7 +121,7 @@ export function useReadingSession({
 
         const token = getAuthToken();
         try {
-          fetch(`${API_BASE_URL}/api/reading-sessions/${sid}/end`, {
+          fetch(`${API_BASE_URL}/api/v1/reading-sessions/${sid}/end`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

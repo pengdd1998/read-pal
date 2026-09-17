@@ -26,7 +26,7 @@ export function useCompanionPersona(): UseCompanionPersonaReturn {
     let cancelled = false;
     const loadPersona = async () => {
       try {
-        const result = await api.get<{ friendPersona?: string; companionMode?: string }>('/api/settings');
+        const result = await api.get<{ friendPersona?: string; companionMode?: string }>('/api/v1/settings');
         if (!cancelled && result.success && result.data) {
           const data = result.data;
           const personaKey = data.friendPersona ?? '';

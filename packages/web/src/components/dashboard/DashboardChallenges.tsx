@@ -42,7 +42,7 @@ export const DashboardChallenges = memo(function DashboardChallenges() {
     let cancelled = false;
     setLoading(true);
     setError(false);
-    api.get<{ challenges: ChallengeItem[] }>('/api/challenges')
+    api.get<{ challenges: ChallengeItem[] }>('/api/v1/challenges')
       .then((res) => {
         if (cancelled) return;
         if (res.success && res.data) {

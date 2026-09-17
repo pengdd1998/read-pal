@@ -34,7 +34,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
  // Check if Google OAuth is available
  useEffect(() => {
  const ctrl = new AbortController();
- fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/auth/google/status`, { signal: ctrl.signal })
+ fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/v1/auth/google/status`, { signal: ctrl.signal })
   .then((r) => r.json())
   .then((d) => { if (!ctrl.signal.aborted) setGoogleConfigured(d?.data?.configured ?? false); })
   .catch((err) => { if (!ctrl.signal.aborted) { warn('AuthForm: Google status check failed', err); setGoogleConfigured(false); } });
@@ -60,7 +60,7 @@ export const AuthForm = React.memo(function AuthForm({ mode, onSuccess }: AuthFo
   analytics.track('user_registered');
   // Auto-seed a sample book for the magic first experience
   try {
-   await authFetch((process.env.NEXT_PUBLIC_API_URL || '') + '/api/books/seed-sample', {
+   await authFetch((process.env.NEXT_PUBLIC_API_URL || '') + '/api/v1/books/seed-sample', {
    method: 'POST',
    });
   } catch (err) {

@@ -25,7 +25,7 @@ export const ReadingSpeedWidget = memo(function ReadingSpeedWidget() {
  let cancelled = false;
  setLoading(true);
  setError(false);
- api.get<ReadingSpeedBook[]>('/api/stats/reading-speed/by-book')
+ api.get<ReadingSpeedBook[]>('/api/v1/stats/reading-speed/by-book')
   .then((res) => {
   if (!cancelled && res.success && Array.isArray(res.data)) {
    setBooks(res.data);

@@ -11,7 +11,7 @@ export function useAiHealth(): boolean | null {
     let cancelled = false;
     const checkHealth = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/agents/health`);
+        const res = await fetch(`${API_BASE_URL}/api/v1/agents/health`);
         if (!cancelled) {
           if (res.ok) {
             const data = await res.json() as { healthy?: boolean };

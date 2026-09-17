@@ -139,7 +139,7 @@ describe('AuthProvider', () => {
   screen.getByTestId('login-btn').click();
  });
 
- expect(mockPost).toHaveBeenCalledWith('/api/auth/login', {
+ expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/login', {
   email: 'test@example.com',
   password: 'password123',
   platform: 'web',
@@ -207,7 +207,7 @@ describe('AuthProvider', () => {
   screen.getByTestId('register-btn').click();
  });
 
- expect(mockPost).toHaveBeenCalledWith('/api/auth/register', {
+ expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/register', {
   name: 'Test User',
   email: 'test@example.com',
   password: 'password123',

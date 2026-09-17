@@ -101,7 +101,7 @@ export const OfflineSection = React.memo(function OfflineSection() {
         if (stale) return;
         setCachedBooks(cached);
 
-        const res = await api.get<{ books: Array<{ id: string; title: string; author: string }> }>('/api/books?status=reading&pageSize=50');
+        const res = await api.get<{ books: Array<{ id: string; title: string; author: string }> }>('/api/v1/books?status=reading&pageSize=50');
         if (stale) return;
         if (res.data?.books) setBooks(res.data.books);
       } catch (err) {

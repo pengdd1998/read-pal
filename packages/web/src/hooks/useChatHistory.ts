@@ -96,7 +96,7 @@ export function useChatHistory({
     const load = async () => {
       try {
         const result = await api.get<ChatHistoryResponse>(
-          '/api/agents/history',
+          '/api/v1/agents/history',
           { book_id: bookId, limit: 50 },
           undefined,
           chatHistoryResponseSchema,
@@ -126,7 +126,7 @@ export function useChatHistory({
               // setting was stored-but-dead until this gate (2026-09-04).
               let quiet = false;
               try {
-                const prefs = await api.get<{ friendFrequency?: string }>('/api/settings');
+                const prefs = await api.get<{ friendFrequency?: string }>('/api/v1/settings');
                 quiet = prefs.success && prefs.data?.friendFrequency === 'minimal';
               } catch { /* settings fetch failure must not break history */ }
               if (!cancelled && !quiet) {
@@ -159,7 +159,7 @@ export function useChatHistory({
     if (!hasMore || loadingMore || !cursorRef.current) return;
     setLoadingMore(true);
     try {
-      const result = await api.get<ChatHistoryResponse>('/api/agents/history', {
+      const result = await api.get<ChatHistoryResponse>('/api/v1/agents/history', {
         book_id: bookId,
         limit: 50,
         before: cursorRef.current,

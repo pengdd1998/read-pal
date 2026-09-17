@@ -102,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
  const login = useCallback(async (email: string, password: string) => {
  const result = await api.post<{ token: string; refreshToken: string; user: User }>(
-  '/api/auth/login',
+  '/api/v1/auth/login',
   { email, password, platform: 'web' },
  );
  if (result.success && result.data) {
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
  const register = useCallback(async (name: string, email: string, password: string) => {
  const result = await api.post<{ token: string; refreshToken: string; user: User }>(
-  '/api/auth/register',
+  '/api/v1/auth/register',
   { name, email, password, platform: 'web' },
  );
  if (result.success && result.data) {
@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  const logout = useCallback(async () => {
  const refreshToken = typeof window !== 'undefined' ? safeGetItem('refresh_token') : null;
  try {
-  await api.post('/api/auth/logout', { refreshToken: refreshToken || undefined });
+  await api.post('/api/v1/auth/logout', { refreshToken: refreshToken || undefined });
  } catch (e) {
   warn('Logout request failed (idempotent):', e);
  }

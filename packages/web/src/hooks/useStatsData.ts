@@ -38,11 +38,11 @@ export function useStatsData(): StatsDataResult & { refetch: () => void } {
     setLoading(true);
     setError(null);
     Promise.all([
-      api.get<DashboardData>('/api/stats/dashboard'),
-      api.get<SessionData[]>('/api/reading-sessions'),
-      api.get<FlashcardStats>('/api/stats/flashcards'),
-      api.get<SpeedData>('/api/stats/reading-speed'),
-      api.get<BookSpeed[]>('/api/stats/reading-speed/by-book'),
+      api.get<DashboardData>('/api/v1/stats/dashboard'),
+      api.get<SessionData[]>('/api/v1/reading-sessions'),
+      api.get<FlashcardStats>('/api/v1/stats/flashcards'),
+      api.get<SpeedData>('/api/v1/stats/reading-speed'),
+      api.get<BookSpeed[]>('/api/v1/stats/reading-speed/by-book'),
     ])
       .then(([dashRes, sessRes, fcRes, speedRes, bookSpeedRes]) => {
         if (stale) return;

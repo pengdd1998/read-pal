@@ -29,7 +29,7 @@ export const FlashcardCard = React.memo(function FlashcardCard({
  try {
   setGenerating(true);
   const res = await api.post<{ generated: number }>(
-  '/api/flashcards/generate',
+  '/api/v1/flashcards/generate',
   {
    bookId,
    count: 5,

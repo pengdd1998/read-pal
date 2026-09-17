@@ -435,7 +435,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     setConnecting(true);
 
     await runStream({
-      endpoint: '/api/agents/chat/stream',
+      endpoint: '/api/v1/agents/chat/stream',
       body: {
         book_id: bookId,
         message: msg,
@@ -480,7 +480,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     setConnecting(true);
 
     await runStream({
-      endpoint: '/api/agents/chat/regenerate',
+      endpoint: '/api/v1/agents/chat/regenerate',
       body: {
         book_id: bookId,
         context: buildContext(),
@@ -504,7 +504,7 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
     const reqId = currentRequestIdRef.current;
     if (reqId) {
       currentRequestIdRef.current = null;
-      api.post('/api/agents/chat/cancel', { request_id: reqId }).catch((err) => {
+      api.post('/api/v1/agents/chat/cancel', { request_id: reqId }).catch((err) => {
         warn('useStreamingChat: cancel request failed (non-fatal)', err);
       });
     }

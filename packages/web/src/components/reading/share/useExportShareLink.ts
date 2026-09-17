@@ -29,7 +29,7 @@ export function useExportShareLink({ bookId, format, selectedTypes, selectedTag 
    if (selectedTag) body.tags = selectedTag;
 
    const res = await api.post<{ token: string; url: string; format: string; title: string }>(
-    '/api/share/export',
+    '/api/v1/share/export',
     body,
    );
 

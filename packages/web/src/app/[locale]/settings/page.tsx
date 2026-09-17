@@ -47,7 +47,7 @@ export default function SettingsPage() {
         clearTimeout(saveTimerRef.current);
         const pending = pendingUpdatesRef.current;
         if (pending) {
-          api.patch<UserSettings>('/api/settings', pending.updates as Record<string, unknown>).catch((err) => { warn('SettingsPage: failed to flush pending updates', err); });
+          api.patch<UserSettings>('/api/v1/settings', pending.updates as Record<string, unknown>).catch((err) => { warn('SettingsPage: failed to flush pending updates', err); });
         }
       }
       if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
@@ -58,14 +58,14 @@ export default function SettingsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<UserSettings>('/api/settings');
+      const res = await api.get<UserSettings>('/api/v1/settings');
       if (signal?.aborted) return;
       if (res.success && res.data) {
         setSettings(res.data);
       } else {
         setError(tRef.current('failed_load'));
       }
-      const meRes = await api.get<{ name: string; email: string }>('/api/auth/me');
+      const meRes = await api.get<{ name: string; email: string }>('/api/v1/auth/me');
       if (signal?.aborted) return;
       if (meRes.success && meRes.data) {
         const d = meRes.data;
@@ -97,7 +97,7 @@ export default function SettingsPage() {
     setSaved(false);
     setError(null);
     try {
-      const res = await api.patch<UserSettings>('/api/settings', updates as Record<string, unknown>);
+      const res = await api.patch<UserSettings>('/api/v1/settings', updates as Record<string, unknown>);
       if (!mountedRef.current) return;
       if (res.success && res.data) {
         setSettings(res.data);

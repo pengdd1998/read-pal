@@ -66,7 +66,7 @@ function SeedButton() {
     setSeeding(true);
     setSeedError(false);
     try {
-      const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
+      const res = await api.post<{ book: { id: string } }>('/api/v1/books/seed-sample');
       if (!mountedRef.current) return;
       if (res.success && res.data) {
         safeSetItem(ONBOARDING_KEY, 'true');

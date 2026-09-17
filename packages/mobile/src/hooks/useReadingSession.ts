@@ -35,14 +35,14 @@ export function useReadingSession({
 
     const startSession = async () => {
       try {
-        const result = await api.post<{ id: string }>('/api/reading-sessions/start', { bookId });
+        const result = await api.post<{ id: string }>('/api/v1/reading-sessions/start', { bookId });
         if (result.success && result.data && !cancelled) {
           sessionIdRef.current = result.data.id;
 
           heartbeatRef.current = setInterval(async () => {
             if (!sessionIdRef.current || isPausedRef.current) return;
             try {
-              await api.patch(`/api/reading-sessions/${sessionIdRef.current}/heartbeat`, {
+              await api.patch(`/api/v1/reading-sessions/${sessionIdRef.current}/heartbeat`, {
                 pagesRead: currentChapterRef.current + 1,
                 scrollProgress: scrollProgressRef.current,
               });
@@ -62,7 +62,7 @@ export function useReadingSession({
       if (sessionIdRef.current) {
         const sid = sessionIdRef.current;
         const finalChapter = currentChapterRef.current;
-        api.post(`/api/reading-sessions/${sid}/end`, {
+        api.post(`/api/v1/reading-sessions/${sid}/end`, {
           pagesRead: finalChapter + 1,
           currentPage: finalChapter,
           totalPages: chaptersLength,

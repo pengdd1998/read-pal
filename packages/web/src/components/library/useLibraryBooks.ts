@@ -41,7 +41,7 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
     // Schema output types dates as string|Date (JSON transport reality vs
     // the shared type's Date) — cast once here; runtime validation is the
     // value, not the type-level refinement.
-    api.get<Book[]>('/api/books', undefined, undefined, bookListResponseSchema as unknown as Parameters<typeof api.get<Book[]>>[3])
+    api.get<Book[]>('/api/v1/books', undefined, undefined, bookListResponseSchema as unknown as Parameters<typeof api.get<Book[]>>[3])
       .then((response) => {
         if (stale) return;
         if (response.success && response.data) {
@@ -79,7 +79,7 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
     const prev = books;
     setBooks((bs) => bs.filter((b) => b.id !== id));
     try {
-      const res = await api.delete(`/api/books/${id}`);
+      const res = await api.delete(`/api/v1/books/${id}`);
       if (!mountedRef.current) return;
       if (!res.success) {
         warn('LibraryGrid: delete returned success=false', res.error);
@@ -100,7 +100,7 @@ export function useLibraryBooks(): UseLibraryBooksReturn {
     if (seeding) return;
     try {
       setSeeding(true);
-      const res = await api.post<{ book: Book }>('/api/books/seed-sample');
+      const res = await api.post<{ book: Book }>('/api/v1/books/seed-sample');
       if (!mountedRef.current) return;
       if (res.success && res.data?.book) {
         setBooks((prev) => [res.data!.book, ...prev]);

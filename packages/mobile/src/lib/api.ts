@@ -36,7 +36,7 @@ class ApiClient {
   private static MAX_CACHE_SIZE = 200;
   private refreshPromise: Promise<boolean> | null = null;
 
-  private static REFRESH_URL = '/api/auth/refresh';
+  private static REFRESH_URL = '/api/v1/auth/refresh';
 
   constructor() {
     this.client = axios.create({
@@ -203,24 +203,24 @@ class ApiClient {
   }
 
   private invalidateAfterMutation(url: string): void {
-    if (url.includes('/api/books') || url.includes('/api/annotations') || url.includes('/api/reading-sessions')) {
-      this.invalidateCache('/api/stats');
-      this.invalidateCache('/api/books');
+    if (url.includes('/api/v1/books') || url.includes('/api/v1/annotations') || url.includes('/api/v1/reading-sessions')) {
+      this.invalidateCache('/api/v1/stats');
+      this.invalidateCache('/api/v1/books');
     }
     const prefixes = url.split('/').slice(0, 4).join('/');
     this.invalidateCache(prefixes);
-    if (url.includes('/api/settings')) {
-      this.invalidateCache('/api/settings');
+    if (url.includes('/api/v1/settings')) {
+      this.invalidateCache('/api/v1/settings');
     }
   }
 
   private getCacheTTL(url: string): number {
     if (url.match(/\/api\/books\/[^?]/) && !url.includes('?')) return 300_000;
     if (url.includes('/content')) return 3_600_000;
-    if (url.includes('/api/settings')) return 60_000;
-    if (url.includes('/api/annotations')) return 15_000;
-    if (url.includes('/api/reading-sessions')) return 15_000;
-    if (url.includes('/api/books')) return 30_000;
+    if (url.includes('/api/v1/settings')) return 60_000;
+    if (url.includes('/api/v1/annotations')) return 15_000;
+    if (url.includes('/api/v1/reading-sessions')) return 15_000;
+    if (url.includes('/api/v1/books')) return 30_000;
     return 0;
   }
 
@@ -333,7 +333,7 @@ class ApiClient {
             }
           },
         });
-        this.invalidateAfterMutation('/api/books');
+        this.invalidateAfterMutation('/api/v1/books');
         return response.data;
       } catch (err) {
         lastError = err;

@@ -55,7 +55,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
 
   const loadAnnotations = useCallback(async () => {
     try {
-      const result = await api.get<Annotation[]>('/api/annotations', { book_id: bookId });
+      const result = await api.get<Annotation[]>('/api/v1/annotations', { book_id: bookId });
       if (result.success && result.data) {
         const data = result.data;
         if (mountedRef.current) setAnnotations(Array.isArray(data) ? data : []);
@@ -82,7 +82,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         : { start: 0, end: text.length });
 
       const location = { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: offsets };
-      const result = await api.post<Annotation>('/api/annotations', {
+      const result = await api.post<Annotation>('/api/v1/annotations', {
         book_id: bookId, type: 'highlight', content: text, color,
         tags: tags || [],
         location,
@@ -125,7 +125,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         : { start: 0, end: text.length });
 
       const location = { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: offsets };
-      const result = await api.post<Annotation>('/api/annotations', {
+      const result = await api.post<Annotation>('/api/v1/annotations', {
         book_id: bookId, type: 'note', content: text, note,
         tags: tags || [],
         location,
@@ -172,7 +172,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
         const removedBookmark = bookmark;
         setAnnotations((p) => p.filter((a) => a.id !== removedId));
         try {
-          const res = await api.delete(`/api/annotations/${removedId}`);
+          const res = await api.delete(`/api/v1/annotations/${removedId}`);
           if (!mountedRef.current) return;
           if (!res.success) {
             setAnnotations((p) => [...p, removedBookmark]);
@@ -188,7 +188,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
       try {
         const chapter = chapters[currentChapter];
         const location = { chapterId: chapter.id, pageIndex: currentChapter, position: 0, selection: { start: 0, end: 0 } };
-        const result = await api.post<Annotation>('/api/annotations', {
+        const result = await api.post<Annotation>('/api/v1/annotations', {
           book_id: bookId, type: 'bookmark',
           content: `Bookmark: ${chapter.title}`,
           location,
@@ -222,7 +222,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     const removed = annotations.find((a) => a.id === id);
     setAnnotations((p) => p.filter((a) => a.id !== id));
     try {
-      const res = await api.delete(`/api/annotations/${id}`);
+      const res = await api.delete(`/api/v1/annotations/${id}`);
       if (!mountedRef.current) return;
       if (!res.success) {
         if (removed) setAnnotations((p) => [...p, removed]);
@@ -260,7 +260,7 @@ export function useAnnotationActions(options: AnnotationActionsOptions) {
     const prev = annotations;
     setAnnotations((p) => p.map((a) => (a.id === updated.id ? updated : a)));
     try {
-      const res = await api.patch(`/api/annotations/${updated.id}`, updated as unknown as Record<string, unknown>);
+      const res = await api.patch(`/api/v1/annotations/${updated.id}`, updated as unknown as Record<string, unknown>);
       if (!mountedRef.current) return;
       if (!res.success) {
         setAnnotations(prev);

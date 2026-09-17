@@ -40,7 +40,7 @@ export const AnnotationEditForm = React.memo(function AnnotationEditForm({ annot
 
   if (Object.keys(updates).length > 0) {
   const res = await api.patch<Annotation>(
-   `/api/annotations/${annotation.id}`,
+   `/api/v1/annotations/${annotation.id}`,
    updates,
   );
   if (res.success && res.data) {

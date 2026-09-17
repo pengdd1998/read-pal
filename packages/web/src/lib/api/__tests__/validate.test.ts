@@ -56,7 +56,7 @@ describe('API boundary schema validation', () => {
   it('passes matching payloads through untouched', async () => {
     mockRequest.mockResolvedValue({ data: { success: true, data: [{ id: '1', title: 'B' }] } });
 
-    const result = await api.get('/api/test-valid', undefined, undefined, bookSchema);
+    const result = await api.get('/api/v1/test-valid', undefined, undefined, bookSchema);
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual([{ id: '1', title: 'B' }]);
@@ -65,7 +65,7 @@ describe('API boundary schema validation', () => {
   it('degrades a shape-mismatched payload to a contract error', async () => {
     mockRequest.mockResolvedValue({ data: { success: true, data: [{ id: '1' }] } }); // title missing
 
-    const result = await api.get('/api/test-drift', undefined, undefined, bookSchema);
+    const result = await api.get('/api/v1/test-drift', undefined, undefined, bookSchema);
 
     expect(result.success).toBe(false);
     expect(result.error?.code).toBe(API_CONTRACT_MISMATCH);
@@ -77,8 +77,8 @@ describe('API boundary schema validation', () => {
     // /api/books has TTL 30s — a cached bad payload would pin the drift.
     mockRequest.mockResolvedValue({ data: { success: true, data: [{ title: 'no id' }] } });
 
-    await api.get('/api/books', undefined, undefined, bookSchema);
-    const second = await api.get('/api/books', undefined, undefined, bookSchema);
+    await api.get('/api/v1/books', undefined, undefined, bookSchema);
+    const second = await api.get('/api/v1/books', undefined, undefined, bookSchema);
 
     // Second call hit the network again (2 requests, not 1) — the bad
     // shape was not served from cache.
@@ -89,8 +89,8 @@ describe('API boundary schema validation', () => {
   it('caches a matching payload normally', async () => {
     mockRequest.mockResolvedValue({ data: { success: true, data: validBooks } });
 
-    await api.get('/api/books', undefined, undefined, bookListResponseSchema);
-    const second = await api.get('/api/books', undefined, undefined, bookListResponseSchema);
+    await api.get('/api/v1/books', undefined, undefined, bookListResponseSchema);
+    const second = await api.get('/api/v1/books', undefined, undefined, bookListResponseSchema);
 
     expect(mockRequest).toHaveBeenCalledTimes(1);
     expect(second.success).toBe(true);
@@ -102,7 +102,7 @@ describe('API boundary schema validation', () => {
       data: { success: false, error: { code: 'SOME_ERROR', message: 'x' } },
     });
 
-    const result = await api.get('/api/test-err', undefined, undefined, bookSchema);
+    const result = await api.get('/api/v1/test-err', undefined, undefined, bookSchema);
 
     expect(result.success).toBe(false);
     expect(result.error?.code).toBe('SOME_ERROR');

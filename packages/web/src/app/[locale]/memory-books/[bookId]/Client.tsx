@@ -71,7 +71,7 @@ export default function ReadingMirrorPage() {
  setError(null);
  Promise.all([
   api.get<ReadingMirror>(`/api/v1/reading-book/${bookId}`, undefined, { signal: ac.signal }),
-  api.get<{ title: string; author: string; coverUrl?: string }>(`/api/books/${bookId}`, undefined, { signal: ac.signal }),
+  api.get<{ title: string; author: string; coverUrl?: string }>(`/api/v1/books/${bookId}`, undefined, { signal: ac.signal }),
  ]).then(([mirrorRes, bookRes]) => {
   if (ac.signal.aborted || !mountedRef.current) return;
   let anySuccess = false;

@@ -67,7 +67,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   // Let backend extract metadata from EPUB/PDF — don't hardcode defaults
 
   const result = await api.upload<{ book: Book }>(
-  '/api/upload',
+  '/api/v1/upload',
   formData,
   (percent) => setUploadProgress(percent),
   controller.signal,

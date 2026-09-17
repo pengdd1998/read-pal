@@ -47,7 +47,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  const loadCollections = useCallback(async () => {
  try {
   setError(false);
-  const res = await api.get<{ items: Collection[] }>('/api/collections');
+  const res = await api.get<{ items: Collection[] }>('/api/v1/collections');
   if (res.success && res.data) {
   const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
   setCollections(items);
@@ -74,7 +74,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  if (!newName.trim()) return;
  setCreating(true);
  try {
-  const res = await api.post<Collection>('/api/collections', {
+  const res = await api.post<Collection>('/api/v1/collections', {
   name: newName.trim(),
   icon: newIcon,
   color: newColor,
@@ -104,7 +104,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  setCollections((cs) => cs.filter((c) => c.id !== id));
  if (activeCollectionId === id) onSelectCollection(null);
  try {
-  const res = await api.delete(`/api/collections/${id}`);
+  const res = await api.delete(`/api/v1/collections/${id}`);
   if (!mountedRef.current) return;
   if (res.success) {
   toast(t('collections_deleted'), 'success');
@@ -123,7 +123,7 @@ export const CollectionsSidebar = React.memo(function CollectionsSidebar({ activ
  const handleRename = async (id: string) => {
  if (!editName.trim()) { setEditingId(null); return; }
  try {
-  const res = await api.patch<Collection>(`/api/collections/${id}`, { name: editName.trim() });
+  const res = await api.patch<Collection>(`/api/v1/collections/${id}`, { name: editName.trim() });
   if (!mountedRef.current) return;
   if (res.success && res.data) {
   setCollections((prev) => prev.map((c) => (c.id === id ? (res.data as Collection) : c)));

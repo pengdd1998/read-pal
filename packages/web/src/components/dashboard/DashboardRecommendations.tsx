@@ -37,7 +37,7 @@ export const DashboardRecommendations = memo(function DashboardRecommendations()
  let cancelled = false;
  setLoading(true);
  setError(false);
- api.get<{ recommendations: RecommendationItem[] }>('/api/recommendations')
+ api.get<{ recommendations: RecommendationItem[] }>('/api/v1/recommendations')
   .then((res) => {
   if (cancelled) return;
   if (res.success && res.data) {

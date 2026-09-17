@@ -100,7 +100,7 @@ export const NotificationBell = memo(function NotificationBell() {
       // One request: the list response carries `unread` (merged server-side)
       // — halves the poller's request volume.
       const notifRes = await api.get<{ items: Notification[]; unread?: number }>(
-        '/api/notifications?per_page=20',
+        '/api/v1/notifications?per_page=20',
       );
       if (staleRef.current) return;
       if (notifRes.success && notifRes.data?.items) {
@@ -168,7 +168,7 @@ export const NotificationBell = memo(function NotificationBell() {
       return Math.max(0, c - 1);
     });
     try {
-      const res = await api.patch(`/api/notifications/${id}/read`);
+      const res = await api.patch(`/api/v1/notifications/${id}/read`);
       if (staleRef.current) return;
       if (!res.success) {
         if (prev) setNotifications(prev);
@@ -198,7 +198,7 @@ export const NotificationBell = memo(function NotificationBell() {
     });
     setMarkingAll(true);
     try {
-      const res = await api.post('/api/notifications/mark-all-read');
+      const res = await api.post('/api/v1/notifications/mark-all-read');
       if (staleRef.current) return;
       if (!res.success) {
         if (prev) setNotifications(prev);

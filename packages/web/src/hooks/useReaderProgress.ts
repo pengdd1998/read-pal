@@ -51,7 +51,7 @@ export function useReaderProgress({
         }));
       } catch (e) { warn('useReaderProgress: localStorage save failed:', e); }
       try {
-        fetch(`${API_BASE_URL}/api/books/${bookId}`, {
+        fetch(`${API_BASE_URL}/api/v1/books/${bookId}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export function useReaderProgress({
     if (loading || pphFetchedRef.current) return;
     pphFetchedRef.current = true;
     let cancelled = false;
-    api.get<{ averagePagesPerHour: number }>('/api/stats/reading-speed')
+    api.get<{ averagePagesPerHour: number }>('/api/v1/stats/reading-speed')
       .then((res) => {
         if (cancelled) return;
         if (res.success && res.data && res.data.averagePagesPerHour > 0) {

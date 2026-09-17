@@ -66,7 +66,7 @@ describe('mobile-cache', () => {
       });
 
       await cacheBook('book-123');
-      expect(api.get).toHaveBeenCalledWith('/api/upload/books/book-123/content');
+      expect(api.get).toHaveBeenCalledWith('/api/v1/upload/books/book-123/content');
     });
 
     it('cacheBook returns -1 on API failure', async () => {

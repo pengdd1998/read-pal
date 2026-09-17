@@ -33,7 +33,7 @@ export default function BookClubDetailPage() {
  async function handleJoin() {
    setJoining(true);
    try {
-     const res = await api.post<{ id: string; name: string }>(`/api/book-clubs/${clubId}/join`);
+     const res = await api.post<{ id: string; name: string }>(`/api/v1/book-clubs/${clubId}/join`);
      if (!mountedRef.current) return;
      if (res.success) {
        // Refetch to sync memberCount AND clubMembers list together.
@@ -55,7 +55,7 @@ export default function BookClubDetailPage() {
  if (!confirm(t('leaveConfirm'))) return;
  setLeaving(true);
  try {
-  const res = await api.post(`/api/book-clubs/${clubId}/leave`);
+  const res = await api.post(`/api/v1/book-clubs/${clubId}/leave`);
   if (!mountedRef.current) return;
   if (res.success) {
    router.push('/book-clubs');

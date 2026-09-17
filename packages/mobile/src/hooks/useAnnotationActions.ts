@@ -11,7 +11,7 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
 
   const loadAnnotations = useCallback(async () => {
     try {
-      const result = await api.get<Annotation[]>('/api/annotations', { book_id: bookId });
+      const result = await api.get<Annotation[]>('/api/v1/annotations', { book_id: bookId });
       if (result.success && result.data) {
         setAnnotations(Array.isArray(result.data) ? result.data : []);
       }
@@ -29,7 +29,7 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
     offsets?: { start: number; end: number },
   ) => {
     try {
-      const result = await api.post<Annotation>('/api/annotations', {
+      const result = await api.post<Annotation>('/api/v1/annotations', {
         book_id: bookId,
         type: 'highlight',
         content: text,
@@ -60,7 +60,7 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
     offsets?: { start: number; end: number },
   ) => {
     try {
-      const result = await api.post<Annotation>('/api/annotations', {
+      const result = await api.post<Annotation>('/api/v1/annotations', {
         book_id: bookId,
         type: 'note',
         content: text,
@@ -83,7 +83,7 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
 
   const deleteAnnotation = useCallback(async (id: string) => {
     try {
-      await api.delete(`/api/annotations/${id}`);
+      await api.delete(`/api/v1/annotations/${id}`);
       setAnnotations((prev) => prev.filter((a) => a.id !== id));
     } catch (err) {
       console.error('Failed to delete annotation:', err);
@@ -95,10 +95,10 @@ export function useAnnotationActions({ bookId }: UseAnnotationActionsOptions) {
       (a) => a.type === 'bookmark' && a.location?.pageIndex === chapterIndex,
     );
     if (existing) {
-      await api.delete(`/api/annotations/${existing.id}`);
+      await api.delete(`/api/v1/annotations/${existing.id}`);
       setAnnotations((prev) => prev.filter((a) => a.id !== existing.id));
     } else {
-      const result = await api.post<Annotation>('/api/annotations', {
+      const result = await api.post<Annotation>('/api/v1/annotations', {
         book_id: bookId,
         type: 'bookmark',
         content: `Bookmark: ${chapterTitle}`,

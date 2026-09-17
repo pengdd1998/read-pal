@@ -28,7 +28,7 @@ export default function ChatPanel({ bookId, bookTitle }: ChatPanelProps) {
   const { data: history } = useQuery({
     queryKey: ['chatHistory', bookId],
     queryFn: async () => {
-      const result = await api.get<Message[]>('/api/agents/history', { book_id: bookId, limit: 50 });
+      const result = await api.get<Message[]>('/api/v1/agents/history', { book_id: bookId, limit: 50 });
       return result.success ? result.data || [] : [];
     },
   });
@@ -62,7 +62,7 @@ export default function ChatPanel({ bookId, bookTitle }: ChatPanelProps) {
     const assistantId = `ai-${Date.now()}`;
 
     try {
-      const result = await api.post<{ role: string; content: string }>('/api/agents/chat', {
+      const result = await api.post<{ role: string; content: string }>('/api/v1/agents/chat', {
         book_id: bookId,
         message: text,
       });

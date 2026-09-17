@@ -55,12 +55,12 @@ describe('API Client', () => {
       const mockData = { success: true, data: [{ id: '1', title: 'Book' }] };
       mockRequest.mockResolvedValue({ data: mockData });
 
-      const result = await api.get('/api/books');
+      const result = await api.get('/api/v1/books');
       expect(result).toEqual(mockData);
       expect(mockRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'get',
-          url: '/api/books',
+          url: '/api/v1/books',
         }),
       );
     });
@@ -68,11 +68,11 @@ describe('API Client', () => {
     it('passes params to GET request', async () => {
       mockRequest.mockResolvedValue({ data: { success: true, data: [] } });
 
-      await api.get('/api/books', { page: 1, limit: 10 });
+      await api.get('/api/v1/books', { page: 1, limit: 10 });
       expect(mockRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'get',
-          url: '/api/books',
+          url: '/api/v1/books',
           params: { page: 1, limit: 10 },
         }),
       );
@@ -81,7 +81,7 @@ describe('API Client', () => {
     it('returns error result for failed GET requests', async () => {
       mockRequest.mockRejectedValue(new Error('Network error'));
 
-      const result = await api.get('/api/books');
+      const result = await api.get('/api/v1/books');
       expect(result.success).toBe(false);
     });
   });
@@ -94,7 +94,7 @@ describe('API Client', () => {
       };
       mockRequest.mockResolvedValue({ data: mockResponse });
 
-      const result = await api.post('/api/auth/login', {
+      const result = await api.post('/api/v1/auth/login', {
         email: 'test@test.com',
         password: 'password123',
       });
@@ -103,7 +103,7 @@ describe('API Client', () => {
       expect(mockRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'post',
-          url: '/api/auth/login',
+          url: '/api/v1/auth/login',
           data: { email: 'test@test.com', password: 'password123' },
         }),
       );
@@ -123,7 +123,7 @@ describe('API Client', () => {
       });
 
       await expect(
-        api.post('/api/auth/login', { email: 'a@b.com', password: 'x' }),
+        api.post('/api/v1/auth/login', { email: 'a@b.com', password: 'x' }),
       ).rejects.toThrow('Internal Server Error');
     });
   });
@@ -133,13 +133,13 @@ describe('API Client', () => {
       const mockResponse = { success: true, data: { id: '1', title: 'Updated' } };
       mockRequest.mockResolvedValue({ data: mockResponse });
 
-      const result = await api.put('/api/books/1', { title: 'Updated Book' });
+      const result = await api.put('/api/v1/books/1', { title: 'Updated Book' });
 
       expect(result).toEqual(mockResponse);
       expect(mockRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'put',
-          url: '/api/books/1',
+          url: '/api/v1/books/1',
           data: { title: 'Updated Book' },
         }),
       );
@@ -151,13 +151,13 @@ describe('API Client', () => {
       const mockResponse = { success: true, data: null };
       mockRequest.mockResolvedValue({ data: mockResponse });
 
-      const result = await api.delete('/api/books/1');
+      const result = await api.delete('/api/v1/books/1');
 
       expect(result).toEqual(mockResponse);
       expect(mockRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'delete',
-          url: '/api/books/1',
+          url: '/api/v1/books/1',
         }),
       );
     });
@@ -167,7 +167,7 @@ describe('API Client', () => {
       // Callers must not mistake this for a failure.
       mockRequest.mockResolvedValue({ data: '' });
 
-      const result = await api.delete('/api/books/1');
+      const result = await api.delete('/api/v1/books/1');
 
       expect(result.success).toBe(true);
       expect(result.data).toBeUndefined();
@@ -179,13 +179,13 @@ describe('API Client', () => {
       const mockResponse = { success: true, data: { id: '1', read: true } };
       mockRequest.mockResolvedValue({ data: mockResponse });
 
-      const result = await api.patch('/api/books/1', { read: true });
+      const result = await api.patch('/api/v1/books/1', { read: true });
 
       expect(result).toEqual(mockResponse);
       expect(mockRequest).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'patch',
-          url: '/api/books/1',
+          url: '/api/v1/books/1',
           data: { read: true },
         }),
       );
@@ -196,7 +196,7 @@ describe('API Client', () => {
     it('returns { success: false } for network errors on GET', async () => {
       mockRequest.mockRejectedValue(new Error('Network Error'));
 
-      const result = await api.get('/api/books');
+      const result = await api.get('/api/v1/books');
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error).toBeDefined();
@@ -211,7 +211,7 @@ describe('API Client', () => {
       mockRequest.mockRejectedValue(error);
       vi.mocked(axios.isAxiosError).mockReturnValue(true);
 
-      const result = await api.get('/api/books/nonexistent');
+      const result = await api.get('/api/v1/books/nonexistent');
       expect(result.success).toBe(false);
     });
 
@@ -225,7 +225,7 @@ describe('API Client', () => {
         configurable: true,
       });
 
-      const result = await api.post('/api/books', { title: 'Offline Book' });
+      const result = await api.post('/api/v1/books', { title: 'Offline Book' });
       expect(result.success).toBe(true);
 
       // Restore

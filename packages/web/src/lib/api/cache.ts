@@ -25,19 +25,19 @@ export function getCacheTTL(url: string): number {
   // or non-book routes under /api/books/ like /api/books/stats (TTL=30s).
   if (url.match(/\/api\/books\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(\?.*)?$/)) return 300_000;
   if (url.includes('/content')) return 0;
-  if (url.includes('/api/settings')) return 60_000;
-  if (url.includes('/api/stats/dashboard')) return 30_000;
-  if (url.includes('/api/stats/reading-calendar')) return 60_000;
-  if (url.includes('/api/stats')) return 30_000;
-  if (url.includes('/api/annotations/tags')) return 120_000;
-  if (url.includes('/api/annotations')) return 15_000;
-  if (url.includes('/api/reading-sessions')) return 15_000;
-  if (url.includes('/api/agents/history')) return 60_000;
-  if (url.includes('/api/challenges')) return 300_000;
-  if (url.includes('/api/recommendations')) return 300_000;
-  if (url.includes('/api/books')) return 30_000;
-  if (url.includes('/api/discovery')) return 60_000;
-  if (url.includes('/api/friend/status')) return 60_000;
+  if (url.includes('/api/v1/settings')) return 60_000;
+  if (url.includes('/api/v1/stats/dashboard')) return 30_000;
+  if (url.includes('/api/v1/stats/reading-calendar')) return 60_000;
+  if (url.includes('/api/v1/stats')) return 30_000;
+  if (url.includes('/api/v1/annotations/tags')) return 120_000;
+  if (url.includes('/api/v1/annotations')) return 15_000;
+  if (url.includes('/api/v1/reading-sessions')) return 15_000;
+  if (url.includes('/api/v1/agents/history')) return 60_000;
+  if (url.includes('/api/v1/challenges')) return 300_000;
+  if (url.includes('/api/v1/recommendations')) return 300_000;
+  if (url.includes('/api/v1/books')) return 30_000;
+  if (url.includes('/api/v1/discovery')) return 60_000;
+  if (url.includes('/api/v1/friend/status')) return 60_000;
   return 0;
 }
 
@@ -70,21 +70,21 @@ export function invalidateCache(cache: Map<string, CacheEntry>, prefix?: string)
 
 /** Invalidate cache entries related to a specific data change */
 export function invalidateAfterMutation(cache: Map<string, CacheEntry>, url: string): void {
-  if (url.includes('/api/books') || url.includes('/api/annotations') || url.includes('/api/reading-sessions')) {
-    invalidateCache(cache, '/api/stats');
-    invalidateCache(cache, '/api/challenges');
-    invalidateCache(cache, '/api/recommendations');
-    invalidateCache(cache, '/api/collections');
+  if (url.includes('/api/v1/books') || url.includes('/api/v1/annotations') || url.includes('/api/v1/reading-sessions')) {
+    invalidateCache(cache, '/api/v1/stats');
+    invalidateCache(cache, '/api/v1/challenges');
+    invalidateCache(cache, '/api/v1/recommendations');
+    invalidateCache(cache, '/api/v1/collections');
   }
-  if (url.includes('/api/collections')) {
-    invalidateCache(cache, '/api/collections');
+  if (url.includes('/api/v1/collections')) {
+    invalidateCache(cache, '/api/v1/collections');
   }
   const resourcePrefix = url.split('/').slice(0, 4).join('/');
   const collectionPrefix = url.split('/').slice(0, 3).join('/');
   invalidateCache(cache, resourcePrefix);
   invalidateCache(cache, collectionPrefix);
-  if (url.includes('/api/settings')) {
-    invalidateCache(cache, '/api/settings');
-    invalidateCache(cache, '/api/stats');
+  if (url.includes('/api/v1/settings')) {
+    invalidateCache(cache, '/api/v1/settings');
+    invalidateCache(cache, '/api/v1/stats');
   }
 }

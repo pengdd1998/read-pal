@@ -32,7 +32,7 @@ export default function BookUploader({ onUploaded }: BookUploaderProps) {
         name: file.name,
       } as any);
 
-      await api.upload('/api/upload', formData, (p) => setProgress(p));
+      await api.upload('/api/v1/upload', formData, (p) => setProgress(p));
       onUploaded();
     } catch (err) {
       console.error('Upload failed:', err);

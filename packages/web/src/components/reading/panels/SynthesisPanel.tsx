@@ -154,7 +154,7 @@ export const SynthesisPanel = React.memo(function SynthesisPanel({
  dispatch({ type: 'start' });
 
  try {
-  const response = await api.post<AnalysisResult>(`/api/synthesis/${bookId}`, {
+  const response = await api.post<AnalysisResult>(`/api/v1/synthesis/${bookId}`, {
   includeHighlights: true,
   includeNotes: true,
   includeConversations: true,

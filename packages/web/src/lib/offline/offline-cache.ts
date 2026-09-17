@@ -32,7 +32,7 @@ export async function cacheBookOffline(bookId: string): Promise<boolean> {
       const result = await cacheBook(bookId);
       return result.cached > 0;
     }
-    const res = await api.get<{ chapters: Array<{ id: string }> }>(`/api/books/${bookId}/chapters`);
+    const res = await api.get<{ chapters: Array<{ id: string }> }>(`/api/v1/books/${bookId}/chapters`);
     if (res.success && res.data?.chapters) {
       await cacheBookForOffline(bookId, res.data.chapters);
       return true;

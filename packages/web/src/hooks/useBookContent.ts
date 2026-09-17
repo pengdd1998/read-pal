@@ -55,8 +55,8 @@ export function useBookContent(
         const [bookResult, annotationsResult] = await Promise.all([
           // slim=1: server omits the unused top-level full-text copy (reader
           // renders chapters[].rawContent) — large books drop ~1/3 payload.
-          api.get<{ book: Book; chapters: Chapter[]; content: string }>(`/api/upload/books/${bookId}/content?slim=1`, { _t: Date.now() }),
-          api.get<Annotation[]>('/api/annotations', { book_id: bookId }).catch((err) => {
+          api.get<{ book: Book; chapters: Chapter[]; content: string }>(`/api/v1/upload/books/${bookId}/content?slim=1`, { _t: Date.now() }),
+          api.get<Annotation[]>('/api/v1/annotations', { book_id: bookId }).catch((err) => {
             warn('useBookContent: annotations fetch failed', err);
             if (!cancelled) setAnnotationsError(true);
             return null;

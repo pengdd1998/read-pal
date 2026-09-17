@@ -51,7 +51,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
    let stale = false;
    setLoading(true);
    setLoadError(false);
-   api.get<{ items: Collection[] }>('/api/collections').then((res) => {
+   api.get<{ items: Collection[] }>('/api/v1/collections').then((res) => {
      if (stale) return;
      if (res.success && res.data) {
        const items = res.data.items ?? (Array.isArray(res.data) ? res.data as unknown as Collection[] : []);
@@ -90,9 +90,9 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
  let res: { success: boolean; error?: unknown } | null = null;
  try {
   if (inCol) {
-  res = await api.post(`/api/collections/${col.id}/books/remove`, { bookIds: [bookId] });
+  res = await api.post(`/api/v1/collections/${col.id}/books/remove`, { bookIds: [bookId] });
   } else {
-  res = await api.post(`/api/collections/${col.id}/books`, { bookIds: [bookId] });
+  res = await api.post(`/api/v1/collections/${col.id}/books`, { bookIds: [bookId] });
   }
   if (!mountedRef.current) return;
   if (!res || !res.success) {
@@ -100,7 +100,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   toast(t('collection_picker_toggle_failed'), 'error');
   // Reload from server to revert optimistic update
   try {
-   const retryRes = await api.get<{ items: Collection[] }>('/api/collections');
+   const retryRes = await api.get<{ items: Collection[] }>('/api/v1/collections');
    if (mountedRef.current && retryRes.success && retryRes.data) {
     const items = retryRes.data.items ?? (Array.isArray(retryRes.data) ? retryRes.data as unknown as Collection[] : []);
     setCollections(items);
@@ -119,7 +119,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
   if (mountedRef.current) toast(t('collection_picker_toggle_failed'), 'error');
   // Reload from server to revert optimistic update
   try {
-   const retryRes = await api.get<{ items: Collection[] }>('/api/collections');
+   const retryRes = await api.get<{ items: Collection[] }>('/api/v1/collections');
    if (mountedRef.current && retryRes.success && retryRes.data) {
     const items = retryRes.data.items ?? (Array.isArray(retryRes.data) ? retryRes.data as unknown as Collection[] : []);
     setCollections(items);
@@ -133,7 +133,7 @@ export const CollectionPicker = React.memo(function CollectionPicker({ bookId, o
  if (!newName.trim() || creating) return;
  setCreating(true);
  try {
-  const res = await api.post<Collection>('/api/collections', {
+  const res = await api.post<Collection>('/api/v1/collections', {
   name: newName.trim(),
   bookIds: [bookId],
   });

@@ -47,7 +47,7 @@ function StreakCalendarInner() {
  setLoading(true);
  setError(null);
  api
-  .get<ReadingCalendarData>('/api/stats/reading-calendar?months=6')
+  .get<ReadingCalendarData>('/api/v1/stats/reading-calendar?months=6')
   .then((res) => {
   if (cancelled) return;
   if (res.success && res.data) {

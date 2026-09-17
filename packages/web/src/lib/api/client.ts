@@ -114,7 +114,7 @@ export class ApiClient {
     throw lastError;
   }
 
-  /** Invalidate cache entries matching a prefix (e.g., '/api/settings' clears '/api/settings*') */
+  /** Invalidate cache entries matching a prefix (e.g., '/api/v1/settings' clears '/api/v1/settings*') */
   invalidateCache(prefix?: string): void {
     invalidateCache(this.cache, prefix);
   }
@@ -325,7 +325,7 @@ export class ApiClient {
             }
           },
         });
-        invalidateAfterMutation(this.cache, '/api/books');
+        invalidateAfterMutation(this.cache, '/api/v1/books');
         return response.data;
       } catch (err) {
         if (signal?.aborted || (err as DOMException)?.name === 'AbortError') {

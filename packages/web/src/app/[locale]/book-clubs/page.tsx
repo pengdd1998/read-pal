@@ -79,8 +79,8 @@ export default function BookClubsPage() {
    setError(null);
    try {
    const [myRes, discRes] = await Promise.all([
-    api.get<ClubListItem[]>('/api/book-clubs'),
-    api.get<ClubListItem[]>('/api/book-clubs/discover'),
+    api.get<ClubListItem[]>('/api/v1/book-clubs'),
+    api.get<ClubListItem[]>('/api/v1/book-clubs/discover'),
    ]);
    if (!cancelled) {
     if (myRes.success && myRes.data) {

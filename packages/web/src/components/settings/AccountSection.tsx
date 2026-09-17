@@ -32,7 +32,7 @@ export const AccountSection = React.memo(function AccountSection() {
   setDeleteError('');
   try {
    const refreshToken = safeGetItem('refresh_token') || undefined;
-   const res = await authFetch(`${API_BASE_URL}/api/auth/account`, {
+   const res = await authFetch(`${API_BASE_URL}/api/v1/auth/account`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: confirmPassword, refresh_token: refreshToken }),

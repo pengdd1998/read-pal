@@ -42,7 +42,7 @@ export const WeeklySummaryWidget = memo(function WeeklySummaryWidget() {
  let cancelled = false;
  setLoading(true);
  setError(false);
- api.get<WeeklySummaryData>('/api/stats/weekly-summary')
+ api.get<WeeklySummaryData>('/api/v1/stats/weekly-summary')
   .then((res) => {
   if (cancelled) return;
   if (res.success && res.data) {

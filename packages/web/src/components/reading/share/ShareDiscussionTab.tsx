@@ -55,7 +55,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
     if (highlights.length === 0) return [];
     try {
       const res = await api.post<{ questions: string[] }>(
-        '/api/agents/discussion-questions',
+        '/api/v1/agents/discussion-questions',
         {
           bookTitle: bookTitle || tRef.current('share_unknown_book'),
           author: author || tRef.current('share_unknown_author'),
@@ -148,7 +148,7 @@ export const ShareDiscussionTab = React.memo(function ShareDiscussionTab({
     setSharing(true);
     try {
       const res = await api.post<{ token: string }>(
-        '/api/share/export',
+        '/api/v1/share/export',
         { bookId, format: 'bookclub' },
       );
       if (!mountedRef.current) return;

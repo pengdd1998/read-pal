@@ -78,7 +78,7 @@ export const InterventionToast = React.memo(function InterventionToast({
   lastCheckRef.current = now;
 
   try {
-  const res = await api.post<Intervention>('/api/interventions/check', {
+  const res = await api.post<Intervention>('/api/v1/interventions/check', {
    bookId,
    currentPage: currentPageRef.current,
    totalPages: totalPagesRef.current,
@@ -122,7 +122,7 @@ export const InterventionToast = React.memo(function InterventionToast({
  setVisible(false);
  // Record dismissal feedback
  if (intervention) {
-  api.post('/api/interventions/feedback', {
+  api.post('/api/v1/interventions/feedback', {
   interventionType: intervention.type,
   dismissed: true,
   }).catch((err) => { warn('InterventionToast: failed to record dismissal feedback', err); }).finally(() => setSubmitting(false));
@@ -135,7 +135,7 @@ export const InterventionToast = React.memo(function InterventionToast({
  if (submitting) return;
  setSubmitting(true);
  if (intervention) {
-  api.post('/api/interventions/feedback', {
+  api.post('/api/v1/interventions/feedback', {
   interventionType: intervention.type,
   helpful: true,
   }).catch((err) => { warn('InterventionToast: failed to record helpful feedback', err); }).finally(() => setSubmitting(false));

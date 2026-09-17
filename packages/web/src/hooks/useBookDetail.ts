@@ -92,8 +92,8 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
     (async () => {
       try {
         const [res, annRes] = await Promise.all([
-          api.get<BookData>(`/api/books/${bookId}`),
-          api.get<AnnotationItem[]>('/api/annotations', {
+          api.get<BookData>(`/api/v1/books/${bookId}`),
+          api.get<AnnotationItem[]>('/api/v1/annotations', {
             book_id: bookId,
             per_page: 200,
           }),
@@ -129,7 +129,7 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
     };
 
     bgFetch<{ decks: Array<{ bookId: string; total: number }> }>(
-      '/api/flashcards/decks',
+      '/api/v1/flashcards/decks',
       guard((data) => {
         // Backend returns {decks, totalCards, totalDue, totalReviewed}.
         // Previously typed as a bare array — calling .find on the wrapper
@@ -139,26 +139,26 @@ export function useBookDetail(bookId: string, t: (key: string) => string) {
       }),
     );
     bgFetch<Array<{ name: string; count: number }>>(
-      `/api/annotations/tags?bookId=${bookId}`,
+      `/api/v1/annotations/tags?bookId=${bookId}`,
       guard((data) => {
         if (Array.isArray(data)) setTags(data);
       }),
     );
-    bgFetch<{ format: string }>(`/api/memory-books/${bookId}`, guard((data) => {
+    bgFetch<{ format: string }>(`/api/v1/memory-books/${bookId}`, guard((data) => {
       if (data.format === 'personal_book') setHasPersonalBook(true);
     }));
     bgFetch<ReadingLogEntry[]>(
-      `/api/reading-sessions/book/${bookId}/log?limit=5`,
+      `/api/v1/reading-sessions/book/${bookId}/log?limit=5`,
       guard((data) => {
         if (Array.isArray(data)) setReadingLog(data);
       }),
     );
     // Pages/hour is the reliable speed metric — the backend's derived wpm
     // assumes 250 words/page which is wildly off. ETA is computed from pph.
-    bgFetch<{ averagePagesPerHour: number }>('/api/stats/reading-speed', guard((data) => {
+    bgFetch<{ averagePagesPerHour: number }>('/api/v1/stats/reading-speed', guard((data) => {
       if (data.averagePagesPerHour) setReadingPph(data.averagePagesPerHour);
     }));
-    bgFetch<Record<string, unknown>>('/api/settings', guard((data) => {
+    bgFetch<Record<string, unknown>>('/api/v1/settings', guard((data) => {
       if (data?.['zoteroApiKey'] && data?.['zoteroUserId']) {
         setZoteroConnected(true);
       }

@@ -18,7 +18,7 @@ export const FlashcardReviewWidget = memo(function FlashcardReviewWidget() {
  let cancelled = false;
  setLoading(true);
  setError(false);
- api.get<{ stats: FlashcardStats }>('/api/flashcards/review?limit=1')
+ api.get<{ stats: FlashcardStats }>('/api/v1/flashcards/review?limit=1')
   .then((res) => {
   if (cancelled) return;
   if (res.success && res.data) {

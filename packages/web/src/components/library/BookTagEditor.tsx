@@ -29,7 +29,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
  const newTags = [...tags, tag];
  setSaving(true);
  try {
-  const res = await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
+  const res = await api.put(`/api/v1/books/${bookId}/tags`, { tags: newTags });
   if (!mountedRef.current) return;
   if (res.success) {
   onTagsChange?.(bookId, newTags);
@@ -51,7 +51,7 @@ export const BookTagEditor = React.memo(function BookTagEditor({ bookId, tags, o
  const newTags = tags.filter((t) => t !== tag);
  setSaving(true);
  try {
-  const res = await api.put(`/api/books/${bookId}/tags`, { tags: newTags });
+  const res = await api.put(`/api/v1/books/${bookId}/tags`, { tags: newTags });
   if (!mountedRef.current) return;
   if (res.success) {
   onTagsChange?.(bookId, newTags);

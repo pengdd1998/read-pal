@@ -42,7 +42,7 @@ export default function SearchPage() {
  setRecentLoading(true);
  setRecentError(null);
  function loadRecent() {
-  api.get<Book[]>('/api/books')
+  api.get<Book[]>('/api/v1/books')
   .then((res) => {
   if (stale) return;
   if (res.success && res.data) {
@@ -88,9 +88,9 @@ export default function SearchPage() {
   setSearched(false);
   try {
   const settled = await Promise.allSettled([
-   api.get<Book[]>('/api/discovery/search', { q: query }),
-   api.get<Record<string, unknown>[]>('/api/annotations/search', { q: query, limit: 20 }),
-   api.get<Book[]>('/api/discovery/semantic', { q: query }),
+   api.get<Book[]>('/api/v1/discovery/search', { q: query }),
+   api.get<Record<string, unknown>[]>('/api/v1/annotations/search', { q: query, limit: 20 }),
+   api.get<Book[]>('/api/v1/discovery/semantic', { q: query }),
   ]);
   if (stale) return;
 

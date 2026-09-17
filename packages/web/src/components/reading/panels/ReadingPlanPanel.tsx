@@ -78,7 +78,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
     if (!bookId) return;
     dispatch({ type: 'fetch_start' });
     try {
-      const res = await api.get<PlanData>('/api/agent/reading-plan', { bookId });
+      const res = await api.get<PlanData>('/api/v1/agent/reading-plan', { bookId });
       if (signal?.aborted || !mountedRef.current) return;
       if (res.success && res.data) {
         dispatch({ type: 'plan_loaded', plan: res.data });
@@ -104,7 +104,7 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
     if (!bookId) return;
     dispatch({ type: 'generate_start' });
     try {
-      const res = await api.post<PlanData>('/api/agent/reading-plan', {
+      const res = await api.post<PlanData>('/api/v1/agent/reading-plan', {
         bookId,
         totalDays,
         dailyMinutes,
@@ -129,13 +129,13 @@ export const ReadingPlanPanel = React.memo(function ReadingPlanPanel({
     if (!bookId || state.status === 'advancing') return;
     dispatch({ type: 'advance_start' });
     try {
-      const res = await api.post<{ message: string }>('/api/agent/reading-plan/advance', { bookId });
+      const res = await api.post<{ message: string }>('/api/v1/agent/reading-plan/advance', { bookId });
       if (!mountedRef.current) return;
       if (res.success) {
         // Silent refresh — keep plan visible while we re-fetch so the user
         // doesn't see a skeleton flash between advance and refetch.
         try {
-          const planRes = await api.get<PlanData>('/api/agent/reading-plan', { bookId });
+          const planRes = await api.get<PlanData>('/api/v1/agent/reading-plan', { bookId });
           if (!mountedRef.current) return;
           if (planRes.success && planRes.data) {
             dispatch({ type: 'plan_loaded', plan: planRes.data });

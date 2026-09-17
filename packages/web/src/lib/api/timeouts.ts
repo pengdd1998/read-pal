@@ -27,15 +27,15 @@ export const AI_TIMEOUT_MS = 180_000;
 export const BOOK_CONTENT_TIMEOUT_MS = 60_000;
 
 const AI_ENDPOINT_PATTERNS: RegExp[] = [
-  /\/api\/agent\/reading-plan/,       // plan generation + advance
-  /\/api\/reading-book\/generate/,    // memory-book pipeline (10 sections)
-  /\/api\/flashcards\/generate/,      // flashcard generation
-  /\/api\/synthesis/,                 // cross-book + single-book analysis
-  /\/api\/knowledge\/graph\//,        // knowledge extraction
-  /\/api\/agent\/mood\//,             // mood scene generation
+  /\/api\/(?:v1\/)?agent\/reading-plan/,       // plan generation + advance
+  /\/api\/(?:v1\/)?reading-book\/generate/,    // memory-book pipeline (10 sections)
+  /\/api\/(?:v1\/)?flashcards\/generate/,      // flashcard generation
+  /\/api\/(?:v1\/)?synthesis/,        // cross-book + single-book analysis
+  /\/api\/(?:v1\/)?knowledge\/graph\//,        // knowledge extraction
+  /\/api\/(?:v1\/)?agent\/mood\//,             // mood scene generation
 ];
 
-const BOOK_CONTENT_PATTERN = /\/api\/upload\/books\/[^/]+\/content/;
+const BOOK_CONTENT_PATTERN = /\/api\/(?:v1\/)?upload\/books\/[^/]+\/content/;
 
 /** Return the request timeout for an endpoint (ms). */
 export function getTimeoutForUrl(url: string): number {

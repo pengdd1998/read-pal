@@ -65,7 +65,7 @@ export default function DashboardPage() {
   const handleSeedSample = async () => {
     try {
       setSeeding(true);
-      const res = await api.post<{ book: { id: string } }>('/api/books/seed-sample');
+      const res = await api.post<{ book: { id: string } }>('/api/v1/books/seed-sample');
       if (!mountedRef.current) return;
       if (res.success) {
         const locale = window.location.pathname.split('/')[1] || 'en';

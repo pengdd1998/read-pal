@@ -49,7 +49,7 @@ export const SingleBookAnalysisCard = React.memo(function SingleBookAnalysisCard
  setError(null);
  setResult(null);
  try {
-  const res = await api.post<AnalysisResult>(`/api/synthesis/${selectedBookId}`, {
+  const res = await api.post<AnalysisResult>(`/api/v1/synthesis/${selectedBookId}`, {
   query: query.trim(),
   mode,
   }, { timeout: 120_000 });

@@ -46,7 +46,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (email: string, password: string) => {
-    const result = await api.post<{ token: string; refreshToken: string; user: User }>('/api/auth/login', { email, password, platform: 'mobile' });
+    const result = await api.post<{ token: string; refreshToken: string; user: User }>('/api/v1/auth/login', { email, password, platform: 'mobile' });
     if (result.success && result.data) {
       const { token, refreshToken, user } = result.data;
       await saveToken(token);
@@ -64,7 +64,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   register: async (name: string, email: string, password: string) => {
-    const result = await api.post<{ token: string; refreshToken: string; user: User }>('/api/auth/register', { name, email, password, platform: 'mobile' });
+    const result = await api.post<{ token: string; refreshToken: string; user: User }>('/api/v1/auth/register', { name, email, password, platform: 'mobile' });
     if (result.success && result.data) {
       const { token, refreshToken, user } = result.data;
       await saveToken(token);
@@ -84,7 +84,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: async () => {
     const refreshToken = await getRefreshToken();
     try {
-      await api.post('/api/auth/logout', { refreshToken: refreshToken || undefined });
+      await api.post('/api/v1/auth/logout', { refreshToken: refreshToken || undefined });
     } catch {
       // Logout is idempotent — ignore errors
     }

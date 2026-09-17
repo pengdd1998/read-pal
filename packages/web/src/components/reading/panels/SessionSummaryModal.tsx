@@ -39,7 +39,7 @@ export const SessionSummaryModal = React.memo(function SessionSummaryModal({
   if (!sessionId) return;
   setSummaryLoading(true);
   setSummaryError(false);
-  api.post<{ summary: string }>(`/api/reading-sessions/${sessionId}/summarize`)
+  api.post<{ summary: string }>(`/api/v1/reading-sessions/${sessionId}/summarize`)
   .then((res) => {
   if (!mountedRef.current) return;
   if (res.success && res.data?.summary) {

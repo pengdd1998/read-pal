@@ -74,7 +74,7 @@ export const ReadingBackground = React.memo(function ReadingBackground({ content
 
  try {
   const result = await api.post<MoodSceneData>(
-  '/api/agents/mood/scene',
+  '/api/v1/agents/mood/scene',
   { mood: 'neutral', text },
   { signal: ctrl.signal },
   );

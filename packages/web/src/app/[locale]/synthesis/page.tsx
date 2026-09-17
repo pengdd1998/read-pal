@@ -46,7 +46,7 @@ export default function SynthesisPage() {
  (async () => {
   setBooksError(null);
   try {
-  const res = await api.get<BookOption[]>('/api/books');
+  const res = await api.get<BookOption[]>('/api/v1/books');
   if (!cancelled && res.success && res.data) {
    setBooks(res.data);
   }
@@ -71,7 +71,7 @@ export default function SynthesisPage() {
  setError(null);
  setResult(null);
  try {
-  const res = await api.get<AnalysisResult>('/api/synthesis/cross-book', undefined, { timeout: 120_000 });
+  const res = await api.get<AnalysisResult>('/api/v1/synthesis/cross-book', undefined, { timeout: 120_000 });
   if (controller.signal.aborted) return;
   if (res.success && res.data) {
   // Backend returns success=true even on LLM failure, embedding the error in data.error.

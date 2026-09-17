@@ -19,13 +19,13 @@ import { isCapacitor } from '@/lib/offline/capacitor';
 import { safeRemoveItem } from '@/lib/offline/safe-storage';
 
 const NON_CRITICAL_PREFIXES = [
-  '/api/notifications',
-  '/api/discovery',
-  '/api/challenges',
-  '/api/recommendations',
+  '/api/v1/notifications',
+  '/api/v1/discovery',
+  '/api/v1/challenges',
+  '/api/v1/recommendations',
 ];
 
-const REFRESH_URL = '/api/auth/refresh';
+const REFRESH_URL = '/api/v1/auth/refresh';
 
 // Methods that can safely carry a deterministic idempotency key. We exclude
 // GET/HEAD/OPTIONS (no body to hash, and the cache layer handles dedup) and

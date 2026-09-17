@@ -56,7 +56,7 @@ describe('useReaderProgress', () => {
 
     // Wait for the promise chain to settle
     await vi.waitFor(() => expect(result.current.readingPph).toBe(42));
-    expect(mockGet).toHaveBeenCalledWith('/api/stats/reading-speed');
+    expect(mockGet).toHaveBeenCalledWith('/api/v1/stats/reading-speed');
   });
 
   it('does not fetch speed while loading', () => {
@@ -101,7 +101,7 @@ describe('useReaderProgress', () => {
     unmount();
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://test-api/api/books/book-1',
+      'http://test-api/api/v1/books/book-1',
       expect.objectContaining({
         method: 'PATCH',
         keepalive: true,

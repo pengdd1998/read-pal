@@ -40,7 +40,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
  setValidationError(null);
  setValidating(true);
  try {
-  const valRes = await api.post<{ valid: boolean; username?: string; error?: string }>('/api/settings/zotero/validate', {
+  const valRes = await api.post<{ valid: boolean; username?: string; error?: string }>('/api/v1/settings/zotero/validate', {
   apiKey: apiKey.trim(),
   userId: userId.trim(),
   });
@@ -49,7 +49,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
   setValidationError(valRes.data?.error || t('zotero_invalid_credentials'));
   return;
   }
-  const saveRes = await api.patch('/api/settings', {
+  const saveRes = await api.patch('/api/v1/settings', {
   zoteroApiKey: apiKey.trim(),
   zoteroUserId: userId.trim(),
   });
@@ -73,7 +73,7 @@ export const ZoteroSection = React.memo(function ZoteroSection({ initialSettings
  async function handleDisconnect() {
  setSaving(true);
  try {
-  const res = await api.patch('/api/settings', { zoteroApiKey: '', zoteroUserId: '' });
+  const res = await api.patch('/api/v1/settings', { zoteroApiKey: '', zoteroUserId: '' });
   if (!mountedRef.current) return;
   if (res.success) {
   setConnected(false);
