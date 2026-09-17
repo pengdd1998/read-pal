@@ -39,12 +39,6 @@ CAPS: list[tuple[str, int]] = [
 EXEMPT: set[str] = {
     # eval/mock data is intentionally one big fixture
     'app/eval/mock_data.py',
-    # eval/live_runner: dispatch table + 7 handlers + report writer form a
-    # cohesive unit; splitting into handlers module would scatter the
-    # cost-cap / timeout / error-classification invariants across files.
-    'app/eval/live_runner.py',
-    # observability module is one cohesive unit; splitting hurts more than helps
-    'app/services/llm/observability.py',
     # cross-book synthesis LLM helpers are tightly coupled
     'app/services/llm/safe_invoke.py',
     'app/services/llm/circuit_fallback.py',
