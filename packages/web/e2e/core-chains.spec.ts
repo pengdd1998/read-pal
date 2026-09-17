@@ -35,9 +35,10 @@ test('reader renders chapter content and headers', async ({ page }) => {
   await page.waitForURL(/dashboard|library/, { timeout: 30_000 });
   await page.goto(`${WEB}/en/library`);
   // open the first book card
-  const card = page.locator('a[href*="/read/"], [data-testid="book-card"]').first();
+  const card = page.locator('a[href*="/read/"]').first();
   await card.waitFor({ state: 'visible', timeout: 30_000 });
-  await card.click();
+  const href = await card.getAttribute('href');
+  await page.goto(`${WEB}${href}`);
   await page.waitForSelector('.reader-content', { timeout: 60_000 });
   await expect(page.locator('.reader-content')).toBeVisible();
 });
