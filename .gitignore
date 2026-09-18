@@ -183,6 +183,14 @@ docs/*
 !docs/launch/
 !docs/incidents/
 !docs/engineering-upgrade/
+# Acceptance evidence (PM decision 09-18): the single adjudication source
+# and the gate table must be clonable; test-plan bodies stay local (D2).
+!docs/testing/
+docs/testing/*
+!docs/testing/03-scoring-rubric.md
+!docs/testing/materials/
+docs/testing/materials/*
+!docs/testing/materials/execution-record.csv
 
 # Debug screenshots and test artifacts
 .pal-test/
