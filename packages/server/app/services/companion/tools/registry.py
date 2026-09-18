@@ -203,7 +203,7 @@ async def execute_tool(
 
 
 async def _heal_shared_session(db: AsyncSession) -> None:
-    """Roll back the shared request session after a tool blew up mid-query.
+    """Roll back the shared request session after a tool blew up mid-query. (P7.1)
 
     Best-effort: if even the rollback fails the session stays poisoned, but
     the main path's release_db still self-heals on commit failure.

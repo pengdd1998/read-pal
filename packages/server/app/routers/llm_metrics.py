@@ -40,7 +40,7 @@ def _ops_key_valid(provided: str | None) -> bool:
 @router.get('', response_model=GenericResponse)
 async def get_llm_metrics(
     hours: int = Query(24, ge=1, le=MAX_METRICS_WINDOW_HOURS),
-    x_ops_key: str | None = Header(None, alias='X-Ops-Key'),
+    x_ops_key: str | None = Header(None, alias='X-Ops-Key'),  # P7.2 — never in the URL (access logs)
     _current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> GenericResponse:

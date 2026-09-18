@@ -1,0 +1,97 @@
+# P7 — 24h-review hardening cluster (backfilled 2026-09-18)
+
+> Backfill note: these three fixes shipped 09-16/09-17 without the P-tag +
+> incident-entry discipline AGENTS.md requires (violation of Per-PR
+> discipline, itself logged in the 09-17 PM gap report as P0-5). Entries
+> reconstructed from the fix commits' own root-cause write-ups.
+
+## P7.1 — Tool timeout poisoned the shared DB session and dropped the turn's user message
+
+**Found:** 2026-09-16, second 24h code review (session cdbcdba6), via WT
+suite failure — a cache-hit turn after a tool timeout lost the turn's user
+message. Fix: `ad5c8d62`.
+
+**Severity:** P1 (production-grade data-loss class: silent message drop on a
+legal timeout path; rate = any planner/tool deadline hit followed by a
+cache-hit turn).
+
+**Locations**
+- `packages/server/app/services/companion/tools/registry.py` — `_heal_shared_session` (the fix; called on timeout/exception paths)
+- `packages/server/tests/test_companion_tools.py` — regression tests
+
+**What went wrong**
+
+`asyncio.wait_for` cancellation can land mid-DB-operation, leaving the shared
+request session with an invalidated transaction. The same-plan next tool and
+the main path's `release_db` already self-healed, but the **cache-hit path
+ran `save_message` BEFORE `release_db`** — a poisoned session made that
+write a no-op, silently dropping the user's message for the turn.
+
+**Why the fix works**
+
+`_heal_shared_session(db)` rolls the session back to a clean state on every
+tool timeout/exception exit, so any subsequent write on the shared session
+(the cache-hit `save_message` included) lands on a usable transaction; after
+a tool DB failure `db.in_transaction()` is False and the session is
+immediately reusable.
+
+## P7.2 — 24h-review ops/security quad: ops key in URL, CSP `http:`, stale parser global, unbounded map
+
+**Found:** 2026-09-16/17 code reviews. Fixes: `eb582e83` (stale global, ops
+key, unbounded map) + `4907e78a` (app-level CSP `img-src http:`), verified in
+prod via `curl -I` on 09-17 (`e3570f3c` close-out).
+
+**Severity:** P2 individually (secret in access logs; mixed-content
+weakening; pathological-EPUB memory growth; one-shot parser bug), P1 as a
+cluster at the VPS edge.
+
+**Locations**
+- `packages/server/app/routers/llm_metrics.py` — ops key moved from URL query to `X-Ops-Key` header (P7.2)
+- `packages/server/app/main.py` — CORS `allow_headers` entry for `X-Ops-Key`; app-level CSP dropped `http:` from `img-src` (P7.2)
+- `packages/server/app/services/parsers/epub/footnote_defs.py` — `MAX_FOOTNOTE_DEFS = 500` total-size valve (P7.2; module migrated from `services/epub_parser/` in M2.2)
+- `packages/server/app/services/parsers/epub/zipfile_path.py` — stale-global fix now lives here (ebooklib path retired in M2.2) (P7.2)
+
+**What went wrong / why the fixes work**
+
+The `/ops/llm` metrics view authenticated with `?key=…` in the URL — the
+secret landed in every access log between client and app; the header move
+removes it from all logs (CORS entry added because cross-origin clients
+preflight custom headers). The app-level CSP allowed `http:` images,
+weakening the edge CSP that had already dropped it. The EPUB parser kept a
+module-level global that went stale across parses within one process. The
+footnote-definitions map had per-entry caps but no total bound, so a
+pathological EPUB could balloon `Book.metadata_` and every book-detail
+response; the 500-entry valve bounds it to ~1 MB.
+
+## P7.3 — Footnote click listener bound before the content div existed
+
+**Found:** 2026-09-16, FN suite (FN1/FN2 misses — footnotes unclickable on a
+cold load). Fix: `2ffcf718`.
+
+**Severity:** P2 (feature dead-on-arrival on first chapter load; worked
+after any chapter switch).
+
+**Locations**
+- `packages/web/src/components/reading/core/ReaderViewParts.tsx` — click-interceptor effect now keyed on `[bookId, sanitizedContent]` with the re-bind rationale in a trailing comment (P7.3)
+
+**What went wrong / why the fix works**
+
+The footnote click interceptor attached once on mount, but `.reader-content`
+renders conditionally — on a cold load the div did not exist at effect run,
+so the listener bound to nothing and footnotes were inert until a chapter
+change re-rendered it. Keying the effect on the sanitized content re-binds
+the listener exactly when the content div (re)mounts.
+
+## How to avoid (cluster-level)
+
+1. Review-driven fixes are still production fixes: same PR discipline
+   (P-tag inline + incident entry) applies — the backfill itself was
+   necessary because this was skipped.
+2. Timeout paths must be audited for what they leave behind (sessions,
+   locks, half-written state), not just what they return.
+3. Secrets never ride in URLs; every new custom header needs the CORS
+   `allow_headers` entry in the same PR.
+4. Per-entry caps without total bounds are half a valve — size both.
+5. Event-listener effects must re-bind on the mount of their target, not of
+   the component (conditional DOM = deps must include the content that
+   spawns it).

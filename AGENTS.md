@@ -113,6 +113,11 @@ See `docs/incidents/`. Specifically, read before touching:
   write path touching books, sessions, or annotations must call
   `invalidate_user_caches(uid)`; cache-key formats live only in
   `stats/dashboard_cache.py`.
+- **Companion-tool timeouts / ops auth / parser caps / reader event
+  rebinding** → `docs/incidents/p7-review-hardening.md` (P7.1–P7.3) — tool
+  timeouts must heal the shared DB session; secrets never in URLs;
+  total-size valves alongside per-entry caps; listener effects rebind on
+  target mount.
 
 ## When prompts change
 

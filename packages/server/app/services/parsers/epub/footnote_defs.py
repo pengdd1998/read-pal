@@ -43,7 +43,7 @@ _TAG_RE = re.compile(r'<[^>]+>')
 # Total-size valve: each definition is already capped at 2000 chars; this
 # bounds the whole map (<= ~1 MB) so a pathological EPUB cannot balloon
 # Book.metadata_ and every book-detail response.
-MAX_FOOTNOTE_DEFS = 500
+MAX_FOOTNOTE_DEFS = 500  # P7.2 — total-size valve; per-entry caps alone don't bound metadata_
 
 
 def _strip_tags(html: str) -> str:
