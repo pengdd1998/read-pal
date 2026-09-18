@@ -18,6 +18,7 @@ from app.services.upload_service import (
     find_existing_book_by_hash,
     get_book_content as svc_get_book_content,
     get_file_type,
+    pdf_rejection_detail,
     stream_upload_to_tempfile,
     validate_file,
 )
@@ -146,7 +147,6 @@ async def upload_book(
     author: str | None = None,
     tags: str | None = None,
 ) -> dict:
-    """Upload an EPUB or PDF file and create a book record."""
     lang = await _get_user_lang(db, UUID(user['id']))
     file_type, error = _validate_upload_file(file.filename, 0, lang)
     if error:
@@ -164,16 +164,9 @@ async def upload_book(
     except HTTPException:
         raise
     except PdfParseError as exc:
-        # Typed parser verdicts (scanned PDF, page cap) get their own
-        # localized message instead of the generic PARSE_ERROR copy.
-        logger.info('upload.pdf_rejected user=%s file=%s code=%s', user['id'], file.filename, exc.code)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                'code': exc.code.upper(),
-                'message': t(f'errors.{exc.code}', lang, **exc.ctx),
-            },
-        ) from exc
+        # Typed parser verdicts (scanned PDF, page cap) get their own localized copy.
+        logger.info('upload.pdf_rejected code=%s', exc.code)
+        raise HTTPException(422, detail=pdf_rejection_detail(exc, lang)) from exc
     except (ValueError, OSError, KeyError, RuntimeError) as exc:
         logger.warning('upload.parse_failed user=%s file=%s error=%s', user['id'], file.filename, exc)
         raise HTTPException(

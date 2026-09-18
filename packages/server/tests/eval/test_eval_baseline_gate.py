@@ -125,7 +125,7 @@ class TestGuardsAnnotation:
         assert not missing, f'Golden entries without guards annotation: {missing}'
 
     def test_guards_vocabulary_is_closed(self):
-        allowed = {'format', 'schema', 'injection', 'sanitizer', 'budget'}
+        allowed = {'format', 'schema', 'injection', 'sanitizer', 'budget', 'spoiler'}
         for g in ALL_GOLDEN:
             for token in g['guards'].split('+'):
                 assert token in allowed, (

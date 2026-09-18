@@ -14,7 +14,7 @@ from app.models.book import Book, BookFileType
 from app.models.document import Document
 from app.services.parsers.epub import process_epub
 from app.services.object_storage import upload_cover
-from app.services.parsers.pdf import process_pdf
+from app.services.parsers.pdf import PdfParseError, process_pdf
 from app.services.upload_content_store import (
     _build_chapters,  # noqa: F401 — re-exported (Document chapter shaping)
     _chapters_from_shared,
@@ -42,6 +42,11 @@ MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
 # ---------------------------------------------------------------------------
 # File validation
 # ---------------------------------------------------------------------------
+
+def pdf_rejection_detail(exc: 'PdfParseError', lang: str) -> dict:
+    """HTTP detail for a typed PDF parser verdict (scanned / page cap)."""
+    return {'code': exc.code.upper(), 'message': t(f'errors.{exc.code}', lang, **exc.ctx)}
+
 
 def validate_file(filename: str, file_size: int, lang: str = DEFAULT_LANGUAGE) -> str | None:
     """Validate file before processing. Returns error message or None."""

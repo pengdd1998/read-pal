@@ -77,6 +77,7 @@ ALL_GOLDEN: list[dict[str, Any]] = [
 #   injection — sanitization/anti-injection contract (untrusted text stays data)
 #   sanitizer — input-wrapping / adversarial-input handling
 #   budget    — token accounting / estimation
+#   spoiler   — progress-aware spoiler boundary (unread content stays out)
 # Values may combine ("schema+format"). New entries should set ``guards``
 # inline in their dict; the mapping below covers the pre-annotation set.
 _GUARDS_BY_KEY: dict[str, str] = {
