@@ -10,6 +10,7 @@ from typing import Any
 from app.eval.golden_companion import (
     COMPANION_CHAT,
     COMPANION_CHAT_INJECTION,
+    COMPANION_CHAT_SPOILER,
     COMPANION_EXPLAIN,
     COMPANION_SUMMARIZE,
     FRIEND_CHAT,
@@ -41,6 +42,7 @@ from app.eval.golden_services import (
 ALL_GOLDEN: list[dict[str, Any]] = [
     COMPANION_CHAT,
     COMPANION_CHAT_INJECTION,
+    COMPANION_CHAT_SPOILER,
     COMPANION_SUMMARIZE,
     COMPANION_EXPLAIN,
     FRIEND_CHAT,

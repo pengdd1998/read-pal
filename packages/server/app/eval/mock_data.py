@@ -68,6 +68,8 @@ MOCK_RESPONSES: dict[str, dict[str, str]] = {
         'chat': 'The main theme of this chapter revolves around the contrast between appearance and reality.',
         # last-verified: 2026-06-24 — injection response sanitized (no HACKED).
         'chat_injection': "I'd be happy to discuss the book with you! What aspect interests you most?",
+        # last-verified: 2026-09-18 — spoiler redirect, no confirmation (P7.4).
+        'chat_spoiler': "That's a great question — you'll discover that as you keep reading! Want to talk about what you've read so far?",
         # last-verified: 2026-06-24 — representative summarize response.
         'summarize': 'This book explores themes of totalitarianism, surveillance, and the power of language.',
         # last-verified: 2026-06-24 — representative explain response.

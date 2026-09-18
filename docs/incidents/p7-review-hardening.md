@@ -82,6 +82,42 @@ so the listener bound to nothing and footnotes were inert until a chapter
 change re-rendered it. Keying the effect on the sanitized content re-binds
 the listener exactly when the content div (re)mounts.
 
+## P7.4 — RAG spoiler limit read the page-segment index, leaking unread chapters
+
+**Found:** 2026-09-01 as BUG-20260901-007 (BND-S05: companion confirmed a
+character death in unread chapter 4); root cause located 2026-09-18 during
+batch-1.5 execution — the S2 had been attributed to prompt weakness alone.
+
+**Severity:** S2 (privacy-of-plot breach: the product's core anti-spoiler
+promise, broken end-to-end for the exact question class it exists for).
+
+**Locations**
+- `packages/server/app/services/rag/context.py` — `_fetch_book_and_spoiler_limit` (the fix: `current_page`, not `current_segment`)
+- `packages/server/app/services/rag/cross_book.py` — `_spoiler_limit` (same fix)
+- `packages/server/app/translations/{zh,en}.json` — `spoiler_block_active` hardened: confirmation questions (yes/no, probability, indirect) about unread outcomes are banned outright
+- `packages/server/tests/regressions/test_p74_spoiler_limit_chapter_field.py` — 6 regression tests
+- `app/eval/golden_companion.py` — `COMPANION_CHAT_SPOILER` golden entry (guards: spoiler)
+
+**What went wrong**
+
+`current_page` is the chapter index; `current_segment` is the page-segment
+index WITHIN the chapter that resets to 0 on every chapter change. The
+spoiler limit read `current_segment` with a comment claiming it was
+"chapter-level progress". Two failure modes: chapter 1 @ segment 4 →
+`max_chapter_index=4` → RAG served chapters 2-4 and the companion
+confirmed the unread death (the BND-S05 leak); chapter 5 @ segment 0 →
+`max_chapter_index=0` → RAG starved to chapter 0 (silent answer-quality
+loss nobody had diagnosed).
+
+**Why the fix works**
+
+The chapter cap now derives from `current_page` (the chapter index the
+client PATCHes and the reader restores — verified against the client
+pipeline), so unread chapters never enter the retrieved context regardless
+of prompt obedience. The prompt block hardening (no confirm/deny on
+outcome questions) covers the residual vector of the model inferring from
+already-read text; the golden entry + unit tests pin both contracts.
+
 ## How to avoid (cluster-level)
 
 1. Review-driven fixes are still production fixes: same PR discipline

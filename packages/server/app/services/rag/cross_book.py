@@ -31,14 +31,16 @@ DEFAULT_TOTAL_K = 10
 def _spoiler_limit(book: Book) -> int | None:
     """Same spoiler contract as single-book RAG (rag/context.py).
 
-    In-progress books only search up to the reader's current chapter;
-    completed books have no filter. P3.5: ``Book.status`` loads as a
-    ``BookStatus`` member — compare against the enum, never the string
+    In-progress books only search up to the reader's current chapter
+    (``current_page`` — the chapter index. P7.4/BUG-20260901-007:
+    ``current_segment`` is the in-chapter page segment and leaks unread
+    chapters); completed books have no filter. P3.5: ``Book.status`` loads
+    as a ``BookStatus`` member — compare against the enum, never the string
     (a str comparison is silently always-False).
     """
     if book.status == BookStatus.completed:
         return None
-    return book.current_segment
+    return book.current_page
 
 
 async def _load_research_scope(

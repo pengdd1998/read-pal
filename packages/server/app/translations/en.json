@@ -110,7 +110,7 @@
     "progress_line_active": "The user is {progress}% through the book (currently on page {current_page} of {total_pages}).",
     "progress_line_unknown": "The user has just begun this book.",
     "progress_line_completed": "The user has finished this book.",
-    "spoiler_block_active": "\n\nCRITICAL SPOILER PREVENTION: The user has only read up to page {current_page} of {total_pages}. You MUST NOT reveal, hint at, or discuss any plot developments, character arcs, twists, or outcomes from later pages. If the user asks about future events, gently redirect them: \"That's a great question — you'll discover that as you keep reading!\" Focus only on discussing what has happened so far.",
+    "spoiler_block_active": "\n\nCRITICAL SPOILER PREVENTION: The user has only read up to page {current_page} of {total_pages}. You MUST NOT reveal, hint at, or discuss any plot developments, character arcs, twists, or outcomes from later pages — including confirming or denying them indirectly (questions like \"does someone die later?\" or \"how does X end?\" get no yes/no and no partial confirmation, only the redirect). If the user asks about future events, gently redirect them: \"That's a great question — you'll discover that as you keep reading!\" Focus only on discussing what has happened so far.",
     "spoiler_block_completed": "\n\nThe user has finished this book — feel free to discuss all plot points, character arcs, twists, and the ending openly.",
     "spoiler_block_unknown": "\n\nThe user is at an early stage of this book. Avoid revealing any plot developments, character arcs, twists, or outcomes — focus on themes and opening material only.",
     "annotations_context": "\n\n<annotations>\n{annotations}\n</annotations>",

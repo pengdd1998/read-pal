@@ -170,7 +170,8 @@ class TestCrossBookSearch:
     async def test_spoiler_limit_applies_per_book(self):
         async with _TestSession() as session:
             uid = await _seed_user(session)
-            # In-progress: reader is at chapter 2 (0-indexed segment).
+            # In-progress: reader is at chapter index 2 (P7.4: the limit
+            # reads current_page — the chapter index — never the segment).
             await _seed_book(
                 session,
                 uid,
@@ -180,7 +181,8 @@ class TestCrossBookSearch:
                     (5, f"{_NEEDLE}未读章节不得命中"),
                 ],
                 status="reading",
-                current_segment=2,
+                current_page=2,
+                current_segment=0,
             )
             # Completed: no chapter filter.
             await _seed_book(

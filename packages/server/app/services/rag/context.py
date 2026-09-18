@@ -43,12 +43,18 @@ async def _fetch_book_and_spoiler_limit(
     if not book:
         return None, None
 
-    # Use current_segment (chapter-level progress) not current_page.
+    # P7.4 (BUG-20260901-007): the chapter limit MUST come from
+    # ``current_page`` (chapter index). The previous code read
+    # ``current_segment`` — the page-segment index WITHIN the chapter
+    # (resets to 0 every chapter change), which both over-restricted
+    # (chapter N at segment 0 locked RAG to chapter 0) and leaked
+    # (chapter 1 at segment 3 exposed chapters 0-3, letting the companion
+    # confirm unread-chapter events like BND-S05's death spoiler).
     # P3.5: Book.status loads as a BookStatus member — a 'completed'
     # string comparison is always False, silently spoiler-limiting
-    # completed books to current_segment forever.
+    # completed books forever.
     is_completed = book.status == BookStatus.completed
-    max_chapter_index = book.current_segment if not is_completed else None
+    max_chapter_index = book.current_page if not is_completed else None
     return book, max_chapter_index
 
 

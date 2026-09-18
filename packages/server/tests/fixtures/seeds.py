@@ -35,6 +35,7 @@ async def _seed_book(
     title,
     chunks,
     status='completed',
+    current_page=None,
     current_segment=None,
 ) -> str:
     """Seed one book + document + chunks; returns the book id (str UUID)."""
@@ -54,6 +55,7 @@ async def _seed_book(
             file_size=1,
             total_pages=100,
             status=status,
+            current_page=current_page or 0,
             current_segment=current_segment or 0,
         )
     )

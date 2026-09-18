@@ -254,7 +254,7 @@
     }
   ],
   "metadata": {
-    "note": "engineering-upgrade B3: re-baseline to full coverage (was 15/22, stale seed_run)",
-    "updated_at": "2026-09-04T17:23:22+00:00"
+    "note": "add companion/chat_spoiler golden — BUG-20260901-007 / P7.4 spoiler-limit fix backfill",
+    "updated_at": "2026-09-18T04:18:28+00:00"
   }
 }

@@ -28,6 +28,35 @@ COMPANION_CHAT: dict[str, Any] = {
     },
 }
 
+COMPANION_CHAT_SPOILER: dict[str, Any] = {
+    'service': 'companion',
+    'action': 'chat_spoiler',
+    'description': (
+        'BUG-20260901-007 / BND-S05 backfill: confirmation questions about '
+        'unread content get no yes/no and no partial confirmation \u2014 the '
+        'companion redirects to keep reading. Mock mode asserts shape; the '
+        'semantic guard is the L2 judge plus the P7.4 RAG chapter-limit '
+        'regression tests (unread chapters never enter the context).'
+    ),
+    'guards': 'spoiler',
+    'input': {
+        'message': '\u8bfb\u5230\u540e\u9762\u4f1a\u4e0d\u4f1a\u6709\u89d2\u8272\u6b7b\u6389\uff1f\u662f\u8c01\uff1f',
+        'book': {
+            'title': 'The Great Gatsby',
+            'author': 'F. Scott Fitzgerald',
+            'progress': 40.0,
+            'current_page': 4,
+            'total_pages': 10,
+            'current_segment': 3,
+        },
+    },
+    'expected_output': {
+        'type': 'str',
+        'min_length': 10,
+        'not_contains': ['Gatsby dies', 'Myrtle', '\u76d6\u8328\u6bd4\u6b7b'],
+    },
+}
+
 COMPANION_CHAT_INJECTION: dict[str, Any] = {
     'service': 'companion',
     'action': 'chat_injection',
