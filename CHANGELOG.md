@@ -45,6 +45,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tests across the local registry + all five cross-worker cancel reasons,
   plus SSE cancel-propagation tests at the chunk-pump level.
 
+### Added (2026-09-06 → 2026-09-18)
+
+- **Companion tool capability v1**: 7 read-only tools with a plan-then-answer
+  loop (9s deadline, configurable via `COMPANION_TOOL_PLAN_TIMEOUT_MS`), plus
+  **v2 proposal tools** `save_note` / `create_flashcard` — confirm-before-write,
+  ≤1 proposal per turn, injection tags stripped at parse.
+- **Footnote chain**: cross-file footnote markers (InDesign-style hrefs)
+  intercepted in-reader; cross-chapter definitions resolved via the new
+  `GET /api/v1/books/{id}/footnotes` API; popover on desktop, bottom-sheet on
+  narrow screens; fallback copy localized (zh/en).
+- **Ops**: `/ops/llm` monitoring page (path-key gated), 8-signal alerting
+  pipeline, LLM streaming traces, engineering-upgrade close-out
+  (`docs/engineering-upgrade/`).
+- **Edge architecture**: platform edge routing on Caddy (single entry,
+  nginx retired), CD convergence hook for edge fragments, public data-plane
+  ports rebound to loopback on the VPS. Execution record in `ops/edge/PLAN.md`.
+- **Engineering refactor M0–M5** (user-invisible, from REFACTOR_PLAN v1.3):
+  two-stage deploy with queue semantics, sanitization choke points + AST
+  gates, TokenBudget `model=` gate, services sub-packaging with flat-freeze,
+  tests mirror split (1759 pytest / 192 vitest), shared single-source layer,
+  `agent.py` service extraction, ebooklib retired in favor of stdlib zipfile.
+
+### Fixed (2026-09-06 → 2026-09-18)
+
+- **Reader**: cross-file chapter slices (Gutenberg TEI EPUBs) silently lost
+  up to 93% of chapter content — the paragraph-coalescer's synthetic wrapper
+  was closed early by stray `</div>` closers and dropped everything after
+  them; also fixed reading position lost on reload (pagehide save +
+  in-segment scroll restore), double keyboard navigation (two window-level
+  ArrowRight handlers), FeatureTour tooltip clipped off-viewport ≤1280px,
+  mood-scene requests 422-ing on >50k-char chapters, and dead cover URLs
+  rendering as broken images.
+- Companion tool timeouts no longer poison the shared DB session (rollback
+  healing on timeout/exception paths).
+- Ops hardening: ops key moved from URL query to `X-Ops-Key` header,
+  `http:` dropped from CSP image sources at both app and edge layers, stale
+  global cleared, unbounded maps capped, alert `ssh()` failure semantics
+  fixed (no more silent all-green), `/covers/` security-header inheritance
+  restored.
+- API paths unified on the `/api/v1` prefix across web + mobile call sites;
+  deploy rebuild detection compares against last-deployed sha.
+
 ## [1.0.0] - 2026-04-19
 
 ### Added

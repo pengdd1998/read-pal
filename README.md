@@ -78,18 +78,18 @@ read-pal/
 ├── packages/
 │   ├── server/         # Python 3.12 / FastAPI backend
 │   │   ├── app/
-│   │   │   ├── routers/       # 19 routers, 130+ endpoints
+│   │   │   ├── routers/       # 29 routers, 158 endpoints
 │   │   │   ├── services/      # Business logic (LLM, knowledge, synthesis)
-│   │   │   ├── models/        # SQLAlchemy 2.0 ORM (27 models)
+│   │   │   ├── models/        # SQLAlchemy 2.0 ORM (26 models)
 │   │   │   ├── schemas/       # Pydantic request/response
 │   │   │   └── middleware/    # Auth, rate limiting
 │   │   ├── alembic/           # Database migrations
-│   │   └── tests/             # 1500+ pytest tests
+│   │   └── tests/             # 1759 pytest tests
 │   └── web/           # Next.js 14 / TypeScript frontend
 │       └── src/
-│           ├── app/           # 30+ pages (App Router)
-│           ├── components/    # 50+ React components
-│           └── hooks/         # 10 custom hooks
+│           ├── app/           # 27 pages (App Router)
+│           ├── components/    # 200+ React components
+│           └── hooks/         # 34 custom hooks
 └── docs/
 ```
 
@@ -102,9 +102,9 @@ read-pal/
 | Frontend | Next.js 14, TypeScript, TailwindCSS |
 | Database | PostgreSQL 16, Redis 7 |
 | Search | pgVector hybrid (semantic + keyword, RRF fusion) |
-| File Processing | ebooklib (EPUB), pypdf (PDF) |
+| File Processing | stdlib zipfile (EPUB), pypdf (PDF) |
 | Knowledge | NetworkX graph engine |
-| Testing | pytest (1500+ tests), Vitest (134 tests) |
+| Testing | pytest (1759 tests), Vitest (192 tests) |
 
 ## Quickstart
 
@@ -178,7 +178,7 @@ Open http://localhost:3000 and start reading!
 ### 5. Run Tests
 
 ```bash
-# Backend (1500+ tests)
+# Backend (1759 tests)
 cd packages/server
 uv run pytest tests/ -v
 
@@ -193,7 +193,7 @@ read-pal exposes a comprehensive REST API under `/api/v1/`:
 | Category | Endpoints | Description |
 |----------|-----------|-------------|
 | Auth | 8 | Register, login, password reset, token refresh |
-| Books | 8 | CRUD, upload (EPUB/PDF), tags, stats |
+| Books | 8 | CRUD, upload (EPUB; PDF on roadmap), tags, stats |
 | Reading | 7 | Sessions, stats, heartbeat, speed tracking |
 | Annotations | 7 | Highlights, notes, bookmarks, search, tags |
 | AI Companion | 7 | Chat, stream (SSE), summarize, explain, questions |
@@ -254,7 +254,7 @@ Areas where we'd love help:
 ## Roadmap
 
 ### Phase 1 — MVP (Current)
-- [x] EPUB/PDF reading with AI companion
+- [x] EPUB reading with AI companion (PDF on roadmap)
 - [x] Annotations and knowledge graph
 - [x] Spaced repetition flashcards
 - [x] Memory books

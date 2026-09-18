@@ -350,8 +350,9 @@ C-4 完成即具备执行条件（/covers/ 内网化使 9000 的浏览器消费�
    9001）全部不通；宿主 `psql -h 127.0.0.1 -p 35551 -U readpal` 通；
 4. read-pal 侧小 PR：`docker/backup.sh` 与 `docker/RESTORE.md` 的 DB 连接
    改 `127.0.0.1:35551`（修正从未跑通的解析断链）；
-5. 开发机替代：`ssh -L 35551:127.0.0.1:35551 tencent-cloud`（Redis/MinIO
-   同型）。
+5. 开发机替代：SSH 隧道——完整手册（~/.ssh/config 永久化、DBeaver/HexHub
+   连接参数、本地 9000 端口冲突坑）见
+   [ops/infra/DEV-ACCESS.md](../infra/DEV-ACCESS.md)。
 
 ## 阶段 D — 模板化推广
 
