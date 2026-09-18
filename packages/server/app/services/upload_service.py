@@ -35,7 +35,7 @@ from app.utils.sanitizer import sanitize_book_field
 
 logger = logging.getLogger('read-pal')
 
-ALLOWED_EXTENSIONS = {'.epub'}
+ALLOWED_EXTENSIONS = {'.epub', '.pdf'}
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
 
 

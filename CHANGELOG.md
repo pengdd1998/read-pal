@@ -67,6 +67,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tests mirror split (1759 pytest / 192 vitest), shared single-source layer,
   `agent.py` service extraction, ebooklib retired in favor of stdlib zipfile.
 
+- **PDF uploads re-enabled** (basic reading support): outline-based
+  chapters with per-page fallback, scanned-PDF detection
+  (`PDF_NO_EXTRACTABLE_TEXT`), 2000-page cap (`PDF_TOO_MANY_PAGES`), both
+  with localized copy; reader + API chain verified end-to-end on a real
+  356-page Chinese PDF (matrix B1a).
+
 ### Fixed (2026-09-06 → 2026-09-18)
 
 - **Reader**: cross-file chapter slices (Gutenberg TEI EPUBs) silently lost

@@ -10,6 +10,23 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger('read-pal')
 
+# Product caps for PDF ingestion (re-enabled 2026-09-18 after the EPUB-first
+# reading-experience buildout, 18ddfc22). PDFs are text-extraction lineage —
+# no covers/inline illustrations — so cap the pathological end of the range.
+MAX_PDF_PAGES = 2000
+# A text PDF of even one page extracts hundreds of chars; below this the
+# file is effectively a scan/image-only PDF and would ingest as an empty book.
+MIN_PDF_TEXT_CHARS = 200
+
+
+class PdfParseError(ValueError):
+    """Typed parse failure with an i18n-able code for the router to map."""
+
+    def __init__(self, code: str, **ctx: object):
+        super().__init__(code)
+        self.code = code
+        self.ctx = ctx
+
 
 # ---------------------------------------------------------------------------
 # PDF processing
@@ -157,9 +174,15 @@ async def process_pdf(file_path: str) -> dict:
 
     reader = PdfReader(file_path)
     total_pages = len(reader.pages)
+    if total_pages > MAX_PDF_PAGES:
+        raise PdfParseError('pdf_too_many_pages', max_pages=MAX_PDF_PAGES, actual_pages=total_pages)
     metadata = _extract_pdf_metadata(reader)
 
     pages_text, pages_html = _extract_page_text(reader)
+
+    total_text = sum(len(p) for p in pages_text)
+    if total_text < MIN_PDF_TEXT_CHARS:
+        raise PdfParseError('pdf_no_extractable_text', total_chars=total_text)
 
     # Try outline-based chapters
     chapters: list[dict] = []

@@ -193,7 +193,7 @@ read-pal exposes a comprehensive REST API under `/api/v1/`:
 | Category | Endpoints | Description |
 |----------|-----------|-------------|
 | Auth | 8 | Register, login, password reset, token refresh |
-| Books | 8 | CRUD, upload (EPUB; PDF on roadmap), tags, stats |
+| Books | 8 | CRUD, upload (EPUB full / PDF basic), tags, stats |
 | Reading | 7 | Sessions, stats, heartbeat, speed tracking |
 | Annotations | 7 | Highlights, notes, bookmarks, search, tags |
 | AI Companion | 7 | Chat, stream (SSE), summarize, explain, questions |
@@ -254,7 +254,7 @@ Areas where we'd love help:
 ## Roadmap
 
 ### Phase 1 — MVP (Current)
-- [x] EPUB reading with AI companion (PDF on roadmap)
+- [x] EPUB/PDF reading with AI companion
 - [x] Annotations and knowledge graph
 - [x] Spaced repetition flashcards
 - [x] Memory books

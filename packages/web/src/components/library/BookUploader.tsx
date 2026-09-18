@@ -10,7 +10,7 @@ interface BookUploaderProps {
  onUploadComplete: (book: Book) => void;
 }
 
-const VALID_MIME_TYPES = ['application/epub+zip', 'application/octet-stream'];
+const VALID_MIME_TYPES = ['application/epub+zip', 'application/pdf', 'application/octet-stream'];
 
 export const BookUploader = React.memo(function BookUploader({ onUploadComplete }: BookUploaderProps) {
  const t = useTranslations('library');
@@ -111,7 +111,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
  const ext = file.name.split('.').pop()?.toLowerCase();
  const isValid =
   VALID_MIME_TYPES.includes(file.type) ||
-  ext === 'epub';
+  ext === 'epub' || ext === 'pdf';
 
  if (!isValid) {
   setLastFile(null);
@@ -170,7 +170,7 @@ export const BookUploader = React.memo(function BookUploader({ onUploadComplete 
   <input
   ref={fileInputRef}
   type="file"
-  accept=".epub,application/epub+zip"
+  accept=".epub,.pdf,application/epub+zip,application/pdf"
   onChange={handleFileSelect}
   disabled={uploading || success}
   aria-label={t('upload_aria_label')}

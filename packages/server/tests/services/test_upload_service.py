@@ -28,11 +28,9 @@ class TestValidateFile:
     def test_valid_epub(self):
         assert validate_file('book.epub', 1024) is None
 
-    def test_pdf_rejected(self):
-        # EPUB-only uploads (PDF to be re-supported later).
-        result = validate_file('paper.pdf', 1024)
-        assert result is not None
-        assert '.pdf' in result
+    def test_pdf_accepted(self):
+        # PDF re-enabled 2026-09-18 (basic reading support; see test_pdf_upload.py).
+        assert validate_file('paper.pdf', 1024) is None
 
     def test_invalid_extension(self):
         result = validate_file('photo.jpg', 1024)
@@ -56,12 +54,11 @@ class TestValidateFile:
 
     def test_case_insensitive_extension(self):
         assert validate_file('BOOK.EPUB', 1024) is None
-        # PDF is rejected regardless of case (EPUB-only).
-        assert validate_file('Paper.PDF', 1024) is not None
+        assert validate_file('Paper.PDF', 1024) is None
 
     def test_double_extension(self):
-        # Path('archive.epub.pdf').suffix == '.pdf' → rejected (EPUB-only).
-        assert validate_file('archive.epub.pdf', 1024) is not None
+        # Path('archive.epub.pdf').suffix == '.pdf' → still a PDF, accepted.
+        assert validate_file('archive.epub.pdf', 1024) is None
 
 
 # ---------------------------------------------------------------------------

@@ -21,6 +21,7 @@ from app.services.upload_service import (
     stream_upload_to_tempfile,
     validate_file,
 )
+from app.services.parsers.pdf import PdfParseError
 from app.utils.i18n import _get_user_lang, not_found_error, t
 from app.utils.sanitizer import strip_html
 from app.middleware.rate_limiter import api_limiter
@@ -162,6 +163,17 @@ async def upload_book(
         return result
     except HTTPException:
         raise
+    except PdfParseError as exc:
+        # Typed parser verdicts (scanned PDF, page cap) get their own
+        # localized message instead of the generic PARSE_ERROR copy.
+        logger.info('upload.pdf_rejected user=%s file=%s code=%s', user['id'], file.filename, exc.code)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                'code': exc.code.upper(),
+                'message': t(f'errors.{exc.code}', lang, **exc.ctx),
+            },
+        ) from exc
     except (ValueError, OSError, KeyError, RuntimeError) as exc:
         logger.warning('upload.parse_failed user=%s file=%s error=%s', user['id'], file.filename, exc)
         raise HTTPException(
