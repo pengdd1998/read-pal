@@ -20,6 +20,12 @@ from app.utils.sanitizer import sanitize_book_field, sanitize_user_input
 
 logger = structlog.get_logger('read-pal.companion')
 
+# Routing key for LLM_FEATURE_ROUTING. The planner is deadline-bound (runs
+# BEFORE the first answer token), so it must not sit behind a 429-storming
+# primary: the default routing pins it to the stable provider. Keep this
+# constant decoupled from log_label copy so routing survives label edits.
+PLANNER_FEATURE = 'companion_tool_plan'
+
 # Cheap summary of what the answer prompt ALREADY has — the planner must
 # not re-request what context prep injected (keeps tool use minimal).
 _CONTEXT_SUMMARY_CAP = 400
@@ -72,6 +78,7 @@ async def plan_tool_calls(
         ],
         fallback=ToolPlanResult().model_dump(),
         log_label='Companion tool plan',
+        feature=PLANNER_FEATURE,
         schema_class=ToolPlanResult,
         user_id=str(user_id),
         book_id=str(book_id),

@@ -6,6 +6,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.exc import DBAPIError
 
+from tests.fixtures.credentials import fake_api_key
 from app.services.rag import (
     RAG_CACHE_PREFIX,
     _chunk_text,
@@ -216,14 +217,14 @@ class TestGetEmbedding:
 
         with patch('app.services.rag.embedding._get_http_client', return_value=mock_client):
             with patch('app.services.rag.embedding.get_settings') as mock_settings:
-                mock_settings.return_value.glm_api_key = 'test-key'
+                mock_settings.return_value.glm_api_key = fake_api_key('test', 'key')
                 result = await _get_embedding('hello world')
                 assert result == [0.1, 0.2, 0.3]
 
     @pytest.mark.asyncio
     async def test_no_api_key(self):
         with patch('app.services.rag.embedding.get_settings') as mock_settings:
-            mock_settings.return_value.glm_api_key = 'dev-key'
+            mock_settings.return_value.glm_api_key = fake_api_key('dev', 'key')
             mock_settings.return_value.embedding_base_url = ''
             mock_settings.return_value.embedding_api_key = ''
             mock_settings.return_value.glm_base_url = 'https://open.bigmodel.cn/api/paas/v4'
@@ -237,7 +238,7 @@ class TestGetEmbedding:
 
         with patch('app.services.rag.embedding._get_http_client', return_value=mock_client):
             with patch('app.services.rag.embedding.get_settings') as mock_settings:
-                mock_settings.return_value.glm_api_key = 'test-key'
+                mock_settings.return_value.glm_api_key = fake_api_key('test', 'key')
                 result = await _get_embedding('hello world')
                 assert result is None
 
@@ -292,7 +293,7 @@ class TestPrecomputeBookEmbeddings:
             ),
             patch('app.db.async_session', mock_factory),
         ):
-            mock_settings.return_value.glm_api_key = 'test-key'
+            mock_settings.return_value.glm_api_key = fake_api_key('test', 'key')
             mock_settings.return_value.max_embedding_calls = 100
             mock_settings.return_value.embedding_enabled = True
             await precompute_book_embeddings(book_id, document_id, chapters)
@@ -307,7 +308,7 @@ class TestPrecomputeBookEmbeddings:
     @pytest.mark.asyncio
     async def test_skips_without_api_key(self):
         with patch('app.services.rag.precompute.get_settings') as mock_settings:
-            mock_settings.return_value.glm_api_key = 'dev-key'
+            mock_settings.return_value.glm_api_key = fake_api_key('dev', 'key')
             await precompute_book_embeddings(uuid4(), uuid4(), [{'title': 'T', 'content': 'C'}])
             # No error, just skips
 

@@ -31,6 +31,7 @@ import uuid
 
 import httpx
 import pytest
+from tests.fixtures.credentials import fake_password
 
 pytestmark = [
     pytest.mark.smoke,
@@ -54,7 +55,7 @@ async def auth_headers(client):
     """Register + login a unique test user, yield Authorization headers."""
     suffix = uuid.uuid4().hex[:8]
     email = f'smoke-{suffix}@readpal.example.com'
-    password = 'SmokePass123!'
+    password = fake_password('SmokePass', '123')
 
     # Register (409 is fine if user somehow already exists)
     r = await client.post('/api/v1/auth/register', json={

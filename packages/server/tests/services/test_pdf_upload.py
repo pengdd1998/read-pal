@@ -81,8 +81,7 @@ class TestProcessPdfScannedDetection:
         for _ in range(3):
             writer.add_blank_page(width=612, height=792)
         p = tmp_path / 'scan.pdf'
-        with open(p, 'wb') as fh:
-            writer.write(fh)
+        writer.write(p)
 
         with pytest.raises(PdfParseError) as exc_info:
             await process_pdf(str(p))

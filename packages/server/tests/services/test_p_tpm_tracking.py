@@ -12,6 +12,8 @@ and disabled-by-default (max_tpm=0 or tpm_enforced=False) is a no-op.
 
 from __future__ import annotations
 
+from tests.fixtures.credentials import fake_api_key
+
 import time
 from unittest.mock import patch
 
@@ -27,7 +29,7 @@ def _make_state(max_tpm: int = 0) -> ProviderState:
     cfg = ProviderConfig(
         name='test-provider',
         base_url='http://localhost',
-        api_key='test',
+        api_key=fake_api_key('test'),
         models={'default': 'test-model'},
         max_tpm=max_tpm,
     )

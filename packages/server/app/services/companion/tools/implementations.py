@@ -85,6 +85,14 @@ async def get_annotations(
     return {'items': items}
 
 
+def _chapter_withheld(index: int, current_page: int, is_completed: bool) -> bool:
+    """TL4-02 / P7.4: chapters beyond the reader's progress stay withheld
+    unless the book is completed. ``index`` is 1-based; ``current_page`` is
+    the 0-based chapter index the reader is on (same semantics as the RAG
+    spoiler limit in rag/context.py)."""
+    return not is_completed and (index - 1) > current_page
+
+
 async def get_chapter(
     db: AsyncSession, user_id: UUID, book_id: UUID, args: dict[str, Any],
 ) -> dict[str, Any]:
@@ -108,6 +116,22 @@ async def get_chapter(
         return {'error': f'index out of range: 1..{len(chapters)}'}
 
     chapter = chapters[index - 1]
+
+    # TL4-02 / P7.4 contract: the tool must not be a spoiler bypass. The
+    # requested chapter sits beyond the reader's progress and the book is
+    # not completed — return a boundary-held stub instead of full text
+    # (title only, so legitimate "did I finish chapter 7" lookups still work).
+    from app.models.book import BookStatus
+    if _chapter_withheld(index, book.current_page, book.status == BookStatus.completed):
+        return {
+            'index': index,
+            'title': chapter.get('title', ''),
+            'held': 'unread-chapter',
+            'note': 'Chapter beyond reading progress — full text withheld '
+                    '(spoiler boundary). Encourage the reader to keep reading.',
+            'total_chapters': len(chapters),
+        }
+
     return {
         'index': index,
         'title': chapter.get('title', ''),

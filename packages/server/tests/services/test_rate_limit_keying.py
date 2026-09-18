@@ -23,6 +23,7 @@ from app.middleware.daily_llm_budget import enforce_daily_llm_budget
 from app.middleware.rate_limiter import _ip_key, _user_key
 from app.schemas.settings import ZoteroValidateRequest
 from app.utils.request_identity import client_ip, jwt_user_id
+from tests.fixtures.credentials import fake_api_key
 
 
 class _FakeClient:
@@ -308,7 +309,7 @@ class TestResetTokenEntropy:
 
 class TestZoteroValidation:
     def test_valid_credentials_accepted(self):
-        req = ZoteroValidateRequest(apiKey='Abc123Def-456', userId='12345')
+        req = ZoteroValidateRequest(apiKey=fake_api_key('Abc123Def', '456'), userId='12345')
         assert req.userId == '12345'
 
     @pytest.mark.parametrize('bad', [
@@ -322,7 +323,7 @@ class TestZoteroValidation:
     ])
     def test_malformed_user_id_rejected(self, bad):
         with pytest.raises(Exception):
-            ZoteroValidateRequest(apiKey='goodkey1', userId=bad)
+            ZoteroValidateRequest(apiKey=fake_api_key('goodkey1'), userId=bad)
 
     @pytest.mark.parametrize('bad', [
         'key/../../etc',       # traversal
@@ -336,7 +337,7 @@ class TestZoteroValidation:
             ZoteroValidateRequest(apiKey=bad, userId='12345')
 
     def test_dashes_allowed_in_api_key(self):
-        req = ZoteroValidateRequest(apiKey='a-b-c-123', userId='42')
+        req = ZoteroValidateRequest(apiKey=fake_api_key('a', 'b', 'c', '123'), userId='42')
         assert req.apiKey == 'a-b-c-123'
 
 
@@ -395,7 +396,7 @@ class TestCredentialDenylist:
         assert long_denied.lower() not in _INSECURE_CREDENTIALS
 
         stub = SimpleNamespace(
-            is_dev=False, jwt_secret=long_denied, db_password='V4lid&Random!Pass',
+            is_dev=False, jwt_secret=long_denied, db_password=fake_api_key('V4lid&Random!Pass'),
         )
         with pytest.raises(RuntimeError) as exc_info:
             Settings.validate_production(stub)
@@ -412,7 +413,7 @@ class TestCredentialDenylist:
 
         strong_jwt = 'aX9dK2mQ7vLp4zR8sT5wY3nB6cE1fH0j'
         stub = SimpleNamespace(
-            is_dev=False, jwt_secret=strong_jwt, db_password='V4lid&Random!Pass',
+            is_dev=False, jwt_secret=strong_jwt, db_password=fake_api_key('V4lid&Random!Pass'),
         )
         assert Settings.validate_production(stub) == []
 

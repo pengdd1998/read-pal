@@ -17,7 +17,6 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import text
 
 from app.prompts import ALL_TEMPLATES, RESEARCH_HUMAN, RESEARCH_SYSTEM
 from app.schemas.llm_outputs import ResearchBrief

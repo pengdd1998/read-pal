@@ -241,7 +241,7 @@ def _parse_args() -> argparse.Namespace:
     """Parse CLI args. Live mode is opt-in via ``--live``."""
     parser = argparse.ArgumentParser(
         prog='app.eval.eval_runner',
-        description='Run prompt-quality eval (mock or live mode).',
+        description='Run prompt-quality evaluation in mock or live mode.',
     )
     parser.add_argument(
         '--live',

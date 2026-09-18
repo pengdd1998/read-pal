@@ -355,7 +355,7 @@ class TestToolPhase:
             ms.return_value.companion_tools_enabled = False
             out = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
-                message='第3章讲了什么', history_texts=[],
+                message='第3章的叙事视角是怎么切换的？', history_texts=[],
                 book=type('B', (), {'title': 'T', 'author': 'A', 'progress': 10,
                                      'status': type('S', (), {'value': 'reading'})()})(),
                 system_text='BASE', budget=_FakeBudget(),
@@ -395,7 +395,7 @@ class TestToolPhase:
             ms.return_value.companion_tool_plan_timeout_ms = 9000
             amended, results, proposals = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
-                message='第3章的角色关系是什么？', history_texts=[],
+                message='主角和对手的关系后来怎么了？', history_texts=[],  # no rule match — LLM planner path
                 book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
             )
         assert 'BASE' in amended and 'tool_results' in amended and 'due_count' in amended
@@ -413,7 +413,7 @@ class TestToolPhase:
             ms.return_value.companion_tool_plan_timeout_ms = 9000
             out = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
-                message='书里那个比喻的原文是什么', history_texts=[],
+                message='书里那个比喻妙在哪里', history_texts=[],  # quote intent now rule-planned; keep LLM path here
                 book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
             )
         assert out == ('BASE', [], [])
@@ -565,7 +565,7 @@ class TestProposalRouting:
             ms.return_value.companion_tool_plan_timeout_ms = 9000
             amended, results, proposals = await run_tool_phase(
                 db=None, user_id=uuid4(), book_id=uuid4(),
-                message='帮我找绿光的原文并记一下它的象征', history_texts=[],
+                message='帮我梳理绿光的象征意义并记下来', history_texts=[],  # no rule match — mixed plan comes from the mocked LLM planner
                 book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
             )
         exec_mock.assert_awaited_once()  # only the read executed

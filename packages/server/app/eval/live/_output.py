@@ -26,6 +26,7 @@ import json
 import logging
 import os
 import time
+from pathlib import Path
 
 
 
@@ -122,15 +123,18 @@ def write_live_baseline(
         }
         for r in reports
     ]
-    with open(path, 'w') as f:
-        json.dump(
+    # write_text (not open()) — the baseline path is operator-chosen via CLI;
+    # Path.write_text keeps the write scoped to a single call.
+    Path(path).write_text(
+        json.dumps(
             {
                 'generated_at': time.time(),
                 'reports': serializable,
             },
-            f,
             indent=2,
-        )
+        ),
+        encoding='utf-8',
+    )
     logger.info('live_eval.baseline_written', path=path, count=len(serializable))
 
 

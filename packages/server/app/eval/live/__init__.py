@@ -1,4 +1,4 @@
-"""Live eval (split M3.2 — was one 770-line module with PLR0915).
+"""Live evaluation module (split M3.2 — was one 770-line file with PLR0915).
 
 _cases: per-service golden handlers (study/synthesis/conversation/
         research/coach) — pure case assembly.

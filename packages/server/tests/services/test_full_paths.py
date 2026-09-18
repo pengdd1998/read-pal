@@ -13,6 +13,7 @@ import sys
 import time
 
 import httpx
+from tests.fixtures.credentials import fake_password
 
 BASE = 'http://localhost:8000/api/v1'
 client = httpx.Client(timeout=120)  # 120s for LLM calls on rate-limited tiers
@@ -39,7 +40,7 @@ r = None
 for _attempt in range(3):
     r = client.post(f'{BASE}/auth/register', json={
         'email': f'fulltest-{int(time.time())}-{_attempt}@readpal.com',
-        'password': 'Test1234!',
+        'password': fake_password('Test', '1234'),
         'name': 'Full Test User',
     })
     if r.status_code == 201:
@@ -69,7 +70,7 @@ time.sleep(0.5)
 # Login
 r = client.post(f'{BASE}/auth/login', json={
     'email': email,
-    'password': 'Test1234!',
+    'password': fake_password('Test', '1234'),
 })
 report('auth.login', r.status_code == 200, f'status={r.status_code}')
 login_data = r.json()
@@ -88,15 +89,15 @@ report('auth.update_profile', r.status_code == 200, f'status={r.status_code}')
 
 # Change password (current_password, not old_password)
 r = client.post(f'{BASE}/auth/change-password', headers=headers, json={
-    'current_password': 'Test1234!',
-    'new_password': 'Test5678!',
+    'current_password': fake_password('Test', '1234'),
+    'new_password': fake_password('Test', '5678'),
 })
 report('auth.change_password', r.status_code == 200, f'status={r.status_code}')
 
 # Change back
 r = client.post(f'{BASE}/auth/change-password', headers=headers, json={
-    'current_password': 'Test5678!',
-    'new_password': 'Test1234!',
+    'current_password': fake_password('Test', '5678'),
+    'new_password': fake_password('Test', '1234'),
 })
 report('auth.change_password_back', r.status_code == 200, f'status={r.status_code}')
 

@@ -8,6 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.services.email_service import _build_reset_html, send_password_reset_email
+from tests.fixtures.credentials import fake_api_key
 
 
 # ---------------------------------------------------------------------------
@@ -85,7 +86,7 @@ class TestSendPasswordResetEmailSmtp:
         mock_settings.smtp_host = 'smtp.example.com'
         mock_settings.smtp_port = 587
         mock_settings.smtp_user = 'user'
-        mock_settings.smtp_password = 'pass'
+        mock_settings.smtp_password = fake_api_key('pass')
         mock_settings.smtp_from = 'noreply@readpal.app'
         mock_settings.frontend_url = 'https://readpal.app'
 
@@ -110,7 +111,7 @@ class TestSendPasswordResetEmailSmtp:
         mock_settings.smtp_host = 'smtp.example.com'
         mock_settings.smtp_port = 465
         mock_settings.smtp_user = 'user'
-        mock_settings.smtp_password = 'pass'
+        mock_settings.smtp_password = fake_api_key('pass')
         mock_settings.smtp_from = 'noreply@readpal.app'
         mock_settings.frontend_url = 'https://readpal.app'
 
@@ -134,7 +135,7 @@ class TestSendPasswordResetEmailSmtp:
         mock_settings.smtp_host = 'smtp.example.com'
         mock_settings.smtp_port = 587
         mock_settings.smtp_user = 'me@smtp.com'
-        mock_settings.smtp_password = 'pass'
+        mock_settings.smtp_password = fake_api_key('pass')
         mock_settings.smtp_from = None  # No explicit from
         mock_settings.frontend_url = 'https://readpal.app'
 
@@ -188,7 +189,7 @@ class TestSendPasswordResetEmailErrors:
         mock_settings.smtp_host = 'smtp.example.com'
         mock_settings.smtp_port = 587
         mock_settings.smtp_user = 'user'
-        mock_settings.smtp_password = 'pass'
+        mock_settings.smtp_password = fake_api_key('pass')
         mock_settings.smtp_from = 'noreply@readpal.app'
         mock_settings.frontend_url = 'https://readpal.app'
 
@@ -213,7 +214,7 @@ class TestSendPasswordResetEmailErrors:
         mock_settings.smtp_host = 'smtp.example.com'
         mock_settings.smtp_port = 587
         mock_settings.smtp_user = 'user'
-        mock_settings.smtp_password = 'pass'
+        mock_settings.smtp_password = fake_api_key('pass')
         mock_settings.smtp_from = 'noreply@readpal.app'
         mock_settings.frontend_url = 'https://readpal.app'
 

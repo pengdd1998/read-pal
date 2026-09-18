@@ -1,5 +1,6 @@
 """Tests for hot-pluggable LLM providers (registry hot-reload + ops router)."""
 
+from tests.fixtures.credentials import fake_api_key
 import json
 import os
 from unittest.mock import patch
@@ -38,7 +39,7 @@ class TestFingerprint:
 
     def test_changed_key_changes_fingerprint(self):
         c1 = _cfg('glm')
-        c2 = {**_cfg('glm'), 'api_key': 'key-different-987654'}
+        c2 = {**_cfg('glm'), 'api_key': fake_api_key('key', 'different', '987654')}
         assert ProviderRegistry._fingerprint([ProviderConfig(**c1)]) != ProviderRegistry._fingerprint([ProviderConfig(**c2)])
 
     def test_changed_priority_changes_fingerprint(self):
@@ -123,11 +124,11 @@ class TestHotReload:
         reg = ProviderRegistry()
         reg.initialize()
 
-        cfg2 = ProviderConfig(**{**_cfg('glm'), 'api_key': 'key-rotated-998877'})
+        cfg2 = ProviderConfig(**{**_cfg('glm'), 'api_key': fake_api_key('key', 'rotated', '998877')})
         settings2 = type('S', (), {'provider_configs': [cfg2], 'tpm_enforced': False, 'feature_routing': {}})()
         mock_settings.return_value = settings2
         assert reg.reload_if_changed_sync() is True
-        assert reg.get_provider_by_name('glm').config.api_key == 'key-rotated-998877'
+        assert reg.get_provider_by_name('glm').config.api_key == fake_api_key('key', 'rotated', '998877')
 
 
 class TestProvidersRouter:

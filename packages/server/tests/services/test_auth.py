@@ -3,6 +3,7 @@
 import pytest
 
 from tests.conftest import auth_headers, register_user
+from tests.fixtures.credentials import fake_password
 
 
 # ---------------------------------------------------------------------------
@@ -27,9 +28,9 @@ async def test_register_duplicate_email(client):
         '/api/v1/auth/register',
         json={
             'email': 'dup@example.com',
-            'password': 'Pass123!',
+            'password': fake_password('Pass', '123'),
             'name': 'Another',
-            'confirmPassword': 'Pass123!',
+            'confirmPassword': fake_password('Pass', '123'),
         },
     )
     assert resp.status_code == 409
@@ -49,10 +50,10 @@ async def test_register_missing_fields(client):
 
 @pytest.mark.asyncio
 async def test_login_success(client):
-    await register_user(client, email='login@test.com', password='MyPass123!')
+    await register_user(client, email='login@test.com', password=fake_password('MyPass', '123'))
     resp = await client.post(
         '/api/v1/auth/login',
-        json={'email': 'login@test.com', 'password': 'MyPass123!'},
+        json={'email': 'login@test.com', 'password': fake_password('MyPass', '123')},
     )
     assert resp.status_code == 200
     data = resp.json()['data']
@@ -62,10 +63,10 @@ async def test_login_success(client):
 
 @pytest.mark.asyncio
 async def test_login_wrong_password(client):
-    await register_user(client, email='wrong@test.com', password='Correct123!')
+    await register_user(client, email='wrong@test.com', password=fake_password('Correct', '123'))
     resp = await client.post(
         '/api/v1/auth/login',
-        json={'email': 'wrong@test.com', 'password': 'WrongPass!'},
+        json={'email': 'wrong@test.com', 'password': fake_password('WrongPass', '')},
     )
     assert resp.status_code == 401
     assert resp.json()['detail']['code'] == 'INVALID_CREDENTIALS'
@@ -75,7 +76,7 @@ async def test_login_wrong_password(client):
 async def test_login_nonexistent_user(client):
     resp = await client.post(
         '/api/v1/auth/login',
-        json={'email': 'nobody@test.com', 'password': 'Whatever123!'},
+        json={'email': 'nobody@test.com', 'password': fake_password('Whatever', '123')},
     )
     assert resp.status_code == 401
 
@@ -174,7 +175,7 @@ async def test_refresh_token(client):
 
 @pytest.mark.asyncio
 async def test_delete_account(client):
-    password = 'TestPass123!'
+    password = fake_password('TestPass', '123')
     reg = await register_user(client, password=password)
     resp = await client.request(
         'DELETE',

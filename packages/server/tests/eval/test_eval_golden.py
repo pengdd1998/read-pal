@@ -26,7 +26,7 @@ class TestGoldenDataset:
     def test_all_golden_cases_pass(self):
         failures = [r for r in self.results if not r.passed]
         assert not failures, (
-            f'{len(failures)} golden eval(s) failed:\n'
+            f'{len(failures)} golden case check(s) failed:\n'
             + '\n'.join(
                 f'  {r.service}/{r.action}: {"; ".join(r.errors)}'
                 for r in failures

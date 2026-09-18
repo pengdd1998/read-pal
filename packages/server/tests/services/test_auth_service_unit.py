@@ -12,6 +12,7 @@ import pytest
 from jose import jwt as jose_jwt
 
 from app.services import auth
+from tests.fixtures.credentials import fake_api_key, fake_password
 
 
 # ---------------------------------------------------------------------------
@@ -91,8 +92,8 @@ def test_build_auth_response_returns_expected_shape():
     from app.services.auth._login import _build_auth_response
 
     user = _make_user()
-    access_token = 'access.jwt.token'
-    refresh_token = 'refresh.jwt.token'
+    access_token = fake_api_key('access', 'jwt', 'token')
+    refresh_token = fake_api_key('refresh', 'jwt', 'token')
 
     result = _build_auth_response(user, access_token, refresh_token)
 
@@ -125,7 +126,7 @@ async def test_authenticate_user_success(mock_create_tokens, mock_verify, mock_g
     db.execute = AsyncMock(return_value=result_mock)
 
     with patch('app.services.auth._login._get_user_lang', return_value='en'):
-        result = await auth.authenticate_user(db, 'user@example.com', 'password123', 'web')
+        result = await auth.authenticate_user(db, 'user@example.com', fake_password('password', '123'), 'web')
 
     assert result['token'] == 'access_tok'
     assert result['refreshToken'] == 'refresh_tok'

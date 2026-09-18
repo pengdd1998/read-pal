@@ -3,6 +3,7 @@
 import pytest
 
 from tests.conftest import auth_headers, register_user
+from tests.fixtures.credentials import fake_password
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +90,7 @@ async def test_update_me_unauthenticated(client):
 @pytest.mark.asyncio
 async def test_delete_account(client):
     """DELETE /account deletes user successfully with password confirmation."""
-    password = 'TestPass123!'
+    password = fake_password('TestPass', '123')
     reg = await register_user(client, password=password)
     headers = auth_headers(reg['token'])
 

@@ -155,7 +155,12 @@ class Settings(BaseSettings):
 
     # Multi-provider LLM routing
     llm_providers: str = ''  # JSON array of ProviderConfig dicts
-    llm_feature_routing: str = '{}'  # JSON dict: feature -> strategy
+    # JSON dict: feature -> strategy. Default pins the deadline-bound tool
+    # planner to the stable provider: the planner runs BEFORE the answer's
+    # first token, and on a 429-storming primary its retry ladder burned the
+    # whole 9s deadline (slow 429s ~19s each x 3 attempts), degrading every
+    # fresh-session content question to a no-tools answer (WT4-02, 09-18).
+    llm_feature_routing: str = '{"companion_tool_plan": "mimo"}'
 
     # JWT
     jwt_secret: str

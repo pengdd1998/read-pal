@@ -57,43 +57,55 @@ async def run_tool_phase(
     if not get_settings().companion_tools_enabled:
         return system_text, [], []
 
-    # Fast-path gate: only book-content questions pay the planning hop;
-    # skip/general turns keep today's zero-added-latency behavior.
-    if classify_query(message, history_texts) != 'content':
-        return system_text, [], []
-
-    from app.services.companion.tools.planner import plan_tool_calls
-
-    # Hard deadline (plan §3, restored 2026-09-14): the planner runs
-    # BEFORE any first token, so its whole latency is dead air. Under a
-    # 429-throttled glm the safe_invoke retry ladder (3 attempts × [5,15]s
-    # backoff + 15s per-attempt timeout ≈ 70s) used to burn here before
-    # the mimo fallback even started — the TL test round caught first
-    # questions hanging exactly this way. Past the deadline: skip tools,
-    # answer directly (tools are an enhancement, never a prerequisite).
     import asyncio as _asyncio
 
     t0 = time.monotonic()
-    deadline_s = _plan_deadline_s()
-    try:
-        plan = await _asyncio.wait_for(
-            plan_tool_calls(
-                user_id=user_id, book_id=book_id, message=message,
-                book_title=book.title, book_author=book.author,
-                progress=book.progress,
-                status=book.status.value if hasattr(book.status, 'value') else str(book.status),
-                has_rag=True,  # content-classified turns always ran RAG
-                has_annotations=any(t for t in history_texts),
-            ),
-            timeout=deadline_s,
-        )
-    except TimeoutError:
-        logger.warning(
-            'companion.tool_phase_skipped reason=planner_deadline '
-            'deadline_s=%s user=%s book=%s',
-            deadline_s, str(user_id), str(book_id),
-        )
-        return system_text, [], []
+
+    # Rule fast path FIRST (09-18, K5/WT4-02): high-confidence intents get a
+    # deterministic plan in <1ms — free, and a rule hit is itself proof of
+    # content intent (quote/progress/annotations asks), so the classifier
+    # gate below must not pre-empt it. The LLM planner is deadline-bound and
+    # on a bad provider day (glm 429 ladder ≈ 45s, mimo reasoning 15-42s)
+    # burned the whole budget before the answer's first token. None means
+    # "no high-confidence rule" → classifier gate → LLM planner.
+    from app.services.companion.tools.rule_plan import rule_plan
+    plan_source = 'rules'
+    plan = rule_plan(message)
+    if plan is None:
+        # Only book-content questions pay the LLM planning hop;
+        # skip/general turns keep zero-added-latency behavior.
+        if classify_query(message, history_texts) != 'content':
+            return system_text, [], []
+        plan_source = 'llm'
+        from app.services.companion.tools.planner import plan_tool_calls
+
+        # Hard deadline (plan §3, restored 2026-09-14): the planner runs
+        # BEFORE any first token, so its whole latency is dead air. Under a
+        # 429-throttled glm the safe_invoke retry ladder (3 attempts × [5,15]s
+        # backoff + 15s per-attempt timeout ≈ 70s) used to burn here before
+        # the mimo fallback even started — the TL test round caught first
+        # questions hanging exactly this way. Past the deadline: skip tools,
+        # answer directly (tools are an enhancement, never a prerequisite).
+        deadline_s = _plan_deadline_s()
+        try:
+            plan = await _asyncio.wait_for(
+                plan_tool_calls(
+                    user_id=user_id, book_id=book_id, message=message,
+                    book_title=book.title, book_author=book.author,
+                    progress=book.progress,
+                    status=book.status.value if hasattr(book.status, 'value') else str(book.status),
+                    has_rag=True,  # content-classified turns always ran RAG
+                    has_annotations=any(t for t in history_texts),
+                ),
+                timeout=deadline_s,
+            )
+        except TimeoutError:
+            logger.warning(
+                'companion.tool_phase_skipped reason=planner_deadline '
+                'deadline_s=%s user=%s book=%s',
+                deadline_s, str(user_id), str(book_id),
+            )
+            return system_text, [], []
     if not plan:
         return system_text, [], []
 
@@ -149,6 +161,7 @@ async def run_tool_phase(
 
     logger.info(
         'companion.tool_phase_completed',
+        plan_source=plan_source,
         tools=[r['tool'] for r in results],
         ok_count=sum(1 for r in results if r.get('ok')),
         proposals=[p['tool'] for p in proposals],

@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.services.llm.circuit_breaker import CircuitBreaker, CircuitState
+from tests.fixtures.credentials import fake_api_key
 
 
 class TestCircuitBreakerProbeInFlight:
@@ -60,7 +61,7 @@ class TestRegistryExcludesProbeInFlight:
 
         # Provider A: HALF_OPEN with probe in flight
         cfg_a = ProviderConfig(
-            name='A', base_url='http://a', api_key='k',
+            name='A', base_url='http://a', api_key=fake_api_key('k'),
             models={'default': 'm'}, priority=1,
         )
         state_a = ProviderState(config=cfg_a)
@@ -93,7 +94,7 @@ class TestRegistryExcludesProbeInFlight:
         registry = ProviderRegistry()
 
         cfg_a = ProviderConfig(
-            name='A', base_url='http://a', api_key='k',
+            name='A', base_url='http://a', api_key=fake_api_key('k'),
             models={'default': 'm'}, priority=1,
         )
         cfg_b = ProviderConfig(
