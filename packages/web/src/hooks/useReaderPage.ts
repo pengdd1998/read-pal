@@ -142,10 +142,9 @@ export function useReaderPage() {
 
   // --- Keyboard shortcuts ---
   useKeyboardShortcuts({
-    currentChapter, chaptersLength: chapters.length, sidebarOpen: ui.sidebarOpen,
+    sidebarOpen: ui.sidebarOpen,
     showShortcutsHelp: ui.showShortcutsHelp, showMobileSettings: ui.showMobileSettings,
     tocOpen: ui.tocOpen, synthesisOpen: ui.synthesisOpen,
-    onChapterChange: handleChapterChange,
     onToggleBookmark: annotationActions.handleToggleBookmark,
     onSetHighlightMode: setHighlightMode,
     onSetTocOpen: ui.setTocOpen,

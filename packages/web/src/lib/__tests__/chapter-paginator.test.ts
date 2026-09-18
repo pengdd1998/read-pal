@@ -38,11 +38,30 @@ describe('splitChapterIntoPages', () => {
   });
 
   it('keeps nested structures as one balanced block', () => {
-    const nested = '<div class="chapter"><p>one</p><p>two</p><p>three</p></div>';
+    // Lone wrapper divs are hoisted before pagination (single-wrapper
+    // chapters must not render as one overlong page), so real depth sits
+    // in sibling sect blocks: each closes as one balanced top-level block.
+    const nested = '<div class="chapter"><div class="sect"><p>one.</p></div><div class="sect"><p>two.</p></div></div>';
     const pages = splitChapterIntoPages(nested, DEFAULT_MAX_CHARS_PER_PAGE);
     // Fits in one page
     expect(pages).toHaveLength(1);
-    expect(pages[0].html).toBe(nested);
+    for (const page of pages) {
+      expect(isBalanced(page.html)).toBe(true);
+    }
+    expect(pages.map((p) => p.html).join('')).toContain('one.');
+    expect(pages.map((p) => p.html).join('')).toContain('two.');
+  });
+
+  it('hoists a lone wrapper div so a wrapped long chapter still paginates', () => {
+    const paras = Array.from(
+      { length: 30 },
+      (_, i) => `<p>paragraph ${i} of a chapter wrapped in a single div.</p>`,
+    );
+    const pages = splitChapterIntoPages(`<div class="chapter">${paras.join('\n')}</div>`, 400);
+    expect(pages.length).toBeGreaterThan(1);
+    for (const page of pages) {
+      expect(isBalanced(page.html)).toBe(true);
+    }
   });
 
   it('emits balanced per-page HTML for nested long chapters', () => {
@@ -99,7 +118,9 @@ describe('invisible metadata blocks', () => {
   });
 
   it('keeps style tags nested inside visible containers', () => {
-    const raw = '<div class="sect"><style>.x{}</style><p>visible text</p></div>';
+    // A sect wrapper WITH siblings is not hoisted, so the nested <style>
+    // stays inside a visible container and is kept with it.
+    const raw = '<div class="sect"><style>.x{}</style><p>visible text.</p></div><p>sibling.</p>';
     const pages = splitChapterIntoPages(raw, 4000);
     expect(pages[0].html).toContain('<div');
     expect(pages[0].html).toContain('visible text');

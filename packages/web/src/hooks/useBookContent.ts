@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '@/lib/api/client';
 import { analytics } from '@/lib/analytics';
+import { safeGetItem } from '@/lib/offline/safe-storage';
 import { warn } from '@/lib/logger';
 import { splitChapterIntoPages, DEFAULT_MAX_CHARS_PER_PAGE, type PageSegment } from '@/lib/reader/chapter-paginator';
 import type { Book, Chapter, Annotation } from '@read-pal/shared';
@@ -68,10 +69,24 @@ export function useBookContent(
           const chapterList = data.chapters ?? [];
           setBook(data.book);
           setChapters(chapterList);
-          const startPage = data.book.currentPage || 0;
+          let startPage = data.book.currentPage || 0;
+          let savedSegment = data.book.currentSegment ?? 0;
+          // Reload/close never runs the unmount save's server PATCH race-free
+          // (pagehide keepalive may land after this GET), so a fresh (<24h)
+          // localStorage record wins — the device's own last position.
+          try {
+            const raw = safeGetItem(`readpal-progress-${bookId}`);
+            if (raw) {
+              const rec = JSON.parse(raw) as { current_page?: number; current_segment?: number; saved_at?: number };
+              if (rec.saved_at && Date.now() - rec.saved_at < 24 * 3600_000
+                && Number.isInteger(rec.current_page) && (rec.current_page ?? 0) < chapterList.length) {
+                startPage = rec.current_page ?? 0;
+                savedSegment = rec.current_segment ?? 0;
+              }
+            }
+          } catch { /* corrupted record — fall back to server values */ }
           setCurrentChapter(Math.min(startPage, Math.max(chapterList.length - 1, 0)));
           // Restore saved segment position
-          const savedSegment = data.book.currentSegment;
           if (savedSegment && savedSegment > 0) {
             setCurrentSegment(savedSegment);
           }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getAuthToken } from '@/lib/auth-fetch';
 import { API_BASE_URL, api } from '@/lib/api/client';
 import { warn } from '@/lib/logger';
@@ -33,40 +33,51 @@ export function useReaderProgress({
   scrollProgressRef.current = chapterScrollProgress;
   currentSegmentRef.current = currentSegment;
 
-  // Save progress on leave
+  // Save progress on leave. Effect cleanup alone never runs for a reload or
+  // tab close (React does not unmount on page unload), which silently lost
+  // the reading position since the last SPA navigation (READ-07) — the
+  // keepalive fetch below was built for unload delivery, so also fire it
+  // from pagehide.
+  const saveProgress = useCallback(() => {
+    const token = getAuthToken();
+    const chapter = currentChapterRef.current;
+    const scroll = Math.min(1, Math.max(0, scrollProgressRef.current));
+    const segment = currentSegmentRef.current;
+    // Persist to localStorage as fallback in case keepalive fetch is dropped
+    try {
+      safeSetItem(`readpal-progress-${bookId}`, JSON.stringify({
+        current_page: chapter,
+        scroll_progress: scroll,
+        current_segment: segment,
+        saved_at: Date.now(),
+      }));
+    } catch (e) { warn('useReaderProgress: localStorage save failed:', e); }
+    try {
+      fetch(`${API_BASE_URL}/api/v1/books/${bookId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ current_page: chapter, scroll_progress: scroll, current_segment: segment }),
+        keepalive: true,
+      }).catch((err) => {
+        warn('Reader: keepalive progress save failed', err);
+      });
+    } catch (err) {
+      warn('Reader: keepalive progress save failed', err);
+    }
+  }, [bookId]);
+
   useEffect(() => {
     if (loading || !bookId) return;
+    const onPageHide = () => saveProgress();
+    window.addEventListener('pagehide', onPageHide);
     return () => {
-      const token = getAuthToken();
-      const chapter = currentChapterRef.current;
-      const scroll = Math.min(1, Math.max(0, scrollProgressRef.current));
-      const segment = currentSegmentRef.current;
-      // Persist to localStorage as fallback in case keepalive fetch is dropped
-      try {
-        safeSetItem(`readpal-progress-${bookId}`, JSON.stringify({
-          current_page: chapter,
-          scroll_progress: scroll,
-          current_segment: segment,
-          saved_at: Date.now(),
-        }));
-      } catch (e) { warn('useReaderProgress: localStorage save failed:', e); }
-      try {
-        fetch(`${API_BASE_URL}/api/v1/books/${bookId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ current_page: chapter, scroll_progress: scroll, current_segment: segment }),
-          keepalive: true,
-        }).catch((err) => {
-          warn('Reader: keepalive progress save failed', err);
-        });
-      } catch (err) {
-        warn('Reader: keepalive progress save failed', err);
-      }
+      window.removeEventListener('pagehide', onPageHide);
+      saveProgress();
     };
-  }, [bookId, loading]);
+  }, [bookId, loading, saveProgress]);
 
   // Reading speed (fetch once per book). Uses pages/hour rather than the
   // derived wpm: the backend's wpm = pph * 250 / 60 assumes 250 words/page,

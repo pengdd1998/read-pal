@@ -176,11 +176,14 @@ export const FeatureTour = React.memo(function FeatureTour() {
 
   {/* Tooltip card */}
   <div
-  className={`fixed z-[70] w-72 pointer-events-auto animate-scale-in ${alignClass}`}
-  style={{ top, left }}
-  onClick={(e) => e.stopPropagation()}
+   className={`fixed z-[70] w-72 pointer-events-auto ${alignClass}`}
+   style={{ top, left }}
+   onClick={(e) => e.stopPropagation()}
   >
-  <div className="bg-surface-0 rounded-xl shadow-2xl border border-surface-2 overflow-hidden">
+  {/* scale-in animates `transform`, which would permanently override the
+      translate utilities on THIS wrapper (fill-mode both) and push the card
+      off-viewport at ≤1280px — animate the inner card instead. */}
+  <div className="bg-surface-0 rounded-xl shadow-2xl border border-surface-2 overflow-hidden animate-scale-in">
    <div className="px-4 pt-3 pb-2">
    <div className="flex items-center gap-2 mb-1">
     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-[10px] font-bold">

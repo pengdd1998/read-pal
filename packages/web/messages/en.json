@@ -167,8 +167,8 @@
     "everything_subtitle": "Built for people who actually read, not just collect books.",
     "feat_reader_title": "Beautiful Reader",
     "feat_reader_desc": "EPUB reader with themes, fonts, and a reading experience designed for focus.",
-    "feat_agents_title": "5 AI Agents",
-    "feat_agents_desc": "Companion, Research, Coach, Synthesis, and your personal Reading Friend.",
+    "feat_agents_title": "3 AI Agents, 2 in the works",
+    "feat_agents_desc": "Companion, Synthesis, and your personal Reading Friend are live; Research and Coach are on the roadmap.",
     "feat_highlights_title": "Smart Highlights",
     "feat_highlights_desc": "Highlight passages and add notes. AI connects ideas across all your books.",
     "feat_graph_title": "Knowledge Graph",
@@ -527,7 +527,7 @@
     "keyboard_shortcuts_title": "Keyboard Shortcuts",
     "close_label": "Close",
     "close_dialog": "Close dialog",
-    "shortcut_prev_next": "Previous / Next chapter",
+    "shortcut_prev_next": "Previous / Next page (Shift+arrows: previous / next chapter)",
     "shortcut_highlight": "Toggle highlight mode",
     "shortcut_bookmark": "Toggle bookmark",
     "shortcut_toc": "Table of contents",
@@ -1028,7 +1028,8 @@
     "proposal_saving": "Saving…",
     "proposal_saved": "Saved",
     "proposal_failed": "Save failed, please retry",
-    "footnote_popover_label": "Footnote {marker}"
+    "footnote_popover_label": "Footnote {marker}",
+    "footnote_cross_ref_fallback": "could not be resolved automatically — see the notes section at the end of the book."
   },
   "stats": {
     "title": "Reading Stats",

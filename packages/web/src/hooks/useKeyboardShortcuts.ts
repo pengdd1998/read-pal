@@ -3,14 +3,11 @@
 import React, { useEffect, useRef } from 'react';
 
 interface UseKeyboardShortcutsOptions {
-  currentChapter: number;
-  chaptersLength: number;
   sidebarOpen: boolean;
   showShortcutsHelp: boolean;
   showMobileSettings: boolean;
   tocOpen: boolean;
   synthesisOpen?: boolean;
-  onChapterChange: (idx: number) => void;
   onToggleBookmark: () => void;
   onSetHighlightMode: React.Dispatch<React.SetStateAction<boolean>>;
   onSetTocOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -21,14 +18,11 @@ interface UseKeyboardShortcutsOptions {
 }
 
 export function useKeyboardShortcuts({
-  currentChapter,
-  chaptersLength,
   sidebarOpen,
   showShortcutsHelp,
   showMobileSettings,
   tocOpen,
   synthesisOpen,
-  onChapterChange,
   onToggleBookmark,
   onSetHighlightMode,
   onSetTocOpen,
@@ -38,11 +32,9 @@ export function useKeyboardShortcuts({
   onSetSynthesisOpen,
 }: UseKeyboardShortcutsOptions) {
   // Refs for stable handler access
-  const chapterChangeRef = useRef(onChapterChange);
   const toggleBookmarkRef = useRef(onToggleBookmark);
 
   // Keep refs in sync
-  chapterChangeRef.current = onChapterChange;
   toggleBookmarkRef.current = onToggleBookmark;
 
   useEffect(() => {
@@ -61,17 +53,11 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      // ArrowLeft / ArrowRight — chapter navigation
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        if (currentChapter > 0) chapterChangeRef.current(currentChapter - 1);
-        return;
-      }
-      if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        if (currentChapter < chaptersLength - 1) chapterChangeRef.current(currentChapter + 1);
-        return;
-      }
+      // ArrowLeft / ArrowRight — owned by useReaderKeyboardNav (pagination-
+      // aware: plain arrows page segments, Shift+arrows jump chapters). This
+      // hook used to ALSO navigate chapters on plain arrows; both listeners
+      // are window-level, so every keypress double-navigated (segment+1 then
+      // chapter+1), landing the reader a whole chapter ahead.
 
       // H — toggle highlight mode
       if (e.key === 'h' || e.key === 'H') {
@@ -110,8 +96,6 @@ export function useKeyboardShortcuts({
     window.addEventListener('keydown', handleKeydown);
     return () => window.removeEventListener('keydown', handleKeydown);
   }, [
-    currentChapter,
-    chaptersLength,
     sidebarOpen,
     showShortcutsHelp,
     showMobileSettings,
@@ -125,5 +109,5 @@ export function useKeyboardShortcuts({
     onSetSynthesisOpen,
   ]);
 
-  return { chapterChangeRef, toggleBookmarkRef };
+  return { toggleBookmarkRef };
 }

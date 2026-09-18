@@ -11,6 +11,7 @@ import { useChapterTimeLeft } from '@/hooks/useChapterTimeLeft';
 import { useReaderKeyboardNav } from '@/hooks/useReaderKeyboardNav';
 import { useReaderSwipeNav } from '@/hooks/useReaderSwipeNav';
 import { api } from '@/lib/api/client';
+import { safeGetItem } from '@/lib/offline/safe-storage';
 import { warn } from '@/lib/logger';
 
 // ---------------------------------------------------------------------------
@@ -160,6 +161,7 @@ export function useReaderViewLogic({
   totalSegments = 1,
   onSegmentChange,
 }: ReaderViewLogicParams) {
+  const t = useTranslations('reader');
   const [scrollProgress, setScrollProgress] = useState(0);
   const selectingRef = useRef(false);
 
@@ -202,6 +204,36 @@ export function useReaderViewLogic({
     lastWrittenHtmlRef.current = sanitizedContent;
   }, [sanitizedContent]);
 
+  // Restore intra-segment scroll offset (READ-07). Chapter+segment come back
+  // from the server, but the pixel offset within an overflowing segment only
+  // exists in the localStorage progress record. Restore it once, on the first
+  // content paint, and only when the record's chapter+segment match the
+  // restored position — later paging must never yank the scroll.
+  const restoredPosRef = useRef(false);
+  useEffect(() => {
+    if (restoredPosRef.current) return;
+    const el = contentDivRef.current;
+    if (!el || !sanitizedContent || lastWrittenHtmlRef.current !== sanitizedContent) return;
+    restoredPosRef.current = true;
+    try {
+      const raw = safeGetItem(`readpal-progress-${bookId}`);
+      if (!raw) return;
+      const rec = JSON.parse(raw) as { current_page?: number; current_segment?: number; scroll_progress?: number };
+      if (rec.current_page !== currentPage || rec.current_segment !== currentSegment) return;
+      const p = Number(rec.scroll_progress);
+      if (!(p > 0.02) || p > 1) return;
+      const c = containerRef.current;
+      if (!c) return;
+      // Two rAFs: let the written DOM lay out before measuring scrollHeight.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const max = c.scrollHeight - c.clientHeight;
+        if (max > 0) c.scrollTop = p * max;
+      }));
+    } catch {
+      // corrupted record — position restore is best-effort
+    }
+  }, [sanitizedContent, currentPage, currentSegment, bookId]);
+
   // Footnote reference clicks: the stored EPUB content keeps the original
   // anchors, and many EPUBs (e.g. InDesign exports) write markers as
   // cross-file links (href="part0001.html#note_1") WITHOUT the
@@ -241,7 +273,7 @@ export function useReaderViewLogic({
       const text = footnoteDefsRef.current[anchorId];
       return text
         ? `<p>${escapeHtml(text)}</p>`
-        : `<em>${escapeHtml(marker)} — see the notes section at the end of the book.</em>`;
+        : `<em>${escapeHtml(marker)} — ${escapeHtml(t('footnote_cross_ref_fallback'))}</em>`;
     };
     const onClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -291,7 +323,7 @@ export function useReaderViewLogic({
     return () => el.removeEventListener('click', onClick);
     // Re-bind when chapter content arrives: the content div is rendered
     // conditionally, so on a cold load it does not exist at first effect
-    // run and the listener must attach once it mounts (FN1/FN2 miss).
+    // run and the listener must attach once it mounts (FN1/FN2 miss, P7.3).
   }, [bookId, sanitizedContent]);
 
   const articleStyle = useMemo(() => ({

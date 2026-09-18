@@ -46,6 +46,27 @@ describe('coalesceHtml — 上游断段合并（设计评审 P0：giga/ntic 腰�
     expect(coalesceHtml('')).toBe('');
     expect(coalesceHtml('<div>plain</div>')).toBe('<div>plain</div>');
   });
+
+  it('跨文件切片的游离闭标签不再吞掉章节主体（Pride P0 回归）', () => {
+    // 真实缺陷材料：章节切片以 <style>…</style></span></div></div><div/> 开头。
+    // 旧实现包一层 <div> 后，游离的 </div> 提前闭合包装层，其余内容成为
+    // body 兄弟节点，firstElementChild.innerHTML 只剩 3.8KB 的 CSS 文本。
+    const html =
+      '<style>body { color: black }</style></span>\n</div></div><div/>\n' +
+      '<div class="blk"><p>It is a truth universally acknowledged.</p></div>' +
+      '<div class="blk"><p>A single man must be in want of a wife.</p></div>';
+    const out = coalesceHtml(html);
+    expect(out).toContain('truth universally acknowledged');
+    expect(out).toContain('want of a wife');
+    expect(out).not.toContain('<style');
+  });
+
+  it('单一顶层包装 div 被提升，分页能看到真实块边界', () => {
+    const paras = Array.from({ length: 20 }, (_, i) => `<p>Paragraph ${i} padding text to give the chapter enough mass for pagination.</p>`).join('');
+    const html = `<div class="chapter">${paras}</div>`;
+    const pages = splitChapterIntoPages(html, 400);
+    expect(pages.length).toBeGreaterThan(1);
+  });
 });
 
 describe('splitChapterIntoPages — 短章节路径同样合并', () => {

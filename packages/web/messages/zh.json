@@ -167,8 +167,8 @@
     "everything_subtitle": "为真正阅读的人打造，而不仅仅是收藏书籍。",
     "feat_reader_title": "精美阅读器",
     "feat_reader_desc": "支持主题、字体的 EPUB 阅读器，专为专注阅读而设计。",
-    "feat_agents_title": "5 个 AI 代理",
-    "feat_agents_desc": "伴侣、研究、教练、综合和你个人的阅读朋友。",
+    "feat_agents_title": "3 个 AI 代理，2 个开发中",
+    "feat_agents_desc": "阅读伴侣、综合分析与你的专属阅读朋友已上线；研究助手与理解教练开发中。",
     "feat_highlights_title": "智能标注",
     "feat_highlights_desc": "标注段落并添加笔记。AI 自动跨书连接想法。",
     "feat_graph_title": "知识图谱",
@@ -527,7 +527,7 @@
     "keyboard_shortcuts_title": "键盘快捷键",
     "close_label": "关闭",
     "close_dialog": "关闭对话框",
-    "shortcut_prev_next": "上一章 / 下一章",
+    "shortcut_prev_next": "上一页 / 下一页（Shift+方向键：上一章 / 下一章）",
     "shortcut_highlight": "切换标注模式",
     "shortcut_bookmark": "切换书签",
     "shortcut_toc": "目录",
@@ -1028,7 +1028,8 @@
     "proposal_saving": "保存中…",
     "proposal_saved": "已保存",
     "proposal_failed": "保存失败，请重试",
-    "footnote_popover_label": "脚注 {marker}"
+    "footnote_popover_label": "脚注 {marker}",
+    "footnote_cross_ref_fallback": "未能自动解析该脚注，请查阅书末注释章节。"
   },
   "stats": {
     "title": "阅读统计",

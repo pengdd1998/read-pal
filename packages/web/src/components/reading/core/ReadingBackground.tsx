@@ -48,8 +48,13 @@ export const ReadingBackground = React.memo(function ReadingBackground({ content
  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
  const abortCtrlRef = useRef<AbortController | null>(null);
 
- const fetchScene = useCallback(async (text: string) => {
- if (!text || text.length < 50) return;
+ const fetchScene = useCallback(async (rawText: string) => {
+ if (!rawText || rawText.length < 50) return;
+
+ // Mood sampling only — cap before hashing/sending. The endpoint schema
+ // rejects text > 50k chars (422), which real chapters (Gutenberg TEI can
+ // run 55k+) hit on every open, poisoning the 60s failure cooldown.
+ const text = rawText.length > 8000 ? rawText.slice(0, 6000) + ' … ' + rawText.slice(-2000) : rawText;
 
  const key = hashText(text);
  const cached = sceneCache.get(key);

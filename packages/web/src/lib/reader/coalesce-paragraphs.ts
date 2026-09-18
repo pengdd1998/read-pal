@@ -38,9 +38,24 @@ function isFragment(prev: Element, cur: Element): boolean {
  */
 export function coalesceHtml(html: string): string {
   if (!html || typeof DOMParser === 'undefined' || !/<p[\s>]/i.test(html)) return html;
-  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, 'text/html');
-  const root = doc.body.firstElementChild;
+  // Parse into <body> directly — never wrap in a synthetic <div>. Cross-file
+  // chapter slices open with stray closers (`…</style></span></div></div>`);
+  // inside a wrapper those closers terminate the wrapper early, stranding the
+  // rest of the chapter as body *siblings* that firstElementChild.innerHTML
+  // silently dropped (found by e2e-core: Pride & Prejudice ch.1 rendered the
+  // 3.8KB <style> CSS text instead of the novel — 93% of the chapter lost).
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const root = doc.body;
   if (!root) return html;
+
+  // Such slices also leave all content nested in ONE wrapper div, which the
+  // paginator (top-level block splitter) would render as a single overlong
+  // page. Hoist the lone wrapper's children so real block boundaries show.
+  while (root.children.length === 1 && root.firstElementChild?.tagName === 'DIV') {
+    const wrap = root.firstElementChild;
+    while (wrap.firstChild) root.insertBefore(wrap.firstChild, wrap);
+    wrap.remove();
+  }
 
   const children = Array.from(root.children);
   let prev = children[0];

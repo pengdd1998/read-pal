@@ -54,16 +54,21 @@ export const BookCoverOverlay = React.memo(function BookCoverOverlay({
 
  const coverColors = useMemo(() => getBookCoverColors(title), [title]);
  const initials = useMemo(() => getBookInitials(title), [title]);
+ // Dead object-store URLs (legacy uploads, pruned buckets) must fall back to
+ // the initials gradient instead of painting a broken-image icon (UPLD-14).
+ const [coverBroken, setCoverBroken] = useState(false);
+ useEffect(() => { setCoverBroken(false); }, [coverUrl]);
 
  return (
- <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-primary-400/30 to-primary-600/70">
-  {coverUrl ? (
+  <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-3 bg-gradient-to-br from-primary-400/30 to-primary-600/70">
+  {coverUrl && !coverBroken ? (
   <Image
    src={coverUrl}
    alt={t('card_cover_of', { title })}
    fill
    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
    className="object-cover"
+   onError={() => setCoverBroken(true)}
   />
   ) : (
   <div className={`absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br ${coverColors[0]} ${coverColors[1]}`}>
