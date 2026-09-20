@@ -7,6 +7,7 @@ logged to console instead of being sent.
 
 import logging
 import smtplib
+import urllib.request
 from email.mime.text import MIMEText
 
 from app.config import get_settings
@@ -66,8 +67,37 @@ def _send_via_smtp(
         server.sendmail(from_addr, [to_addr], msg.as_string())
 
 
+def _send_via_resend(settings, from_addr: str, to_addr: str, subject: str, html: str) -> None:
+    """Deliver via the Resend HTTP API (monitoring plan C1).
+
+    Stdlib-only by module convention (urllib, not an HTTP client dep).
+    A non-2xx response raises URLError/HTTPError into the caller's
+    existing catch-and-log — the reset flow never raises to the user.
+    """
+    import json as _json
+
+    payload = _json.dumps({
+        'from': from_addr,
+        'to': [to_addr],
+        'subject': subject,
+        'html': html,
+    }).encode()
+    req = urllib.request.Request(
+        'https://api.resend.com/emails',
+        data=payload,
+        headers={
+            'Authorization': f'Bearer {settings.resend_api_key}',
+            'Content-Type': 'application/json',
+        },
+        method='POST',
+    )
+    with urllib.request.urlopen(req, timeout=SMTP_TIMEOUT_SECONDS) as resp:
+        if resp.status >= 300:
+            raise OSError(f'Resend returned {resp.status}')
+
+
 async def send_password_reset_email(email: str, token: str) -> None:
-    """Send a password-reset email or log to console if SMTP is not configured.
+    """Send a password-reset email — Resend API → SMTP → console fallback.
 
     Errors are caught and logged so the caller never raises — keeping the
     existing silent-error pattern in the forgot-password handler.
@@ -75,27 +105,38 @@ async def send_password_reset_email(email: str, token: str) -> None:
     settings = get_settings()
     reset_url = f'{settings.frontend_url}/reset-password?token={token}'
 
-    if not settings.smtp_host:
+    if not (settings.resend_api_key or settings.smtp_host):
         logger.info(
-            'Password reset for %s (no SMTP configured). Reset URL: %s',
+            'Password reset for %s (no mail transport configured). Reset URL: %s',
             email,
             reset_url,
         )
         return
 
     try:
-        from_ = settings.smtp_from or settings.smtp_user or 'noreply@readpal.app'
-        _send_via_smtp(
-            settings,
-            from_,
-            email,
-            'Reset your read-pal password',
-            _build_reset_html(reset_url),
+        from_ = (
+            settings.resend_from
+            or settings.smtp_from
+            or settings.smtp_user
+            or 'noreply@readpal.app'
         )
+        if settings.resend_api_key:
+            _send_via_resend(
+                settings, from_, email,
+                'Reset your read-pal password', _build_reset_html(reset_url),
+            )
+        else:
+            _send_via_smtp(
+                settings,
+                from_,
+                email,
+                'Reset your read-pal password',
+                _build_reset_html(reset_url),
+            )
         logger.info('Password reset email sent to %s', email)
     except (smtplib.SMTPException, TimeoutError, ConnectionError, OSError):
         logger.warning(
-            'SMTP delivery failed for password reset email to %s — '
+            'Mail delivery failed for password reset email to %s — '
             'user will not receive the reset link',
             email,
             exc_info=True,

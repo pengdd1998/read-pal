@@ -46,6 +46,8 @@ class TestSendPasswordResetEmailNoSmtp:
     async def test_console_fallback_when_no_smtp_host(self):
         mock_settings = MagicMock()
         mock_settings.smtp_host = None
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
         mock_settings.frontend_url = 'https://readpal.app'
 
         with patch('app.services.email_service.get_settings', return_value=mock_settings):
@@ -56,6 +58,8 @@ class TestSendPasswordResetEmailNoSmtp:
     async def test_console_fallback_logs_url(self):
         mock_settings = MagicMock()
         mock_settings.smtp_host = None
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
         mock_settings.frontend_url = 'https://readpal.app'
 
         with (
@@ -84,6 +88,8 @@ class TestSendPasswordResetEmailSmtp:
     async def test_sends_via_smtp_with_starttls(self):
         mock_settings = MagicMock()
         mock_settings.smtp_host = 'smtp.example.com'
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
         mock_settings.smtp_port = 587
         mock_settings.smtp_user = 'user'
         mock_settings.smtp_password = fake_api_key('pass')
@@ -109,6 +115,8 @@ class TestSendPasswordResetEmailSmtp:
     async def test_sends_via_smtp_ssl_on_port_465(self):
         mock_settings = MagicMock()
         mock_settings.smtp_host = 'smtp.example.com'
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
         mock_settings.smtp_port = 465
         mock_settings.smtp_user = 'user'
         mock_settings.smtp_password = fake_api_key('pass')
@@ -133,6 +141,8 @@ class TestSendPasswordResetEmailSmtp:
     async def test_uses_smtp_user_as_fallback_from(self):
         mock_settings = MagicMock()
         mock_settings.smtp_host = 'smtp.example.com'
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
         mock_settings.smtp_port = 587
         mock_settings.smtp_user = 'me@smtp.com'
         mock_settings.smtp_password = fake_api_key('pass')
@@ -157,6 +167,8 @@ class TestSendPasswordResetEmailSmtp:
     async def test_skips_login_when_no_credentials(self):
         mock_settings = MagicMock()
         mock_settings.smtp_host = 'smtp.example.com'
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
         mock_settings.smtp_port = 587
         mock_settings.smtp_user = None
         mock_settings.smtp_password = None
@@ -187,6 +199,8 @@ class TestSendPasswordResetEmailErrors:
     async def test_smtp_failure_is_caught(self):
         mock_settings = MagicMock()
         mock_settings.smtp_host = 'smtp.example.com'
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
         mock_settings.smtp_port = 587
         mock_settings.smtp_user = 'user'
         mock_settings.smtp_password = fake_api_key('pass')
@@ -212,6 +226,8 @@ class TestSendPasswordResetEmailErrors:
     async def test_timeout_error_is_caught(self):
         mock_settings = MagicMock()
         mock_settings.smtp_host = 'smtp.example.com'
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
         mock_settings.smtp_port = 587
         mock_settings.smtp_user = 'user'
         mock_settings.smtp_password = fake_api_key('pass')
@@ -234,6 +250,8 @@ class TestSendPasswordResetEmailErrors:
     async def test_constructs_correct_reset_url(self):
         mock_settings = MagicMock()
         mock_settings.smtp_host = None
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
         mock_settings.frontend_url = 'https://myapp.com'
 
         with (
@@ -245,3 +263,68 @@ class TestSendPasswordResetEmailErrors:
             log_args = mock_logger.info.call_args
             # The reset URL should be in the log message
             assert 'mytoken' in str(log_args)
+
+
+class TestResendTransport:
+    """C1: Resend API takes precedence over SMTP; console fallback still
+    applies when both are unset (test default). No real HTTP — the
+    urlopen call is patched."""
+
+    @pytest.mark.asyncio
+    async def test_resend_used_when_key_set(self):
+        mock_settings = MagicMock()
+        mock_settings.smtp_host = 'smtp.example.com'  # must be IGNORED
+        mock_settings.resend_api_key = 're_test_key'
+        mock_settings.resend_from = 'read-pal <noreply@readpal.app>'
+        mock_settings.frontend_url = 'https://readpal.app'
+
+        with patch('app.services.email_service.get_settings', return_value=mock_settings), \
+                patch('app.services.email_service.urllib.request.urlopen') as urlopen:
+            resp = MagicMock()
+            resp.status = 200
+            resp.__enter__.return_value = resp
+            urlopen.return_value = resp
+
+            await send_password_reset_email('user@example.com', 'tok')
+
+        urlopen.assert_called_once()
+        req = urlopen.call_args.args[0]
+        assert req.full_url == 'https://api.resend.com/emails'
+        assert req.headers['Authorization'] == 'Bearer re_test_key'
+        import json as _json
+        body = _json.loads(req.data.decode())
+        assert body['to'] == ['user@example.com']
+        assert body['from'] == 'read-pal <noreply@readpal.app>'
+        assert '/reset-password?token=tok' in body['html']
+
+    @pytest.mark.asyncio
+    async def test_console_fallback_when_no_transport(self):
+        mock_settings = MagicMock()
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
+        mock_settings.smtp_host = None
+        mock_settings.resend_api_key = None
+        mock_settings.resend_from = None
+        mock_settings.frontend_url = 'https://readpal.app'
+
+        with patch('app.services.email_service.get_settings', return_value=mock_settings), \
+                patch('app.services.email_service.urllib.request.urlopen') as urlopen:
+            await send_password_reset_email('user@example.com', 'tok')
+        urlopen.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_resend_error_never_raises(self):
+        mock_settings = MagicMock()
+        mock_settings.smtp_host = None
+        mock_settings.resend_api_key = 're_test_key'
+        mock_settings.resend_from = None
+        mock_settings.smtp_from = None
+        mock_settings.smtp_user = None
+        mock_settings.frontend_url = 'https://readpal.app'
+
+        with patch('app.services.email_service.get_settings', return_value=mock_settings), \
+                patch(
+                    'app.services.email_service.urllib.request.urlopen',
+                    side_effect=OSError('api down'),
+                ):
+            await send_password_reset_email('user@example.com', 'tok')  # must not raise

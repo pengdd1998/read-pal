@@ -267,6 +267,12 @@ class Settings(BaseSettings):
     smtp_user: str | None = None
     smtp_password: str | None = None
     smtp_from: str | None = None
+    # Resend HTTP transport (monitoring plan C1 — preferred over SMTP on a
+    # VPS whose port 25 is blocked; API-type provider, DNS-verified domain,
+    # no ICP dependency). Takes precedence over SMTP when set; console
+    # fallback still applies when both are unset (test default).
+    resend_api_key: str | None = None
+    resend_from: str | None = None
 
     # Object storage — MinIO / S3-compatible. Optional: when configured, book
     # covers are uploaded here and book.cover_url holds the public URL; when
