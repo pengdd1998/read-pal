@@ -1461,3 +1461,5 @@ Call log:
 20260920,自动化(ZCode),GAP D3补测,E1-L,Chromium headless,KG3-01+03,知识图谱,P0/P1,PASS,,/tmp/kg3-panel.png,5标注→建图→节点可见;点击节点NodeDetailPanel开(概念/来源);关闭钮清面板(1→0);观察:Esc未绑定关闭(规格三路径其一即满足,不构成缺陷)
 20260920,自动化(ZCode),A2部署验证,PROD,https入口(自签),P7.6-PDF门,P0,PASS,,sse载荷,损坏→422 PDF_CORRUPT_OR_UNSUPPORTED;加密→422 PDF_ENCRYPTED(生产实弹)
 20260920,自动化(ZCode),A2部署验证,PROD,https入口(自签),P7.7三态,P0,PASS,,sse载荷,全新用户(种书无chunk)→no_results:true 三态分类生产生效;帧序request_id→searching→brief→[DONE]完整
+20260920,自动化(ZCode),A2部署验证,PROD,https入口,J4天缓存,P1,PASS,,响应对比,双载完全同句(秒回);trace=0系响应缓存命中(合法路径);附注:种书进度字段2000%致洞察文案夸大(数据面小瑕疵另记)
+20260920,自动化(ZCode),A2部署验证,PROD,ssh直查,A2#6-rollup,P1,PASS,,psql,llm_metrics_rollup=9行(迁移0030+writer同事务upsert生产生效)
