@@ -1463,3 +1463,4 @@ Call log:
 20260920,自动化(ZCode),A2部署验证,PROD,https入口(自签),P7.7三态,P0,PASS,,sse载荷,全新用户(种书无chunk)→no_results:true 三态分类生产生效;帧序request_id→searching→brief→[DONE]完整
 20260920,自动化(ZCode),A2部署验证,PROD,https入口,J4天缓存,P1,PASS,,响应对比,双载完全同句(秒回);trace=0系响应缓存命中(合法路径);附注:种书进度字段2000%致洞察文案夸大(数据面小瑕疵另记)
 20260920,自动化(ZCode),A2部署验证,PROD,ssh直查,A2#6-rollup,P1,PASS,,psql,llm_metrics_rollup=9行(迁移0030+writer同事务upsert生产生效)
+20260920,自动化(ZCode),A2部署验证,PROD,https自签入口,A2#3#5-SSE,P0,PASS,,/tmp/prod_chat.txt,chat流端到端:caddy透传SSE完整;tool_status帧在流中(planner+工具阶段生产运行);实质回答1292字;planner延迟数据点已采(G14复测素材)
