@@ -105,7 +105,19 @@ async def run_tool_phase(
                 'deadline_s=%s user=%s book=%s',
                 deadline_s, str(user_id), str(book_id),
             )
-            return system_text, [], []
+            # G14b: the skip must be VISIBLE, not silent — the turn is
+            # answered without tools/proposals and the reader deserves to
+            # know why the answer is plainer than usual. A synthetic
+            # planner entry rides the existing tool_status frame (streaming
+            # emits it because tool_results is non-empty); it never reaches
+            # render_tool_results because this branch returns before the
+            # render step, so the system prompt stays untouched.
+            return system_text, [{
+                'tool': 'planner',
+                'ok': False,
+                'latency_ms': int((time.monotonic() - t0) * 1000),
+                'degraded': 'planner_deadline',
+            }], []
     if not plan:
         return system_text, [], []
 

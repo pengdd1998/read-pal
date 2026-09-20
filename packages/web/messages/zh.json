@@ -1021,6 +1021,7 @@
     "next_chapter_label": "下一章",
     "next_chapter_cta": "继续阅读下一章：{title}",
     "companion_tool_searching": "正在查阅资料…",
+    "companion_planner_degraded": "本次回答为简化直答（规划超时，工具与保存卡片暂不可用）。",
     "companion_tool_trace": "查阅了 {count} 处资料",
     "proposal_note_title": "保存这条笔记？",
     "proposal_card_title": "创建这张闪卡？",

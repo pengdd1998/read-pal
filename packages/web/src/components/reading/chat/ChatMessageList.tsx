@@ -25,8 +25,9 @@ export interface SanitizedMessage {
  content: string;
  sanitized: string;
  streaming?: boolean;
- /** Tool-phase footprint (2026-09-14), additive. */
- toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>;
+ /** Tool-phase footprint (2026-09-14), additive. `degraded` marks a
+  * planner-deadline skip (G14b) — the UI shows an honest simplified-answer note. */
+ toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number; degraded?: string | null }>;
  /** v2 action proposals (ephemeral). */
  proposals?: Array<{ id?: string; tool?: string; args?: Record<string, unknown>; preview?: string }>;
 }

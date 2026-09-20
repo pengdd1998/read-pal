@@ -307,10 +307,15 @@ class TestMetricsAdditions:
             seen['days'] = days
             return {'pii': 1, 'harmful': 0, 'total': 1}
 
-        with patch('app.utils.output_filter.read_guardrail_hits', fake_read):
-            await compute_llm_metrics(
-                hours=1, user_id=None, force_global=True, guardrail_days=7,
-            )
+        # Explicit session: session=None would fall back to the app
+        # sessionmaker (a live-DB dependency that the fresh-clone check
+        # caught — locally masked by the dev tunnel, refused in CI-less envs).
+        async with _TestSession() as session:
+            with patch('app.utils.output_filter.read_guardrail_hits', fake_read):
+                await compute_llm_metrics(
+                    hours=1, session=session, user_id=None, force_global=True,
+                    guardrail_days=7,
+                )
         assert seen['days'] == 7
 
 

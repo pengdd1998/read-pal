@@ -162,6 +162,8 @@ def emit_tool_status_frame(results: list[dict], request_id: str) -> str:
                 'tool': r.get('tool'),
                 'ok': bool(r.get('ok')),
                 'latency_ms': r.get('latency_ms'),
+                # G14b: planner-deadline skip surfaces as degraded='planner_deadline'
+                'degraded': r.get('degraded'),
             }
             for r in results
         ],

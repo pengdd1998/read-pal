@@ -380,6 +380,50 @@ class TestToolPhase:
         assert out == ('BASE', [], [])
 
     @pytest.mark.asyncio
+    async def test_planner_deadline_surfaces_degraded_entry(self):
+        """G14b: a deadline skip is VISIBLE, not silent — the turn answers
+        without tools and the UI must be able to say so. The synthetic
+        planner entry rides the tool_status frame (streaming emits it
+        because tool_results is non-empty) and never reaches the system
+        prompt (this branch returns before render_tool_results)."""
+        import asyncio as aio
+
+        from app.services.companion.tools.phase import run_tool_phase
+
+        async def _slow_plan(**_kwargs):
+            await aio.sleep(0.4)
+            return [{'name': 'get_chapter', 'args': {}}]
+
+        with patch('app.config.get_settings') as ms, patch(
+            'app.services.companion.tools.planner.plan_tool_calls',
+            new=_slow_plan,
+        ):
+            ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_plan_timeout_ms = 30  # 30ms deadline
+            out = await run_tool_phase(
+                db=None, user_id=uuid4(), book_id=uuid4(),
+                message='第3章讲了什么', history_texts=[],
+                book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
+            )
+
+        system_text, tool_results, proposals = out
+        assert system_text == 'BASE', 'degraded turn must not amend the prompt'
+        assert proposals == []
+        assert len(tool_results) == 1
+        entry = tool_results[0]
+        assert entry['tool'] == 'planner'
+        assert entry['ok'] is False
+        assert entry['degraded'] == 'planner_deadline'
+        assert entry['latency_ms'] >= 30
+
+        # The frame carries the flag (G14b contract with the UI).
+        from app.services.companion.stream_cache import emit_tool_status_frame
+
+        frame = emit_tool_status_frame(tool_results, 'req-g14b')
+        assert '"degraded": "planner_deadline"' in frame
+        assert '"tool": "planner"' in frame
+
+    @pytest.mark.asyncio
     async def test_full_path_amends_and_reports(self):
         from app.services.companion.tools.phase import run_tool_phase
         with patch('app.config.get_settings') as ms, patch(
@@ -470,7 +514,14 @@ class TestPlannerDeadline:
                 book=_fake_book(), system_text='BASE', budget=_FakeBudget(),
             )
         elapsed = __import__('time').monotonic() - t0
-        assert out == ('BASE', [], [])
+        # G14b contract update: a deadline skip returns a synthetic
+        # degraded planner entry (visible in the tool_status frame) —
+        # the turn is still answered plainly, system prompt unchanged.
+        system_text, tool_results, proposals = out
+        assert system_text == 'BASE'
+        assert proposals == []
+        assert [r['tool'] for r in tool_results] == ['planner']
+        assert tool_results[0]['degraded'] == 'planner_deadline'
         assert elapsed < 2.0, f'phase took {elapsed:.1f}s'
 
     @pytest.mark.asyncio

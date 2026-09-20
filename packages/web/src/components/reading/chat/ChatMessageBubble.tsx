@@ -5,7 +5,7 @@ import type { SanitizedMessage } from './ChatMessageList';
 import { ProposalCard } from './ProposalCard';
 
 interface ChatMessageBubbleProps {
- msg: SanitizedMessage & { myRating?: boolean | null; toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>; proposals?: Array<{ id?: string; tool?: string; args?: Record<string, unknown>; preview?: string }> };
+ msg: SanitizedMessage & { myRating?: boolean | null; toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number; degraded?: string | null }>; proposals?: Array<{ id?: string; tool?: string; args?: Record<string, unknown>; preview?: string }> };
  bookId: string;
  t: (key: string, params?: Record<string, unknown>) => string;
  submitFeedback: (messageId: string, rating: boolean | null, onFail?: () => void) => void;
@@ -24,7 +24,7 @@ const TOOL_LABELS: Record<string, string> = {
 };
 
 function ToolTrace({ trace, searching, t }: {
-  trace: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>;
+  trace: Array<{ tool?: string; ok?: boolean; latency_ms?: number; degraded?: string | null }>;
   searching: boolean;
   t: (key: string, params?: Record<string, unknown>) => string;
 }) {
@@ -71,6 +71,11 @@ export const ChatMessageBubble = memo(function ChatMessageBubble({ msg, bookId, 
   }`}>
   {msg.role === 'assistant' ? (
    <>
+   {msg.toolTrace?.some((r) => r.degraded) && !msg.streaming && (
+   <div className="mb-1.5 px-2 py-1 rounded-lg bg-amber-100/60 dark:bg-amber-900/30 border border-amber-300/40 dark:border-amber-700/40 text-[11px] text-amber-700 dark:text-amber-300" role="note">
+    {t('companion_planner_degraded')}
+   </div>
+   )}
    {msg.toolTrace && msg.toolTrace.length > 0 && (
    <ToolTrace trace={msg.toolTrace ?? []} searching={!msg.content && !!msg.streaming} t={t} />
    )}
