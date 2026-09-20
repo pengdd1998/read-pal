@@ -1457,3 +1457,4 @@ Call log:
 20260920,自动化(ZCode),G14c排查,E1-L,静态分析,WT5-02,提案写入,P2,INVESTIGATED,,13-companion-tools-v2-test-plan.md,静态契约端到端一致(非schema漂移);断点限于UI路径;H1=卡片DOM缺口/H2=错误态吞没;复现需健康planner供给→独立立案
 20260920,自动化(ZCode),GAP D3,E1-L,静态走查,RM6-01,阅读之书,P0,VERIFIED-CODE,,docs/archive/2026-09/scripts/rm-browser-run.mjs,代码链路完整:列表Link→详情→ActionButtons(aria-label=下载HTML与探针匹配);历史SKIP系探针2.5s等待<冷启动详情加载(记录已注'详情未展开');剩余=放宽超时的浏览器走查补录(与D2同类,需本地全栈+已生成镜像)
 20260920,自动化(ZCode),GAP D2,E1-L,SSE载荷级,BND-S05,P0,PASS,,/tmp/bnd_sse.txt(载荷),进度ch4/问结局:答案=纯引导语(答案藏在书里);整条SSE流(含RAG/工具帧)零后期情节token(亚哈/标枪/沉没/生还等全无);guard=true
+20260920,自动化(ZCode),GAP D3补测,E1-L,Chromium headless,RM6-01,阅读之书,P0,PASS,,/tmp/Pride and Prejudice_reading_mirror.html,放宽超时(30s)走查:列表卡→详情→下载钮可达;文件名=Pride and Prejudice_reading_mirror.html(书名净化形态);自包含HTML(内联style零外链);10节9259B;历史SKIP确认系探针2.5s<冷启动
