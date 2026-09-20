@@ -264,10 +264,10 @@ Areas where we'd love help:
 - [ ] 100 beta users
 
 ### Phase 2 — Multi-Agent
-- [ ] Research agent (web search, cross-document)
-- [ ] Coach agent (comprehension monitoring)
-- [ ] Synthesis agent (advanced cross-document)
-- [ ] Mobile apps (iOS/Android)
+- [x] Research agent (cross-library Q&A with citations, phase-streamed SSE)
+- [ ] Coach agent (comprehension monitoring) — backend ready, frontend deferred pending product definition
+- [x] Synthesis agent (single-book & cross-book analysis)
+- [ ] Mobile apps (iOS/Android) — blocked on ICP filing (self-signed TLS breaks Android release)
 
 ### Phase 3 — Scale
 - [ ] Reading Persona system
