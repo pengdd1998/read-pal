@@ -119,3 +119,56 @@ class TestProcessPdfPageCap:
             await process_pdf(str(tmp_path / 'huge.pdf'))
         assert exc_info.value.code == 'pdf_too_many_pages'
         assert exc_info.value.ctx['actual_pages'] == MAX_PDF_PAGES + 1
+
+
+class TestProcessPdfCorruptEncrypted:
+    """Risk review 2026-09-20: pypdf exceptions (PdfStreamError /
+    FileNotDecryptedError) extend PyPdfError(Exception), NOT ValueError —
+    the router's ``except (ValueError, OSError, ...)`` never caught them
+    and corrupt/encrypted uploads surfaced as unhandled 500s. The parser
+    now converts every pypdf raise into a typed PdfParseError."""
+
+    async def test_corrupt_pdf_rejected_typed(self, tmp_path):
+        p = tmp_path / 'broken.pdf'
+        p.write_bytes(b'%PDF-1.4 this is not a real pdf %%EOF')
+        with pytest.raises(PdfParseError) as exc_info:
+            await process_pdf(str(p))
+        assert exc_info.value.code == 'pdf_corrupt_or_unsupported'
+
+    async def test_truncated_random_bytes_rejected_typed(self, tmp_path):
+        p = tmp_path / 'garbage.pdf'
+        p.write_bytes(b'\x89PNG\r\n\x1a\n definitely not a pdf')
+        with pytest.raises(PdfParseError) as exc_info:
+            await process_pdf(str(p))
+        assert exc_info.value.code in ('pdf_corrupt_or_unsupported', 'pdf_encrypted')
+
+    async def test_password_encrypted_pdf_rejected_typed(self, tmp_path):
+        from pypdf import PdfWriter
+
+        writer = PdfWriter()
+        writer.add_blank_page(width=612, height=792)
+        writer.encrypt(user_password='secret')
+        p = tmp_path / 'locked.pdf'
+        writer.write(p)
+
+        with pytest.raises(PdfParseError) as exc_info:
+            await process_pdf(str(p))
+        assert exc_info.value.code == 'pdf_encrypted'
+
+    async def test_owner_locked_pdf_without_user_password_still_parses(self, tmp_path):
+        """Owner-password-only PDFs (print/copy restrictions) decrypt with
+        an empty password — they must keep uploading, not get swept into
+        the encrypted rejection."""
+        from pypdf import PdfWriter
+
+        writer = PdfWriter()
+        writer.add_blank_page(width=612, height=792)
+        writer.encrypt(user_password='', owner_password='restrictions')
+        p = tmp_path / 'owner-locked.pdf'
+        writer.write(p)
+
+        # Blank page → lands on the scanned/no-text verdict, NOT encrypted:
+        # proves the empty-password decrypt succeeded past the gate.
+        with pytest.raises(PdfParseError) as exc_info:
+            await process_pdf(str(p))
+        assert exc_info.value.code == 'pdf_no_extractable_text'

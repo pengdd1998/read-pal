@@ -169,16 +169,51 @@ def _build_fallback_chapters(
 
 
 async def process_pdf(file_path: str) -> dict:
-    """Extract text, outlines, and metadata from PDF."""
-    from pypdf import PdfReader
+    """Extract text, outlines, and metadata from PDF.
 
-    reader = PdfReader(file_path)
-    total_pages = len(reader.pages)
+    pypdf's exception hierarchy (``PdfReadError`` extends ``PyPdfError``
+    extends ``Exception``) bypasses the router's
+    ``except (ValueError, OSError, ...)`` — corrupt/encrypted files used
+    to surface as unhandled 500s (P7.6, risk review 2026-09-20). Every
+    pypdf raise below is converted to a typed ``PdfParseError`` so the
+    upload router can answer with a localized 422.
+    """
+    from pypdf import PdfReader
+    from pypdf.errors import DependencyError, PdfReadError
+
+    try:
+        reader = PdfReader(file_path)
+    except PdfReadError as exc:
+        logger.warning('pdf_parser.read_failed: %s', str(exc)[:200])
+        raise PdfParseError('pdf_corrupt_or_unsupported') from exc
+
+    if getattr(reader, 'is_encrypted', False):
+        # Empty-password decrypt covers owner-locked PDFs (print/copy
+        # restrictions only) which are readable; PasswordType.NOT_DECRYPTED
+        # is falsy, any real decryption result is truthy. DependencyError
+        # covers AES dictionaries when the cryptography package is absent.
+        try:
+            decrypted = reader.decrypt('')
+        except (DependencyError, PdfReadError) as exc:
+            logger.info('pdf_parser.decrypt_failed: %s', str(exc)[:120])
+            raise PdfParseError('pdf_encrypted') from exc
+        if not decrypted:
+            raise PdfParseError('pdf_encrypted')
+
+    try:
+        total_pages = len(reader.pages)
+    except PdfReadError as exc:
+        logger.warning('pdf_parser.pages_failed: %s', str(exc)[:200])
+        raise PdfParseError('pdf_corrupt_or_unsupported') from exc
     if total_pages > MAX_PDF_PAGES:
         raise PdfParseError('pdf_too_many_pages', max_pages=MAX_PDF_PAGES, actual_pages=total_pages)
     metadata = _extract_pdf_metadata(reader)
 
-    pages_text, pages_html = _extract_page_text(reader)
+    try:
+        pages_text, pages_html = _extract_page_text(reader)
+    except (DependencyError, PdfReadError) as exc:
+        logger.warning('pdf_parser.extract_failed: %s', str(exc)[:200])
+        raise PdfParseError('pdf_corrupt_or_unsupported') from exc
 
     total_text = sum(len(p) for p in pages_text)
     if total_text < MIN_PDF_TEXT_CHARS:
@@ -191,7 +226,7 @@ async def process_pdf(file_path: str) -> dict:
         outline_chapters = _build_pdf_chapters(outlines, pages_text, pages_html, total_pages)
         if outline_chapters:
             chapters = outline_chapters
-    except (ValueError, AttributeError, KeyError) as exc:
+    except (ValueError, AttributeError, KeyError, PdfReadError) as exc:
         logger.warning('PDF outline processing failed: %s', exc)
 
     if not chapters:

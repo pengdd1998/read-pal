@@ -65,6 +65,8 @@
     "invalid_file_type_ext": "不支持的文件类型：{ext}。支持的格式：{allowed}",
     "pdf_too_many_pages": "PDF 页数超过上限（最多 {max_pages} 页），请拆分后再上传。",
     "pdf_no_extractable_text": "未能从该 PDF 提取到文本——它可能是扫描件或图片型 PDF。请上传文字版 PDF 或 EPUB。",
+    "pdf_encrypted": "该 PDF 已加密，请先解除密码保护后再上传。",
+    "pdf_corrupt_or_unsupported": "无法解析该 PDF——文件可能已损坏或使用了暂不支持的格式。",
     "invalid_password": "当前密码不正确",
     "password_changed": "密码修改成功",
     "invalid_refresh_token": "无效或已过期的刷新令牌",

@@ -172,3 +172,35 @@ other DBAPIErrors must still re-raise).
 Python except clauses are ordered most-specific-first — when two handlers
 are in a subclass relation, the narrow one goes on top. A handler that
 has never fired in tests is a handler that does not exist.
+
+## P7.6 — pypdf exceptions bypassed the upload 422 ladder (corrupt/encrypted → 500)
+
+**Symptom**
+
+Uploading a corrupt or password-encrypted PDF returned an unhandled 500
+(risk review 2026-09-20, /tmp fixture reproduction; reachable at e6e12a98).
+
+**Root cause**
+
+pypdf's exception hierarchy (`PdfReadError` ⊂ `PyPdfError` ⊂ `Exception`)
+shares no base with the upload router's
+`except (ValueError, OSError, KeyError, RuntimeError)` → 422 ladder.
+`PdfStreamError` (corrupt) fires at `PdfReader()` construction;
+`FileNotDecryptedError` (encrypted) at `.pages` access. Both sailed past
+every handler.
+
+**Fix**
+
+`app/services/parsers/pdf.py` `process_pdf` converts every pypdf raise
+into a typed `PdfParseError`: `pdf_corrupt_or_unsupported` (constructor /
+pages / extract_text), `pdf_encrypted` (real password or AES without the
+cryptography dependency). Empty-password decrypt still succeeds for
+owner-locked (restrictions-only) PDFs so they keep uploading. zh/en
+copy added; HTTP-verified 422 ×2; 12 parser tests including the
+owner-locked regression guard.
+
+**How to avoid**
+
+Third-party exception hierarchies don't join your ValueError ladder by
+luck — every new parser/SDK gets its raises converted at the module
+boundary into typed errors the router already knows.

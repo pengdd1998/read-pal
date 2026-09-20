@@ -65,6 +65,8 @@
     "invalid_file_type_ext": "Unsupported file type: {ext}. Allowed: {allowed}",
     "pdf_too_many_pages": "PDF exceeds the page limit (max {max_pages} pages). Please split it before uploading.",
     "pdf_no_extractable_text": "No extractable text in this PDF — it looks like a scanned/image-only PDF. Please upload a text-based PDF or an EPUB.",
+    "pdf_encrypted": "This PDF is encrypted. Please remove its password protection before uploading.",
+    "pdf_corrupt_or_unsupported": "Could not parse this PDF — the file may be corrupted or in a format we don't support yet.",
     "invalid_password": "Current password is incorrect",
     "password_changed": "Password changed successfully",
     "invalid_refresh_token": "Invalid or expired refresh token",
