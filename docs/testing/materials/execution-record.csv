@@ -1454,3 +1454,4 @@ Call log:
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-04,提案写入,P2,SKIP,,companion-tools-v2/report.md,"离线 error+retry 场景需精确断网时机——人工复核"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,"dismiss 关闭路径待人工（非数据安全项）"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,"双标签并发幂等——幂等中间件单测背书，人工复核"
+20260920,自动化(ZCode),G14c排查,E1-L,静态分析,WT5-02,提案写入,P2,INVESTIGATED,,13-companion-tools-v2-test-plan.md,静态契约端到端一致(非schema漂移);断点限于UI路径;H1=卡片DOM缺口/H2=错误态吞没;复现需健康planner供给→独立立案
