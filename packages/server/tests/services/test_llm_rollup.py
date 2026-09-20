@@ -23,7 +23,7 @@ from app.services.llm.metrics import compute_llm_metrics
 from app.services.llm.rollup import rollup_metrics, upsert_traces
 from tests.conftest import _TestSession
 
-NOW = datetime.now(UTC)
+NOW = datetime.now(UTC).replace(minute=5, second=0, microsecond=0)  # pinned: relative offsets must never straddle an hour boundary (CI flake 2026-09-20)
 
 
 def _td(
@@ -125,7 +125,7 @@ class TestRollupMetrics:
                 _td(label='a', provider='glm', cost=0.001, ts=NOW - timedelta(hours=2)),
                 _td(label='a', provider='mimo', cost=0.002, ts=NOW - timedelta(hours=2)),
                 _td(label='b', provider='glm', success=False, error_type='timeout',
-                    ts=NOW - timedelta(days=3)),
+                    ts=NOW - timedelta(days=2, hours=12)),  # 60h back: safely inside the 72h window
             ])
             await s.commit()
             data = await rollup_metrics(s, hours=72)
