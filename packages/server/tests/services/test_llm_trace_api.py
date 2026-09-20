@@ -259,7 +259,7 @@ class TestMetricsAdditions:
                 _trace(http_request_id='a', created_at=now - timedelta(hours=1), cost=0.001),
                 _trace(http_request_id='b', created_at=now - timedelta(hours=1)),
                 _trace(
-                    http_request_id='c', created_at=now - timedelta(hours=26),
+                    http_request_id='c', created_at=now - timedelta(hours=47),
                     success=False, error_type='rate_limit',
                 ),
             ])
@@ -272,9 +272,13 @@ class TestMetricsAdditions:
             assert bucket['calls'] == 2
             assert bucket['success_rate'] == 1.0
 
-            daily = await compute_llm_metrics(hours=72, session=session, user_id=None, force_global=True)
+            # P-C: >48h GLOBAL windows now read the rollup (day buckets
+            # pinned in tests/services/test_llm_rollup.py). The trace path's
+            # own day-bucket branch stays reachable via USER-SCOPED long
+            # windows (user scope never routes to the rollup).
+            daily = await compute_llm_metrics(hours=72, session=session, user_id='user-aaaaaaaa')
             assert len(daily['series']) >= 1
-            assert all('T' not in b['bucket'] for b in daily['series']), '>48h window buckets by day'
+            assert all('T' not in b['bucket'] for b in daily['series']), 'user-scoped >48h buckets by day'
 
     @pytest.mark.asyncio
     async def test_provider_model_fallback_and_label_enrichment(self):

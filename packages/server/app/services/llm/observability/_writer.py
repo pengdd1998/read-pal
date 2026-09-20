@@ -73,10 +73,15 @@ class _TraceWriter:
         try:
             from app.db import async_session
             from app.models.llm_trace import LLMCallTrace
+            from app.services.llm.rollup import upsert_traces
 
             async with db_error_guard('observability.trace_flush', batch_size=len(batch)):
                 async with async_session() as session:
                     session.add_all([LLMCallTrace(**t) for t in batch])
+                    # P-C: fold the same batch into the hourly rollup in the
+                    # same transaction — a rollup gap is then only possible
+                    # when the trace write itself failed.
+                    await upsert_traces(session, batch)
                     await session.commit()
             logger.debug('Trace flush: %d records written', len(batch))
             return len(batch)
@@ -171,6 +176,19 @@ class _TraceWriter:
                     break
             if total_deleted:
                 logger.info('Trace prune: deleted %d rows older than %dd', total_deleted, retention_days)
+
+            # P-C: rollup retention rides the same cadence — derived data,
+            # fixed 90d horizon (independent of the trace retention knob:
+            # rollup exists precisely to outlive raw traces).
+            try:
+                from app.services.llm.rollup import prune_rollup
+
+                async with factory() as session:
+                    pruned = await prune_rollup(session)
+                if pruned:
+                    logger.info('Rollup prune: deleted %d rows older than 90d', pruned)
+            except Exception:  # noqa: BLE001 — rollup prune must not affect traces
+                logger.warning('Rollup prune failed', exc_info=True)
             return total_deleted
         except Exception:
             logger.warning('Trace prune failed', exc_info=True)

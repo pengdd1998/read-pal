@@ -135,9 +135,30 @@ async def compute_llm_metrics(
     ``guardrail_days`` (P-A): window for the guardrail counters — 1 keeps
     the historical today-only view; larger values show the multi-day
     trend the alerting thresholds need.
+
+    P-C: global-scope windows beyond 48h read the hourly rollup instead
+    of scanning traces (bounded rows, trend-grade p95 — see
+    ``rollup.rollup_metrics``). User-scoped views always read traces:
+    the rollup is platform-wide by construction.
     """
     hours = max(1, min(hours, MAX_METRICS_WINDOW_HOURS))
     since = datetime.now(UTC) - timedelta(hours=hours)
+
+    global_scope = force_global or (
+        os.environ.get('LLM_METRICS_SCOPE', '').strip().lower() == 'global'
+    )
+    if global_scope and hours > 48 and session is not None:
+        from app.services.llm.rollup import rollup_metrics
+
+        data = await rollup_metrics(session, hours=hours)
+        # Guardrail counters are live-read, not rolled up — attach here so
+        # the ops console keeps them on every window size.
+        from app.utils.output_filter import read_guardrail_hits
+
+        data['guardrail_hits_today'] = await read_guardrail_hits(
+            days=max(1, guardrail_days),
+        )
+        return data
 
     # Unset user_id => global scope is only honored for ops-configured
     # deployments; otherwise an anonymous scope falls back to user filter

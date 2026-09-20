@@ -28,8 +28,16 @@ def _make_trace(**overrides) -> dict:
 
 
 def _mock_async_session():
-    """Build a mock async context manager for async_session()."""
+    """Build a mock async context manager for async_session().
+
+    ``execute`` returns a result whose ``.scalars().all()`` chain is
+    synchronous and empty — the writer's rollup upsert SELECTs before
+    merging (P-C), and a bare AsyncMock made that chain yield coroutines.
+    """
     mock_session = AsyncMock()
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = []
+    mock_session.execute = AsyncMock(return_value=result)
     mock_factory = MagicMock()
     mock_factory.return_value.__aenter__ = AsyncMock(return_value=mock_session)
     mock_factory.return_value.__aexit__ = AsyncMock(return_value=False)

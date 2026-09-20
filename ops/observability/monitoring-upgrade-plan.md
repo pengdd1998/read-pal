@@ -1,15 +1,17 @@
 # LLM 监控升级方案（P-A / P-B / P-C 分期）
 
 > 2026-09-18 定稿（参照 Claude Code Router 工作台的三级下钻交互），
-> 2026-09-20 落盘。执行状态：**P-A / P-B 已完成（2026-09-20）**。
-> P-A：后端 1832 测试全绿；实弹：ops-key 403 门、requests 列表、
-> `/{request_id}` 链路下钻（真实 glm 429→mimo 兜底链）、providers
-> 快照 `tpmWindowUsed`。P-B：/ops/llm 升级（30d 默认、双趋势图、
-> 失败分布、供应商运行时卡 30s 轮询、by_label 增 TTFT/成本/版本列）
-> + 新页 /ops/llm/traces（过滤/分页/行展开链路/复制 ID）——浏览器
-> 12/12 实弹通过；web 213 vitest 全绿（趋势图为零依赖 SVG，未引库）。
-> P-C 未开始。dev 注意：`LLM_LOG_ENABLED` 曾为 false（trace 表
-> 09-17 起为空），已改回 true。
+> 2026-09-20 落盘。执行状态：**P-A / P-B / P-C 全部完成（2026-09-20）**。
+> P-A：行级 trace API + series/TPM/熔断快照（1832 绿，实弹下钻验证）。
+> P-B：/ops/llm 升级 + /ops/llm/traces 下钻页（浏览器 12/12；web 213）。
+> P-C：`llm_metrics_rollup`（hour×label×provider，writer 同事务 upsert，
+> 90d 保留；>48h 全局窗口读 rollup——实弹 `_source: rollup` 验证；
+> alembic 0030 upgrade/downgrade 双跑过）；check.py 落地 §4 三阈值
+> （成本 7d 翻倍/rate_limit 占比跳变 >20pp/label 成功率 −5pp 且 ≥30）
+> + digest 7 天趋势 + `guardrial` 拼写修复（阈值 SQL 已在真 PG 上
+> 种子行验证数学）。后端 1838 绿。p95 为调用加权合并的**趋势级**近似
+> （精确值走行级 API）；model 维度不在 rollup（by_model 仅 ≤48h 有值）。
+> dev 注意：`LLM_LOG_ENABLED` 曾为 false，已改回 true。
 >
 > 核心判断：read-pal **数据面很全、呈现面极弱**。`llm_call_traces` 落库
 > 20 字段（`ttft_ms / fallback_used / prompt_version / lang / cache_hit /

@@ -109,6 +109,14 @@ def check_signals() -> list[tuple[str, str, bool, str]]:
     except (ValueError, IndexError):
         out.append(('llm_success_rate', 'P2', True, f'no parse: {llm[:40]!r}'))
 
+    # --- P-C thresholds (llm-metrics.md §4, via the hourly rollup) ----------
+    # 1h probes above stay on the raw trace table: freshness + exact p95,
+    # bounded by a single hour of rows. The threshold probes below look at
+    # multi-day windows where the rollup is the right (and cheap) source.
+    # Defensive: a pre-migration deploy has no rollup table yet — degrade
+    # to OK-with-note instead of killing the whole check run.
+    out.extend(_rollup_threshold_signals())
+
     deadline_n = ssh(
         'docker logs read-pal-api-1 --since 1h 2>&1 | grep -c planner_deadline'
     )
@@ -117,14 +125,97 @@ def check_signals() -> list[tuple[str, str, bool, str]]:
 
     guard = ssh(
         "docker exec infra-redis sh -c "
-        "\"redis-cli --scan --pattern 'llm:guardrial:*' >/dev/null 2>&1; "
-        "redis-cli --scan --pattern 'llm:guardrail:*' | while read k; do redis-cli get $k; done\" "
+        "\"redis-cli --scan --pattern 'llm:guardrail:*' | while read k; do redis-cli get $k; done\" "
         '| awk \'{s+=$1} END {print s+0}\''
     )
     g = int(guard or 0)
     out.append(('guardrail_spike', 'P2', g <= 50, f'{g} hits today'))
 
     return out
+
+
+def _psql(sql: str) -> str:
+    """Run one psql query inside the VPS postgres container."""
+    return ssh(
+        'docker exec infra-postgres psql -U readpal -d readpal -tAc '
+        + json.dumps(sql)
+    )
+
+
+def _rollup_threshold_signals() -> list[tuple[str, str, bool, str]]:
+    """§4 thresholds over the hourly rollup: cost doubling (7d vs prior
+    7d), rate_limit share jump (24h vs prior 7d, >20pp), per-label
+    success drop (24h vs prior 7d, −5pp with ≥30 calls)."""
+    signals: list[tuple[str, str, bool, str]] = []
+    degraded = lambda note: [('llm_rollup', 'P2', True, note)]  # noqa: E731
+
+    try:
+        # -- cost: last 7d vs prior 7d (floor avoids 0.01 -> 0.03 noise)
+        row = _psql(
+            "SELECT coalesce(round(sum(cost_usd) FILTER"
+            " (WHERE hour > now() - interval '7 days')::numeric, 4), 0),"
+            " coalesce(round(sum(cost_usd) FILTER"
+            " (WHERE hour <= now() - interval '7 days')::numeric, 4), 0)"
+            " FROM llm_metrics_rollup WHERE hour > now() - interval '14 days'"
+        )
+        recent, prior = (float(x) for x in row.split('|'))
+        if prior >= 1.0 and recent >= 2 * prior:
+            signals.append(('llm_cost_doubling', 'P2', False,
+                            f'${recent} last 7d vs ${prior} prior (≥2×)'))
+        else:
+            signals.append(('llm_cost_doubling', 'P2', True,
+                            f'${recent} vs ${prior} (7d)'))
+
+        # -- rate_limit share: 24h vs prior 7d baseline
+        row = _psql(
+            "SELECT coalesce(sum(case when hour > now() - interval '1 day'"
+            " then calls end), 0), coalesce(sum(case when"
+            " hour > now() - interval '1 day' then coalesce((regexp_match("
+            "error_counts, '(?:^|,)rate_limit=([0-9]+)'))[1], '0')::int"
+            " end), 0), coalesce(sum(case when hour <="
+            " now() - interval '1 day' then calls end), 0), coalesce(sum("
+            "case when hour <= now() - interval '1 day' then coalesce(("
+            "regexp_match(error_counts, '(?:^|,)rate_limit=([0-9]+)'))[1],"
+            " '0')::int end), 0) FROM llm_metrics_rollup WHERE hour >"
+            " now() - interval '8 days'"
+        )
+        c24, rl24, c7, rl7 = (int(float(x)) for x in row.split('|'))
+        share24 = rl24 / c24 if c24 else 0.0
+        share7 = rl7 / c7 if c7 else 0.0
+        if c24 >= 30 and share24 - share7 > 0.20:
+            signals.append(('llm_ratelimit_jump', 'P2', False,
+                            f'rate_limit share {share24:.0%} (24h) vs {share7:.0%} baseline (+{share24 - share7:.0%})'))
+        else:
+            signals.append(('llm_ratelimit_jump', 'P2', True,
+                            f'{share24:.0%} (24h) vs {share7:.0%} (7d base)'))
+
+        # -- per-label success drop: 24h vs prior 7d, ≥30 calls
+        rows = _psql(
+            "SELECT label, sum(case when hour > now() - interval '1 day'"
+            " then calls end), sum(case when hour >"
+            " now() - interval '1 day' then successes end), sum(case when"
+            " hour <= now() - interval '1 day' then calls end), sum(case"
+            " when hour <= now() - interval '1 day' then successes end)"
+            " FROM llm_metrics_rollup WHERE hour > now() - interval '8 days'"
+            " GROUP BY label HAVING sum(case when hour >"
+            " now() - interval '1 day' then calls end) >= 30"
+        )
+        drops = []
+        for line in rows.splitlines():
+            parts = line.split('|')
+            if len(parts) != 5:
+                continue
+            label, c24, s24, c7, s7 = parts
+            r24 = int(s24) / int(c24) if int(c24) else 1.0
+            r7 = int(s7) / int(c7) if int(c7) else 1.0
+            if int(c7) >= 30 and r24 < r7 - 0.05:
+                drops.append(f'{label} {r24:.0%} vs {r7:.0%}')
+        signals.append(('llm_label_success_drop', 'P2', not drops,
+                        '; '.join(drops) if drops else 'all labels within −5pp'))
+
+        return signals
+    except Exception as exc:  # noqa: BLE001 — degrade, never kill the run
+        return degraded(f'rollup unavailable: {str(exc)[:80]}')
 
 
 # --- state + notify ---------------------------------------------------------
@@ -186,7 +277,25 @@ def evaluate(signals: list[tuple[str, str, bool, str]], state: dict) -> None:
 def digest(signals: list[tuple[str, str, bool, str]]) -> None:
     lines = [f'- {n}[{s}]: ' + ('OK' if ok else f'FAIL ({d})')
              for n, s, ok, d in signals]
+    trend = _seven_day_trend()
+    if trend:
+        lines.append('')
+        lines.append(f'7 天趋势：{trend}')
     notify('📖 read-pal 监控心跳', '每日快照（09:00）\n\n' + '\n'.join(lines))
+
+
+def _seven_day_trend() -> str:
+    """One-line 7d summary for the digest (calls / success / cost)."""
+    try:
+        row = _psql(
+            "SELECT sum(calls), round(100.0 * sum(successes)"
+            " / nullif(sum(calls), 0), 1), round(sum(cost_usd)::numeric, 4)"
+            " FROM llm_metrics_rollup WHERE hour > now() - interval '7 days'"
+        )
+        calls, rate, cost = (x for x in row.split('|'))
+        return f'{int(float(calls)):,} 次调用 · 成功率 {rate}% · ${cost}'
+    except Exception:  # noqa: BLE001 — digest trend is best-effort
+        return ''
 
 
 def main() -> int:
