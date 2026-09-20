@@ -186,7 +186,7 @@
 |---|------|------|
 | F1 | ✅ | 5 张卡，问题源自划线 |
 | F2 | ✅ | review rating=3 success:True |
-| F3 | ✅ | 12 节点中文（苏联/苏联小说/意识形态无关）|
+| F3 | ✅ | 12 节点中文（苏联/苏联小说/意识形态无关）。KG3/KG6 正式附因（GAP D3，2026-09-20）：**KG3 交互**——功能在位（NodeDetailPanel + 节点 onClick 实证于 components/knowledge/），历史 SKIP 系探针主视图文案正则阻断非产品缺陷，补测列 D2 同批浏览器走查；**KG6 概念搜索**——功能未实现（knowledge 组件面无任何搜索输入，探针"未找到搜索框"属实），正式 SKIP 转产品待办（如立项，验收按 10-knowledge-graph-test-plan KG6-01..04 四条用例） |
 | F4 | ✅ | 主题"苏联科幻文学的审查困境与创作策略"（中文）|
 | F5 | ✅ | 双书 compare → common_themes/unique_perspectives |
 | F6 | ✅ | "《路边野餐》如何体现了苏联小说在智慧和道德上的趣味性？"（中文，引用划线）|
