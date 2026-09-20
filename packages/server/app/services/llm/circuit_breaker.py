@@ -5,12 +5,36 @@ from __future__ import annotations
 import asyncio
 import enum
 import time
+from collections import deque
+from datetime import datetime, UTC
+from typing import Any
 
 import structlog
 
 from app.config import get_settings
 
 logger = structlog.get_logger('read-pal.llm')
+
+# P-A (monitoring upgrade): ring buffer of state transitions — the
+# structlog lines are ephemeral; ops needs "when did the breaker open"
+# survivably in-process. Bounded to keep the snapshot response small.
+_TRANSITION_HISTORY: deque[dict[str, Any]] = deque(maxlen=50)
+
+
+def recent_transitions() -> list[dict[str, Any]]:
+    """Newest-last transition history (process-local)."""
+    return list(_TRANSITION_HISTORY)
+
+
+def _record_transition(name: str, old: CircuitState, new: CircuitState) -> None:
+    if old == new:
+        return
+    _TRANSITION_HISTORY.append({
+        'provider': name or '(unnamed)',
+        'from': old.value,
+        'to': new.value,
+        'ts': datetime.now(UTC).isoformat(timespec='seconds'),
+    })
 
 
 class CircuitState(enum.Enum):
@@ -23,7 +47,8 @@ class CircuitState(enum.Enum):
 class CircuitBreaker:
     """Simple async-safe circuit breaker — no external dependencies."""
 
-    def __init__(self) -> None:
+    def __init__(self, name: str = '') -> None:
+        self.name = name
         self.state = CircuitState.CLOSED
         self._failures = 0
         self._opened_at: float = 0.0
@@ -39,8 +64,9 @@ class CircuitBreaker:
                 settings = get_settings()
                 elapsed = time.monotonic() - self._opened_at
                 if elapsed >= settings.circuit_reset_timeout_seconds:
-                    self.state = CircuitState.HALF_OPEN
+                    old, self.state = self.state, CircuitState.HALF_OPEN
                     self._probe_in_progress = True
+                    _record_transition(self.name, old, self.state)
                     logger.info('circuit_breaker_half_open')
                     return True
                 return False
@@ -56,7 +82,8 @@ class CircuitBreaker:
             self._failures = 0
             self._probe_in_progress = False
             if self.state != CircuitState.CLOSED:
-                self.state = CircuitState.CLOSED
+                old, self.state = self.state, CircuitState.CLOSED
+                _record_transition(self.name, old, self.state)
                 logger.info('circuit_breaker_closed')
 
     async def record_failure(self) -> None:
@@ -66,12 +93,14 @@ class CircuitBreaker:
             self._probe_in_progress = False
             settings = get_settings()
             if self.state == CircuitState.HALF_OPEN:
-                self.state = CircuitState.OPEN
+                old, self.state = self.state, CircuitState.OPEN
                 self._opened_at = time.monotonic()
+                _record_transition(self.name, old, self.state)
                 logger.warning('circuit_breaker_open_probe_failed')
             elif self._failures >= settings.circuit_failure_threshold:
-                self.state = CircuitState.OPEN
+                old, self.state = self.state, CircuitState.OPEN
                 self._opened_at = time.monotonic()
+                _record_transition(self.name, old, self.state)
                 logger.warning(
                     'circuit_breaker_open',
                     consecutive_failures=self._failures,

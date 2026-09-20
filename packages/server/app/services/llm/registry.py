@@ -138,7 +138,11 @@ class ProviderRegistry:
                 existing.config = cfg
                 new_providers[cfg.name] = existing
             else:
-                new_providers[cfg.name] = ProviderState(config=cfg)
+                state = ProviderState(config=cfg)
+                # P-A: label the breaker so transition history (ops view)
+                # attributes state changes to this provider.
+                state.circuit.name = cfg.name
+                new_providers[cfg.name] = state
         self._providers = new_providers
         self._config_fingerprint = self._fingerprint(configs)
         self._initialized = True

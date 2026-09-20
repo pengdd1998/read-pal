@@ -50,6 +50,10 @@ def _state_snapshot() -> list[dict[str, Any]]:
             'circuitState': str(state.circuit.state.value),
             'avgLatencyMs': round(state.avg_latency_ms, 1),
             'rpmWindowUsed': state.call_count,
+            # P-A: the registry has tracked TPM consumption all along "for
+            # dashboards" — surface it so throttling pressure is visible
+            # before 429s start (max_tpm<=0 means untracked/unlimited).
+            'tpmWindowUsed': state.token_count,
             'isDefault': cfg.name == 'glm' and not settings.llm_providers.strip(),
         })
     return out
@@ -68,7 +72,12 @@ async def list_providers(
     """List configured LLM providers with live circuit/RPM state."""
     registry = get_registry()
     registry.reload_if_changed_sync()
-    return GenericResponse(success=True, data={'providers': _state_snapshot()})
+    from app.services.llm.circuit_breaker import recent_transitions
+
+    return GenericResponse(success=True, data={
+        'providers': _state_snapshot(),
+        'circuitTransitions': recent_transitions(),
+    })
 
 
 @router.post('/reload', response_model=GenericResponse)

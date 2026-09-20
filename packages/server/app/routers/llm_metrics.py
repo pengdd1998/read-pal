@@ -2,17 +2,28 @@
 
 Read-only aggregation over ``llm_call_traces`` (engineering-upgrade B4).
 Router stays thin per AGENTS.md Never-rule 2: validation here, computation
-in ``app.services.llm.metrics``.
+in ``app.services.llm.metrics`` / ``app.services.llm.trace_queries``.
+
+Monitoring-upgrade P-A (2026-09-20): row-level trace browsing —
+``GET /requests`` (filterable list) and ``GET /requests/{request_id}``
+(one SSE turn's full call chain). Both are ops-ONLY (cross-user
+metadata) and guarded by the shared ``require_ops_key`` dependency.
 """
 
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.middleware.auth import get_current_user
+from app.middleware.ops_auth import ops_key_valid, require_ops_key
 from app.middleware.rate_limiter import account_limiter
 from app.schemas.common import GenericResponse
 from app.services.llm.metrics import MAX_METRICS_WINDOW_HOURS, compute_llm_metrics
+from app.services.llm.trace_queries import (
+    MAX_TRACE_WINDOW_HOURS,
+    get_trace_chain,
+    list_llm_traces,
+)
 
 router = APIRouter(
     prefix='/api/v1/stats/llm',
@@ -21,25 +32,10 @@ router = APIRouter(
 )
 
 
-def _ops_key_valid(provided: str | None) -> bool:
-    """Constant-time compare against the configured ops key.
-
-    Checks os.environ first (container env / test monkeypatch), then the
-    settings object (.env-file config, e.g. local dev) — pydantic loads
-    .env into Settings but never exports it to the process environ.
-    """
-    import hmac
-    import os
-
-    from app.config import get_settings
-
-    expected = (os.environ.get('OPS_KEY') or get_settings().ops_key or '').strip()
-    return bool(expected and provided and hmac.compare_digest(expected, provided))
-
-
 @router.get('', response_model=GenericResponse)
 async def get_llm_metrics(
     hours: int = Query(24, ge=1, le=MAX_METRICS_WINDOW_HOURS),
+    guardrail_days: int = Query(1, ge=1, le=30),
     x_ops_key: str | None = Header(None, alias='X-Ops-Key'),  # P7.2 — never in the URL (access logs)
     _current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -52,10 +48,56 @@ async def get_llm_metrics(
     must not travel in the URL: nginx access logs record the full request
     line, so a query param would persist the secret on disk.
     """
-    ops_ok = _ops_key_valid(x_ops_key)
+    ops_ok = ops_key_valid(x_ops_key)
     data = await compute_llm_metrics(
-        hours=hours, session=db,
+        hours=hours,
+        session=db,
         user_id=None if ops_ok else str(_current_user['id']),
         force_global=ops_ok,
+        guardrail_days=guardrail_days,
     )
+    return GenericResponse(success=True, data=data)
+
+
+@router.get('/requests', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
+async def list_llm_trace_rows(
+    hours: int = Query(24, ge=1, le=MAX_TRACE_WINDOW_HOURS),
+    label: str | None = Query(None, max_length=100),
+    success: bool | None = Query(None),
+    error_type: str | None = Query(None, max_length=32),
+    request_prefix: str | None = Query(None, max_length=50, description='http_request_id prefix search'),
+    limit: int = Query(50, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    db: AsyncSession = Depends(get_db),
+) -> GenericResponse:
+    """Row-level trace list (ops-only): newest-first, filterable, paginated.
+    ``user`` fields are salted-free 8-hex digests — correlation without
+    exposing ids."""
+    data = await list_llm_traces(
+        db,
+        hours=hours,
+        label=label,
+        success=success,
+        error_type=error_type,
+        request_prefix=request_prefix,
+        limit=limit,
+        offset=offset,
+    )
+    return GenericResponse(success=True, data=data)
+
+
+@router.get('/requests/{request_id}', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
+async def get_llm_trace_chain(
+    request_id: str,
+    db: AsyncSession = Depends(get_db),
+) -> GenericResponse:
+    """One SSE turn's full call chain (ops-only): every trace sharing the
+    ``http_request_id`` — main answer + tool loop + fallback retries —
+    oldest-first with a chain-level latency summary."""
+    data = await get_trace_chain(db, request_id)
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail={'code': 'TRACE_NOT_FOUND', 'message': 'No traces for this request id.'},
+        )
     return GenericResponse(success=True, data=data)

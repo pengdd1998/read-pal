@@ -15,6 +15,11 @@ plus a per-label breakdown (top labels by call volume) for drilling into
 which feature drives cost/latency. Percentiles are computed Python-side on
 purpose: SQLite (test) lacks ``percentile_cont``, and window sizes here are
 bounded by the ``MAX_METRICS_WINDOW_HOURS`` cap.
+
+Monitoring-upgrade P-A (2026-09-20) additions, same row scan: hourly/daily
+``series``, ``by_provider`` / ``by_model`` / ``fallback_used`` counts,
+``by_label`` enriched with cost / p95 TTFT / prompt version, and the
+guardrail window parameterized (``guardrail_days``).
 """
 
 from __future__ import annotations
@@ -30,6 +35,9 @@ from app.models.llm_trace import LLMCallTrace
 
 MAX_METRICS_WINDOW_HOURS = 720  # 30 days hard cap — protects the row scan
 MAX_LABEL_BREAKDOWN = 10
+# Series resolution switch: hourly buckets while the window is short enough
+# to stay readable, daily beyond (a 720h hourly series would be 720 points).
+SERIES_HOURLY_MAX_HOURS = 48
 
 
 def _percentile(sorted_values: list[int], pct: float) -> int | None:
@@ -43,12 +51,73 @@ def _percentile(sorted_values: list[int], pct: float) -> int | None:
     return sorted_values[idx]
 
 
+def _bucket_key(created_at: datetime, hourly: bool) -> str:
+    """ISO bucket key — hour precision for short windows, day otherwise."""
+    if hourly:
+        return created_at.strftime('%Y-%m-%dT%H:00')
+    return created_at.strftime('%Y-%m-%d')
+
+
+def _series(rows: list[Any], hours: int) -> list[dict[str, Any]]:
+    """Time-bucketed calls / success rate / p95 / cost for trend charts.
+
+    Rows are ordered newest-first from the scan; buckets are returned
+    oldest-first for left-to-right charting. Empty buckets are skipped
+    (sparse series — the chart x-axis is categorical, not continuous).
+    """
+    hourly = hours <= SERIES_HOURLY_MAX_HOURS
+    agg: dict[str, dict[str, Any]] = {}
+    for r in rows:
+        key = _bucket_key(r.created_at, hourly)
+        bucket = agg.setdefault(
+            key, {'calls': 0, 'success': 0, 'latencies': [], 'cost': 0.0},
+        )
+        bucket['calls'] += 1
+        bucket['success'] += 1 if r.success else 0
+        if r.success and not r.cache_hit:
+            bucket['latencies'].append(r.latency_ms)
+        bucket['cost'] += r.estimated_cost_usd or 0.0
+    return [
+        {
+            'bucket': key,
+            'calls': b['calls'],
+            'success_rate': round(b['success'] / b['calls'], 4),
+            'p95_latency_ms': _percentile(sorted(b['latencies']), 95),
+            'cost_usd': round(b['cost'], 6),
+        }
+        for key, b in sorted(agg.items())
+    ]
+
+
+def _grouped_counts(
+    rows: list[Any], attr: str,
+) -> dict[str, dict[str, Any]]:
+    """calls / success_rate / p95 per distinct value of ``attr``."""
+    agg: dict[str, dict[str, Any]] = {}
+    for r in rows:
+        key = getattr(r, attr) or '(unset)'
+        g = agg.setdefault(key, {'calls': 0, 'success': 0, 'latencies': []})
+        g['calls'] += 1
+        g['success'] += 1 if r.success else 0
+        if r.success and not r.cache_hit:
+            g['latencies'].append(r.latency_ms)
+    return {
+        key: {
+            'calls': g['calls'],
+            'success_rate': round(g['success'] / g['calls'], 4),
+            'p95_latency_ms': _percentile(sorted(g['latencies']), 95),
+        }
+        for key, g in sorted(agg.items(), key=lambda kv: -kv[1]['calls'])
+    }
+
+
 async def compute_llm_metrics(
     *,
     hours: int = 24,
     session: AsyncSession | None = None,
     user_id: str | None = None,
     force_global: bool = False,
+    guardrail_days: int = 1,
 ) -> dict[str, Any]:
     """Aggregate the five minimal indicators over the last ``hours``.
 
@@ -62,6 +131,10 @@ async def compute_llm_metrics(
     spend must not leak to every account. Set LLM_METRICS_SCOPE=global to
     run the endpoint as an ops console over all users (single-operator
     deployments).
+
+    ``guardrail_days`` (P-A): window for the guardrail counters — 1 keeps
+    the historical today-only view; larger values show the multi-day
+    trend the alerting thresholds need.
     """
     hours = max(1, min(hours, MAX_METRICS_WINDOW_HOURS))
     since = datetime.now(UTC) - timedelta(hours=hours)
@@ -90,6 +163,12 @@ async def compute_llm_metrics(
             LLMCallTrace.total_tokens,
             LLMCallTrace.estimated_cost_usd,
             LLMCallTrace.error_type,
+            LLMCallTrace.created_at,
+            LLMCallTrace.provider,
+            LLMCallTrace.model,
+            LLMCallTrace.fallback_used,
+            LLMCallTrace.ttft_ms,
+            LLMCallTrace.prompt_version,
         ).where(LLMCallTrace.created_at >= since)
         if not global_scope:
             q = q.where(LLMCallTrace.user_id == user_id)
@@ -117,13 +196,24 @@ async def compute_llm_metrics(
     label_agg: dict[str, dict[str, Any]] = {}
     for r in rows:
         agg = label_agg.setdefault(
-            r.label, {'calls': 0, 'success': 0, 'latencies': [], 'tokens': 0},
+            r.label, {
+                'calls': 0, 'success': 0, 'latencies': [], 'tokens': 0,
+                'cost': 0.0, 'ttfts': [], 'prompt_version': None,
+            },
         )
         agg['calls'] += 1
         agg['success'] += 1 if r.success else 0
         if r.success and not r.cache_hit:
             agg['latencies'].append(r.latency_ms)
+            if r.ttft_ms is not None:
+                agg['ttfts'].append(r.ttft_ms)
         agg['tokens'] += r.total_tokens or 0
+        agg['cost'] += r.estimated_cost_usd or 0.0
+        # rows scan newest-first: the first row seen per label is its
+        # most recent prompt version — what an ops reader wants ("what
+        # is running NOW"), not the modal value over the window.
+        if agg['prompt_version'] is None and r.prompt_version:
+            agg['prompt_version'] = r.prompt_version
 
     by_label = [
         {
@@ -132,6 +222,9 @@ async def compute_llm_metrics(
             'success_rate': round(agg['success'] / agg['calls'], 4),
             'p95_latency_ms': _percentile(sorted(agg['latencies']), 95),
             'total_tokens': agg['tokens'],
+            'cost_usd': round(agg['cost'], 6),
+            'p95_ttft_ms': _percentile(sorted(agg['ttfts']), 95),
+            'prompt_version': agg['prompt_version'],
         }
         for label, agg in sorted(
             label_agg.items(), key=lambda kv: kv[1]['calls'], reverse=True,
@@ -145,7 +238,7 @@ async def compute_llm_metrics(
     guardrails: dict[str, int] = {}
     if global_scope:
         from app.utils.output_filter import read_guardrail_hits
-        guardrails = await read_guardrail_hits(days=1)
+        guardrails = await read_guardrail_hits(days=max(1, guardrail_days))
 
     return {
         'window_hours': hours,
@@ -172,4 +265,12 @@ async def compute_llm_metrics(
         ),
         'guardrail_hits_today': guardrails,
         'by_label': by_label,
+        # P-A additions —
+        'series': _series(rows, hours),
+        'by_provider': _grouped_counts(rows, 'provider'),
+        'by_model': _grouped_counts(rows, 'model'),
+        'fallback': {
+            'used': sum(1 for r in rows if r.fallback_used),
+            'total': total,
+        },
     }
