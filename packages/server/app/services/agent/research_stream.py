@@ -33,7 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db import release_db
 from app.services.agent.research import (
     _books_searched,
-    _empty_brief,
+    _empty_brief_for,
     _is_research_fallback,
     _source_metadata,
     _synthesize_brief,
@@ -131,7 +131,7 @@ async def research_stream_events(
 
     if not chunks:
         logger.info("research.stream.no_sources", request_id=request_id)
-        yield _frame({"brief": _empty_brief()})
+        yield _frame({"brief": await _empty_brief_for(db, user_id)})
         yield "data: [DONE]\n\n"
         return
 

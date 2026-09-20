@@ -11,6 +11,12 @@ This script:
   2. Re-embeds all NULL chunks in batches via app.services.rag.embedding
      (so it uses whatever EMBEDDING_* provider is configured — local
      Ollama bge-m3 in dev).
+  3. REINDEXes the HNSW cosine index — P7.7 (2026-09-20): a bulk
+     embedding UPDATE left the index returning ZERO rows for
+     ``ORDER BY embedding <=> q LIMIT k`` while plain filtered counts
+     still worked, silently degrading every semantic search to empty.
+     A 7.9s REINDEX on 30k chunks restored it. Always reindex after
+     mass vector writes.
 
 Idempotent: re-running only processes still-NULL chunks.
 
@@ -153,12 +159,16 @@ async def main() -> None:
 
     remaining = await count_null()
     print(f'chunks to embed: {remaining}')
-    if remaining == 0:
-        print('nothing to do.')
-        return
+    if remaining > 0:
+        ok, failed = await backfill()
+        print(f'DONE: embedded={ok} failed={failed}')
 
-    ok, failed = await backfill()
-    print(f'DONE: embedded={ok} failed={failed}')
+    # P7.7: bulk vector writes leave the HNSW cosine index returning empty
+    # ORDER BY ... LIMIT scans while plain counts still work. ALWAYS run
+    # this after a backfill (the script cannot: DDL identifiers cannot be
+    # parameterized and the security gate blocks constant DDL strings):
+    #   REINDEX INDEX ix_book_chunks_embedding_cosine;
+    print('NEXT STEP (required, P7.7): REINDEX INDEX ix_book_chunks_embedding_cosine;')
 
 
 if __name__ == '__main__':

@@ -204,3 +204,49 @@ owner-locked regression guard.
 Third-party exception hierarchies don't join your ValueError ladder by
 luck — every new parser/SDK gets its raises converted at the module
 boundary into typed errors the router already knows.
+
+## P7.7 — Bulk embedding backfill silently zeroed HNSW semantic search
+
+**Symptom**
+
+After backfilling 1251 chunk embeddings (2026-09-20, dev), every
+semantic search returned zero rows: the Research agent answered
+"no sources" for queries that had returned results hours earlier. No
+errors logged — the app's DBAPIError catch saw nothing because nothing
+raised.
+
+**Root cause**
+
+The mass ``UPDATE book_chunks SET embedding = ...`` left the HNSW
+cosine index (``ix_book_chunks_embedding_cosine``) in a state where its
+index scans return zero rows. Postgres plans
+``ORDER BY embedding <=> q LIMIT k`` as an HNSW index scan (that's the
+point of the index) while filtered COUNTs use seq scans — so
+verification queries that counted rows looked healthy and the actual
+top-k searches were empty. Detection signature: **count with the same
+predicate > 0 while ORDER BY-distance LIMIT returns 0**.
+
+Fix was ``REINDEX INDEX ix_book_chunks_embedding_cosine`` (7.9s on 30k
+chunks). ``scripts/backfill_embeddings.py`` now prints the required
+REINDEX as its final step (the script cannot run DDL itself: identifiers
+cannot be parameterized and the commit gate blocks constant DDL
+strings — the docstring carries the runbook).
+
+**Stacked diagnosis note**
+
+This surfaced while diagnosing Research findings=0 and was the third
+layer under two others fixed the same day: unread books contributing
+chapter-0 front-matter noise (excluded from the research fan-out now,
+``rag/cross_book.py``) and the library-wide status count hiding the
+no-progress state behind the auto-seeded sample book (three-state scope
+classification: empty / unread_only / eligible). Also
+``MAX_EMBEDDING_CALLS=300`` (.env) had been capping fresh uploads at 300
+embedded chunks per book — raised to 2000 for the local Ollama backend
+where embedding is free.
+
+**How to avoid**
+
+After ANY bulk write to an indexed vector column, verify with an
+ORDER BY-distance LIMIT query (not a count) and REINDEX on doubt.
+Retrieval regressions need layer-by-layer evidence: scope → eligibility
+→ per-book retrieval → index health.

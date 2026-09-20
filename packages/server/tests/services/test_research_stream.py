@@ -134,6 +134,25 @@ class TestResearchSseStream:
         synth.assert_not_awaited()
 
     @pytest.mark.asyncio
+    async def test_unread_only_library_streams_no_progress_flag(self):
+        from tests.fixtures.seeds import _NEEDLE as NEEDLE
+
+        async with _TestSession() as session:
+            uid = await _seed_user(session)
+            await _seed_book(
+                session, uid, title="Never Opened",
+                chunks=[(0, f"{NEEDLE}扉页")],
+                status="unread", current_page=0,
+            )
+            chunks = await _collect(
+                research_sse_stream(session, uid, f"研究问题 {NEEDLE}", request_id="req-np")
+            )
+
+        frames = _data_frames(chunks)
+        assert len(frames) == 3
+        assert frames[2]["brief"].get("no_progress") is True
+
+    @pytest.mark.asyncio
     async def test_fallback_brief_carries_error_flag(self):
         from app.schemas.llm_outputs import ResearchBrief
 

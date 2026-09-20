@@ -87,6 +87,29 @@ def _empty_brief() -> dict[str, Any]:
     }
 
 
+async def _empty_brief_for(db: AsyncSession, user_id: UUID) -> dict[str, Any]:
+    """Empty brief with an honest reason for the emptiness.
+
+    Distinguishes three states so the UI never says "no books" to a user
+    who owns books: ``no_progress`` (library is unread-only — nothing
+    spoiler-safe to search yet) and ``no_results`` (readable books exist
+    but the query matched nothing). Classification mirrors the search's
+    own scope rule (``rag.cross_book.classify_research_scope``) — a
+    library-wide status count once classified the auto-seeded sample
+    book (a chunk-less ``reading`` Gatsby from registration) as
+    readable, hiding the no-progress state from fresh users.
+    """
+    from app.services.rag.cross_book import classify_research_scope
+
+    brief = _empty_brief()
+    scope_class = await classify_research_scope(db, user_id)
+    if scope_class == "unread_only":
+        brief["no_progress"] = True
+    elif scope_class == "eligible":
+        brief["no_results"] = True
+    return brief
+
+
 def _books_searched(chunks: list[dict]) -> int:
     """Distinct books actually contributing excerpts (schema omits this)."""
     return len({str(c.get("book_id")) for c in chunks if c.get("book_id")})
@@ -153,7 +176,7 @@ async def run_research(
 
     if not chunks:
         logger.info("research.no_sources", user_id=str(user_id))
-        return {"success": True, "data": _empty_brief()}
+        return {"success": True, "data": await _empty_brief_for(db, user_id)}
 
     data = await _synthesize_brief(user_id, safe_question, chunks)
 

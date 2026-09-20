@@ -177,6 +177,36 @@ describe('ResearchPanel (matrix J1/J2 — streaming)', () => {
     await waitFor(() => expect(screen.getByText(/还没有可检索的书/)).toBeTruthy());
   });
 
+  it('unread-only library shows start-reading guidance (no_progress)', async () => {
+    renderPanel();
+    const user = userEvent.setup();
+    await user.type(screen.getByRole('textbox'), '任何问题');
+    await user.click(screen.getByRole('button', { name: '提问' }));
+    await waitFor(() => expect(authFetchMock).toHaveBeenCalledTimes(1));
+    act(() => {
+      streamMeta?.({ brief: { summary: '', findings: [], follow_ups: [], sources: [], books_searched: 0, no_progress: true } });
+      streamDone?.();
+    });
+    await waitFor(() => expect(screen.getByTestId('research-no-progress')).toBeTruthy());
+    expect(screen.getByText(/只检索你已读过的内容/)).toBeTruthy();
+    // The generic empty-library message must NOT co-render.
+    expect(screen.queryByText(/还没有可检索的书/)).toBeNull();
+  });
+
+  it('readable library with zero hits shows rephrase guidance (no_results)', async () => {
+    renderPanel();
+    const user = userEvent.setup();
+    await user.type(screen.getByRole('textbox'), '任何问题');
+    await user.click(screen.getByRole('button', { name: '提问' }));
+    await waitFor(() => expect(authFetchMock).toHaveBeenCalledTimes(1));
+    act(() => {
+      streamMeta?.({ brief: { summary: '', findings: [], follow_ups: [], sources: [], books_searched: 0, no_results: true } });
+      streamDone?.();
+    });
+    await waitFor(() => expect(screen.getByTestId('research-no-results')).toBeTruthy());
+    expect(screen.queryByText(/还没有可检索的书/)).toBeNull();
+  });
+
   it('degraded fallback (brief.error) still renders the partial brief with a warning', async () => {
     renderPanel();
     const user = userEvent.setup();

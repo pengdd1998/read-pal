@@ -211,6 +211,42 @@ class TestCrossBookSearch:
         assert results == []
 
     @pytest.mark.asyncio
+    async def test_unread_books_are_excluded_from_scope(self):
+        """2026-09-20 findings=0 diagnosis: unread books clamp to chapter-0
+        front matter under the spoiler boundary — publisher pages, TOC,
+        introductions. They must not fill the fan-out with that noise;
+        reading/completed books carry the evidence."""
+        async with _TestSession() as session:
+            uid = await _seed_user(session)
+            await _seed_book(
+                session, uid, title="Never Opened",
+                chunks=[(0, f"{_NEEDLE}扉页出版信息")],
+                status="unread", current_page=0,
+            )
+            await _seed_book(
+                session, uid, title="Currently Reading",
+                chunks=[(0, f"{_NEEDLE}正文证据段落")],
+                status="reading", current_page=0,
+            )
+            results = await cross_book_search(session, uid, _NEEDLE)
+
+        titles = {r["book_title"] for r in results}
+        assert "Currently Reading" in titles
+        assert "Never Opened" not in titles, "unread books must stay out of the fan-out"
+
+    @pytest.mark.asyncio
+    async def test_unread_only_library_returns_nothing_searchable(self):
+        async with _TestSession() as session:
+            uid = await _seed_user(session)
+            await _seed_book(
+                session, uid, title="Never Opened",
+                chunks=[(0, f"{_NEEDLE}扉页")],
+                status="unread", current_page=0,
+            )
+            results = await cross_book_search(session, uid, _NEEDLE)
+        assert results == []
+
+    @pytest.mark.asyncio
     async def test_completed_book_has_no_chapter_filter(self):
         """P3.5 regression: completed books must not be spoiler-limited.
 
@@ -328,6 +364,53 @@ class TestRunResearch:
         assert result["success"] is True
         assert result["data"]["findings"] == []
         assert result["data"]["sources"] == []
+        invoke.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_unread_only_library_flags_no_progress(self):
+        """Books exist but none has reading progress → ``no_progress`` flag
+        so the UI says "start reading" instead of "no books"."""
+        async with _TestSession() as session:
+            uid = await _seed_user(session)
+            await _seed_book(
+                session, uid, title="Never Opened",
+                chunks=[(0, f"{_NEEDLE}扉页")],
+                status="unread", current_page=0,
+            )
+            invoke = AsyncMock()
+            with patch(
+                "app.services.agent.research.safe_llm_invoke",
+                invoke,
+            ):
+                result = await run_research(session, uid, f"研究问题 {_NEEDLE}")
+
+        assert result["success"] is True
+        assert result["data"]["no_progress"] is True
+        assert result["data"]["sources"] == []
+        invoke.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_readable_but_chunkless_books_flag_no_results(self):
+        """Readable books whose retrieval yields nothing (e.g. the
+        registration-seeded sample book has no chunks) → ``no_results``,
+        NOT the misleading "library is empty" state."""
+        async with _TestSession() as session:
+            uid = await _seed_user(session)
+            await _seed_book(
+                session, uid, title="Seeded Sample",
+                chunks=[],
+                status="reading", current_page=1,
+            )
+            invoke = AsyncMock()
+            with patch(
+                "app.services.agent.research.safe_llm_invoke",
+                invoke,
+            ):
+                result = await run_research(session, uid, "任何问题")
+
+        assert result["success"] is True
+        assert result["data"]["no_results"] is True
+        assert "no_progress" not in result["data"]
         invoke.assert_not_awaited()
 
 

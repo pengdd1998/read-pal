@@ -65,6 +65,31 @@ async def _load_research_scope(
     return list(result.scalars().all())
 
 
+async def classify_research_scope(
+    db: AsyncSession,
+    user_id: UUID,
+    book_ids: list[UUID] | None = None,
+) -> str:
+    """Classify why research retrieval may come back empty.
+
+    Returns ``'empty'`` (no books in scope), ``'unread_only'`` (books
+    exist but none has reading progress — nothing spoiler-safe to
+    search), or ``'eligible'`` (readable books exist; an empty result
+    then means the query matched nothing, not that the library is
+    unusable). Reuses ``_load_research_scope`` so the classification
+    always matches the search's own eligibility rule — the library-wide
+    status counts previously used for this classified auto-seeded
+    sample books (register seeds a ``reading`` Gatsby with no chunks)
+    as "readable", hiding the no-progress state from real fresh users.
+    """
+    books = await _load_research_scope(db, user_id, book_ids, DEFAULT_MAX_BOOKS)
+    if not books:
+        return 'empty'
+    if all(b.status == BookStatus.unread for b in books):
+        return 'unread_only'
+    return 'eligible'
+
+
 async def cross_book_search(
     db: AsyncSession,
     user_id: UUID,
@@ -83,7 +108,16 @@ async def cross_book_search(
     rows sharing a content_hash collapse to one excerpt carrying the
     first book's attribution.
     """
-    books = await _load_research_scope(db, user_id, book_ids, max_books)
+    scoped = await _load_research_scope(db, user_id, book_ids, max_books)
+    # Unread books stay out of the fan-out: the user never opened them,
+    # so the spoiler boundary clamps their searchable surface to chapter
+    # 0 — publisher front matter on typical EPUBs (title page / TOC /
+    # introductions). Their per_book_k slots would contribute pure noise
+    # — the 2026-09-20 findings=0 diagnosis caught synthesis handed
+    # "chapter titles and introductory comments" only. Reading books
+    # (even at chapter 0) and completed books keep the normal spoiler
+    # contract.
+    books = [b for b in scoped if b.status != BookStatus.unread]
     if not books:
         return []
 

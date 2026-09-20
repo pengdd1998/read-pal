@@ -31,6 +31,11 @@ interface ResearchBrief {
   follow_ups: string[];
   sources: ResearchSource[];
   books_searched?: number;
+  /** Library has books but none has reading progress (spoiler-safe
+   * retrieval has nothing to search yet). */
+  no_progress?: boolean;
+  /** Readable books exist but this query matched nothing. */
+  no_results?: boolean;
   error?: string;
 }
 
@@ -190,7 +195,20 @@ export const ResearchPanel = React.memo(function ResearchPanel() {
         </div>
       )}
 
-      {brief && !brief.sources.length && !brief.error && (
+      {brief && !brief.sources.length && !brief.error && brief.no_progress && (
+        <div className="mt-4 rounded-xl bg-surface-1 px-4 py-3 text-xs text-gray-500 dark:text-gray-400" data-testid="research-no-progress">
+          {t('research_no_progress')}{' '}
+          <Link href="/library" className="text-primary-600 dark:text-primary-400 hover:underline">{t('research_go_read')}</Link>
+        </div>
+      )}
+
+      {brief && !brief.sources.length && !brief.error && brief.no_results && !brief.no_progress && (
+        <div className="mt-4 rounded-xl bg-surface-1 px-4 py-3 text-xs text-gray-500 dark:text-gray-400" data-testid="research-no-results">
+          {t('research_no_results')}
+        </div>
+      )}
+
+      {brief && !brief.sources.length && !brief.error && !brief.no_progress && !brief.no_results && (
         <div className="mt-4 rounded-xl bg-surface-1 px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
           {t('research_empty_library')}{' '}
           <Link href="/library" className="text-primary-600 dark:text-primary-400 hover:underline">{t('research_go_library')}</Link>
