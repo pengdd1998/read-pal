@@ -113,23 +113,29 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         try:
             yield session
             await session.commit()
-        except DBAPIError:
-            await session.rollback()
-            raise
         except InterfaceError as exc:
             # Streaming responses: the SSE generator and this teardown share
             # one asyncpg connection. If the generator's persist is still
             # in flight when teardown fires, the commit can fail with
-            # "another operation is in progress". The generator owns its
+            # "another operation is in progress" — or, after the generator
+            # released the connection and the client disconnected, with
+            # "the underlying connection is closed". The generator owns its
             # own commits/rollbacks for stream persistence, so a failed
             # teardown commit here loses nothing — roll back and log
             # instead of turning a completed stream into a 500.
+            # P7.5: this handler MUST precede `except DBAPIError` —
+            # sqlalchemy's InterfaceError SUBCLASSES DBAPIError, so the
+            # historical order made this branch unreachable and re-raised
+            # the race as an unhandled 500 (research-stream cancel path).
             logger.warning(
                 'db.teardown_commit_race session_closing_anyway error=%s',
                 str(exc)[:200],
             )
             with suppress(Exception):
                 await session.rollback()
+        except DBAPIError:
+            await session.rollback()
+            raise
         finally:
             await session.close()
 

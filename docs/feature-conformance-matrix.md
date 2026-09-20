@@ -233,11 +233,11 @@
 
 | # | 功能 | 预期行为 | 验收标准 |
 |---|------|---------|---------|
-| J1 | Research agent 前端入口 | 聊天面板 agent 切换或 dashboard 卡片直连 `/api/v1/agents/research`，跨书引用带出处 | 入口可达；引用可点验；护栏（消毒/预算）经 choke point |
-| J2 | Research 流式化 | stream_registry 复用，SSE 逐 token | 首响 <5s；取消可用（P0.3 契约） |
-| J3 | Coach agent 决策 | 前端入口落地 **或** 明示移出 Phase 2（与 interventions 面重叠需产品定义） | 二选一有书面决策；无半成品入口 |
-| J4 | dashboard insight 真实化 | 静态日期取模池 → 真实 agent 调用（带降级回退） | 冷启动有降级文案；正常态内容随书变化 |
-| J5 | "N AI Agents" 文案 | 与实际能力一致（当前 3/5，诚实口径已上线 2026-09-18） | zh/en 全量无夸大；新 agent 上线同 PR 更新 |
+| J1 | Research agent 前端入口 | 聊天面板 agent 切换或 dashboard 卡片直连 `/api/v1/agents/research`，跨书引用带出处 | ✅ 2026-09-20：dashboard 研究助手面板（ResearchPanel）直连 API；引用 `[n] 书名·章节` 深链 `/read/{book_id}`；消毒/预算全走后端 choke point。浏览器实证 200/92s，4 来源 2 书（findings=0 为检索深度问题非管线问题，引用渲染有单测钉住）。修复两阻斷：api 客户端 15s 默认超时掐断 95s 请求（timeouts.ts 增补 AI 端点模式）；dashboard remount 竞态（useDashboardData loading 重置） |
+| J2 | Research 流式化 | stream_registry 复用，SSE 逐 token | ✅ 2026-09-20（实现形态偏离已记录）：**阶段流式**而非逐 token——综合是 schema 校验的 `safe_llm_invoke`（JSON 契约+eval golden 依赖），逐 token 会破坏该契约；帧序 request_id→searching→sources→synthesizing→brief，首帧 <1s，RAG 落地即出引用（实测引用条屏显 109s 后才被 brief 替换）；取消走共享 `/chat/cancel` 注册表（P0.3/P0.6 契约含跨 worker+完成戳记），15s keepalive 防 proxy 断链。**顺带修 P7.5**：get_db teardown-race 处理分支因 except 顺序（InterfaceError ⊂ DBAPIError）不可达，取消断开路径炸 500——修复+回归测试+事件档案 |
+| J3 | Coach agent 决策 | 前端入口落地 **或** 明示移出 Phase 2（与 interventions 面重叠需产品定义） | ✅ 2026-09-20 书面决策：**Coach 前端入口移出 Phase 2**，待产品定义后回归。依据：后端 `/agent/coach`（comprehension monitoring）与已上线的 interventions（规则行为模式）在前端呈现面重叠（Toast/设置页/历史均已占位），入口位置与触发时机属产品决策，自主推进会造出半成品入口——恰是本行验收禁止的形态。后端服务保留且有测试钉住（`run_coach_report` + golden `coach_agent/assess`），回归触发条件：产品对 coach/interventions 边界给出定义。当前前端零 Coach 入口（无半成品） |
+| J4 | dashboard insight 真实化 | 静态日期取模池 → 真实 agent 调用（带降级回退） | ✅ 2026-09-20：新增 `GET /api/v1/agent/insight`（J4）——复用 `get_dashboard_stats` 作信号源（零新增查询面，P6.1 缓存契约天然覆盖），`safe_llm_call` 一句话洞察，Redis 天键封顶 **≤1 次 LLM/用户/天**（26h TTL）；全部失败路径（无书/LLM 降级/Redis 挂）返回 `insight: null` → 前端保留静态池降级，卡片永不阻塞。浏览器实证：真实句「您对《傲慢与偏见》的稳步阅读…」渲染 + 二次加载命中天缓存（2 请求 1 次 LLM）。新 PromptTemplate×2（insight.system/human v1，variables 声明）刻意不加 golden（文本一句话，循 mood 先例）；顺带补录 2129673d 遗留的 sanitizer 基线欠账（37/37） |
+| J5 | "N AI Agents" 文案 | 与实际能力一致（当前 3/5，诚实口径已上线 2026-09-18） | ✅ 2026-09-20 同 PR 更新（研究助手上线触发）：落地页 zh/en 「3 个 AI 代理，2 个开发中」→「4 个 AI 代理，1 个开发中」，研究助手移入已上线列表，理解教练留在开发中 |
 
 ## K. 伴读工具与提案写入（companion tools — 批次 1.5/1 验收，映射 plan 12/13 生命线）
 

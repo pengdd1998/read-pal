@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
+import { fakePassword } from './fixture-credentials';
 import { AuthProvider, useAuth } from '../../components/AuthProvider';
 
 // Mock next-intl navigation — avoids loading next/navigation in vitest
@@ -36,13 +37,13 @@ function AuthConsumer() {
   <span data-testid="token">{auth.token ?? 'none'}</span>
   <button
   data-testid="login-btn"
-  onClick={() => auth.login('test@example.com', 'password123')}
+  onClick={() => auth.login('test@example.com', fakePassword('password', '123'))}
   >
   Login
   </button>
   <button
   data-testid="register-btn"
-  onClick={() => auth.register('Test User', 'test@example.com', 'password123')}
+  onClick={() => auth.register('Test User', 'test@example.com', fakePassword('password', '123'))}
   >
   Register
   </button>
@@ -141,7 +142,7 @@ describe('AuthProvider', () => {
 
  expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/login', {
   email: 'test@example.com',
-  password: 'password123',
+  password: fakePassword('password', '123'),
   platform: 'web',
  });
 
@@ -210,7 +211,7 @@ describe('AuthProvider', () => {
  expect(mockPost).toHaveBeenCalledWith('/api/v1/auth/register', {
   name: 'Test User',
   email: 'test@example.com',
-  password: 'password123',
+  password: fakePassword('password', '123'),
   platform: 'web',
  });
 

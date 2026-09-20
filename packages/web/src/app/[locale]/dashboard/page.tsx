@@ -16,6 +16,7 @@ import { DashboardWidgetGrid } from '@/components/dashboard/DashboardWidgetGrid'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { FlashcardReviewWidget } from '@/components/dashboard/FlashcardReviewWidget';
 import { ExploreMoreSection } from '@/components/dashboard/ExploreMoreSection';
+import { ResearchPanel } from '@/components/dashboard/ResearchPanel';
 
 // Lazy-load heavy dashboard components
 const OnboardingWalkthrough = dynamic(() => import('@/components/onboarding/OnboardingWalkthrough').then((m) => ({ default: m.OnboardingWalkthrough })), { ssr: false, loading: () => <div className="h-32 w-full animate-pulse skeleton rounded-xl" /> });
@@ -53,6 +54,7 @@ export default function DashboardPage() {
 
   const [greetingKey, setGreetingKey] = useState('greeting_morning');
   const [insightOfDayKey, setInsightOfDayKey] = useState<InsightKey | null>(null);
+  const [insightText, setInsightText] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -61,6 +63,22 @@ export default function DashboardPage() {
   }, []);
 
   const { stats, recentBooks, streak, hasData, loading, error, retry } = useDashboardData();
+
+  // J4: upgrade the canned insight-of-the-day to a real agent call once the
+  // library is confirmed non-empty. Any failure keeps the canned pool — the
+  // card must never block the dashboard. Fires once per mount (the backend
+  // day-cache caps the LLM cost at one call per user per day).
+  useEffect(() => {
+    if (!hasData || loading) return;
+    let cancelled = false;
+    api.get<{ insight: string | null }>('/api/v1/agent/insight')
+      .then((res) => {
+        if (!cancelled && res.success && res.data?.insight) setInsightText(res.data.insight);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasData, loading]);
 
   const handleSeedSample = async () => {
     try {
@@ -122,6 +140,7 @@ export default function DashboardPage() {
           stats={stats}
           loading={loading}
           insightOfDayKey={insightOfDayKey}
+          insightText={insightText}
         />
       )}
 
@@ -146,6 +165,11 @@ export default function DashboardPage() {
         <div className="mt-5 animate-fade-in">
           <FlashcardReviewWidget />
         </div>
+      )}
+
+      {/* Research agent (matrix J1) */}
+      {hasData && !loading && (
+        <ResearchPanel />
       )}
 
       {/* Explore More */}

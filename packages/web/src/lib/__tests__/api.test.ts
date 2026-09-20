@@ -33,6 +33,7 @@ vi.mock('../auth-fetch', () => ({
 }));
 
 // Import after mocks are set up
+import { fakePassword } from './fixture-credentials';
 import { api, API_BASE_URL } from '../api';
 
 describe('API Client', () => {
@@ -96,7 +97,7 @@ describe('API Client', () => {
 
       const result = await api.post('/api/v1/auth/login', {
         email: 'test@test.com',
-        password: 'password123',
+        password: fakePassword('password', '123'),
       });
 
       expect(result).toEqual(mockResponse);
@@ -104,7 +105,7 @@ describe('API Client', () => {
         expect.objectContaining({
           method: 'post',
           url: '/api/v1/auth/login',
-          data: { email: 'test@test.com', password: 'password123' },
+          data: { email: 'test@test.com', password: fakePassword('password', '123') },
         }),
       );
     });

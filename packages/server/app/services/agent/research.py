@@ -76,6 +76,60 @@ def _is_research_fallback(data: dict[str, Any]) -> bool:
     return not data.get("summary") and not data.get("findings") and not data.get("follow_ups")
 
 
+def _empty_brief() -> dict[str, Any]:
+    """Brief shape returned when retrieval finds nothing to cite."""
+    return {
+        "summary": "",
+        "findings": [],
+        "follow_ups": [],
+        "sources": [],
+        "books_searched": 0,
+    }
+
+
+def _books_searched(chunks: list[dict]) -> int:
+    """Distinct books actually contributing excerpts (schema omits this)."""
+    return len({str(c.get("book_id")) for c in chunks if c.get("book_id")})
+
+
+async def _synthesize_brief(
+    user_id: UUID,
+    safe_question: str,
+    chunks: list[dict],
+) -> dict[str, Any]:
+    """Schema-validated synthesis over numbered excerpts.
+
+    Shared by the blocking ``run_research`` and the SSE variant in
+    ``research_stream`` — one place owns prompts, budget, and fallback.
+    """
+    budget = TokenBudget(model=_RESEARCH_MODEL)
+    sources_block = budget.add(_format_sources(chunks), "research_sources")
+    if budget.truncations:
+        logger.warning(
+            "research_sources_truncated",
+            truncations=", ".join(budget.truncations),
+        )
+
+    messages = [
+        SystemMessage(content=RESEARCH_SYSTEM.template),
+        HumanMessage(
+            content=RESEARCH_HUMAN.template.format(
+                question=safe_question,
+                sources=sources_block,
+            )
+        ),
+    ]
+    return await safe_llm_invoke(
+        messages,
+        fallback=ResearchBrief().model_dump(),
+        log_label="Research agent",
+        schema_class=ResearchBrief,
+        user_id=str(user_id),
+        book_id=None,
+        template=RESEARCH_SYSTEM,
+    )
+
+
 async def run_research(
     db: AsyncSession,
     user_id: UUID,
@@ -99,43 +153,9 @@ async def run_research(
 
     if not chunks:
         logger.info("research.no_sources", user_id=str(user_id))
-        return {
-            "success": True,
-            "data": {
-                "summary": "",
-                "findings": [],
-                "follow_ups": [],
-                "sources": [],
-                "books_searched": 0,
-            },
-        }
+        return {"success": True, "data": _empty_brief()}
 
-    budget = TokenBudget(model=_RESEARCH_MODEL)
-    sources_block = budget.add(_format_sources(chunks), "research_sources")
-    if budget.truncations:
-        logger.warning(
-            "research_sources_truncated",
-            truncations=", ".join(budget.truncations),
-        )
-
-    messages = [
-        SystemMessage(content=RESEARCH_SYSTEM.template),
-        HumanMessage(
-            content=RESEARCH_HUMAN.template.format(
-                question=safe_question,
-                sources=sources_block,
-            )
-        ),
-    ]
-    data = await safe_llm_invoke(
-        messages,
-        fallback=ResearchBrief().model_dump(),
-        log_label="Research agent",
-        schema_class=ResearchBrief,
-        user_id=str(user_id),
-        book_id=None,
-        template=RESEARCH_SYSTEM,
-    )
+    data = await _synthesize_brief(user_id, safe_question, chunks)
 
     is_fallback = _is_research_fallback(data)
     if is_fallback:

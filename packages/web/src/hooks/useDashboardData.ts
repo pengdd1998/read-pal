@@ -24,7 +24,11 @@ export function useDashboardData() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    // Only the FIRST load shows the skeleton. This effect re-runs on `t`
+    // identity changes (locale resolution) and focus revalidations —
+    // re-toggling loading remounted every below-fold section (ResearchPanel
+    // lost its in-flight question mid-submit on 2026-09-18 verification).
+    if (dashboardData === null) setLoading(true);
     setError(null);
     let lastFetchTime = 0;
     const fetchDashboard = () => {

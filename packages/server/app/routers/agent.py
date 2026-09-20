@@ -500,6 +500,46 @@ async def research(
     return payload
 
 
+@router.post('/research/stream', dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent_stream])
+async def research_stream(
+    request: Request,  # populated by idempotent_stream dependency
+    body: ResearchRequest,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Phase-streamed research (SSE, J2): request_id → searching → sources
+    → synthesizing → brief. Cancellable via POST /chat/cancel — the stream
+    registers in the shared in-flight registry (cross-worker via Redis)."""
+    from app.services.agent.research_stream import research_sse_stream
+
+    return StreamingResponse(
+        research_sse_stream(
+            db,
+            UUID(current_user['id']),
+            body.question,
+            book_ids=body.book_ids,
+            request_id=new_request_id(),
+            request=request,
+        ),
+        media_type='text/event-stream',
+        headers=_SSE_HEADERS,
+    )
+
+
+@router.get('/insight', response_model=GenericResponse, dependencies=[ai_heavy_limiter, daily_ai_budget])
+async def daily_insight(
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Daily dashboard insight (J4): one grounded sentence, Redis day-cached
+    (≤1 LLM call/user/day). ``insight: null`` = degraded — the frontend
+    keeps its canned fallback pool."""
+    from app.services.agent.insight import get_daily_insight
+
+    result = await get_daily_insight(db, UUID(current_user['id']))
+    return {'success': True, 'data': result}
+
+
 @router.post('/coach', response_model=GenericResponse, dependencies=[ai_heavy_limiter, write_limiter, daily_ai_budget, idempotent])
 async def coach(
     request: Request,  # populated by idempotent dependency

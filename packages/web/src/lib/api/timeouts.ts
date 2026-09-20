@@ -33,6 +33,8 @@ const AI_ENDPOINT_PATTERNS: RegExp[] = [
   /\/api\/(?:v1\/)?synthesis/,        // cross-book + single-book analysis
   /\/api\/(?:v1\/)?knowledge\/graph\//,        // knowledge extraction
   /\/api\/(?:v1\/)?agent\/mood\//,             // mood scene generation
+  /\/api\/(?:v1\/)?agents\/research/,          // research brief (cross-book RAG + synthesis, ~95s)
+  /\/api\/(?:v1\/)?agent\/insight/,            // daily dashboard insight (day-cached LLM call)
 ];
 
 const BOOK_CONTENT_PATTERN = /\/api\/(?:v1\/)?upload\/books\/[^/]+\/content/;

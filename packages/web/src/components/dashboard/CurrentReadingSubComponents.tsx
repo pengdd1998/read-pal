@@ -75,7 +75,12 @@ export const QuickActions = React.memo(function QuickActions() {
 });
 
 // Insight Card sub-component
-export const InsightCard = React.memo(function InsightCard({ insightKey }: { insightKey: InsightKey | null }) {
+export const InsightCard = React.memo(function InsightCard({ insightKey, insightText }: {
+  insightKey: InsightKey | null;
+  /** J4: real agent-generated sentence; when present it replaces the canned
+   * pool text and the label switches to "today's insight". */
+  insightText?: string | null;
+}) {
   const t = useTranslations('dashboard');
 
   return (
@@ -84,10 +89,10 @@ export const InsightCard = React.memo(function InsightCard({ insightKey }: { ins
         <InsightIcon type={insightKey?.icon ?? ''} />
         <div>
           <div className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-widest">
-            {insightKey ? t(insightKey.agentKey) : ''}
+            {insightText ? t('insight_today') : insightKey ? t(insightKey.agentKey) : ''}
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-            {insightKey ? t(insightKey.key) : ''}
+            {insightText || (insightKey ? t(insightKey.key) : '')}
           </p>
         </div>
       </div>

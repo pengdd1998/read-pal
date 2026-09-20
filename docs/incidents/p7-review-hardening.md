@@ -131,3 +131,44 @@ already-read text; the golden entry + unit tests pin both contracts.
 5. Event-listener effects must re-bind on the mount of their target, not of
    the component (conditional DOM = deps must include the content that
    spawns it).
+
+## P7.5 — get_db teardown-race handler was unreachable (dead except ordering)
+
+**Symptom**
+
+Cancelling the research SSE stream (`POST /api/v1/agents/research/stream`,
+2026-09-20 J2 verification) logged an unhandled 500 after the client was
+already gone:
+
+    sqlalchemy.dialects.postgresql.asyncpg.InterfaceError:
+    cannot call Transaction.commit(): the underlying connection is closed
+    File "app/db.py", line 115, in get_db
+
+**Root cause**
+
+`get_db` had the dedicated teardown-race handler written as
+`except DBAPIError: rollback; raise` FOLLOWED by
+`except InterfaceError: log; rollback` — but sqlalchemy's
+`InterfaceError` SUBCLASSES `DBAPIError`, so the race always fell into
+the first branch and was re-raised. The specific handler was dead code
+from the day it was written (companion streams masked it: their persist
+re-checks-out a connection before teardown, so the teardown commit had a
+live connection).
+
+The trigger sequence (new with the research stream): generator calls
+`release_db()` (returns connection to pool) → client disconnects →
+dependency teardown commits on the returned connection → InterfaceError
+→ re-raised → unhandled 500 in logs.
+
+**Fix**
+
+`app/db.py` `get_db`: `except InterfaceError` now precedes
+`except DBAPIError`. Pinned by `tests/services/test_db_teardown_race.py`
+(an InterfaceError from the teardown commit must not escape `get_db`;
+other DBAPIErrors must still re-raise).
+
+**How to avoid**
+
+Python except clauses are ordered most-specific-first — when two handlers
+are in a subclass relation, the narrow one goes on top. A handler that
+has never fired in tests is a handler that does not exist.

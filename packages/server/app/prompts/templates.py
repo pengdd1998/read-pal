@@ -30,6 +30,10 @@ from app.prompts.research_prompts import (
     RESEARCH_HUMAN,
     RESEARCH_SYSTEM,
 )
+from app.prompts.insight_prompts import (
+    INSIGHT_HUMAN,
+    INSIGHT_SYSTEM,
+)
 from app.prompts.synthesis_mode_prompts import (
     CONCEPT_MAP_HUMAN,
     CONCEPT_MAP_SYSTEM,
@@ -70,6 +74,8 @@ __all__ = [
     'BOOK_COMPARE_SYSTEM',
     'COACH_ASSESSMENT_HUMAN',
     'COACH_ASSESSMENT_SYSTEM',
+    'INSIGHT_HUMAN',
+    'INSIGHT_SYSTEM',
     'CONCEPT_MAP_HUMAN',
     'CONCEPT_MAP_SYSTEM',
     'CONTRADICTIONS_HUMAN',
@@ -146,6 +152,8 @@ def _build_registry() -> None:
         READING_PLAN_HUMAN,
         RESEARCH_SYSTEM,
         RESEARCH_HUMAN,
+        INSIGHT_SYSTEM,
+        INSIGHT_HUMAN,
         COACH_ASSESSMENT_SYSTEM,
         COACH_ASSESSMENT_HUMAN,
         CROSS_REFERENCE_SYSTEM,

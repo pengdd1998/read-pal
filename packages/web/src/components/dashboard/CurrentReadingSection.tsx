@@ -22,6 +22,8 @@ interface CurrentReadingSectionProps {
   stats: DashboardStats | null;
   loading: boolean;
   insightOfDayKey: InsightKey | null;
+  /** J4: real agent-generated insight; null = keep the canned pool. */
+  insightText?: string | null;
 }
 
 const ActiveBookCard = React.memo(function ActiveBookCard({ book, isFirst, isMultiple, coverAlt, continueLabel, lastReadLabel }: {
@@ -188,7 +190,7 @@ const StatsGrid = React.memo(function StatsGrid({ stats }: { stats: DashboardSta
   );
 });
 
-export const CurrentReadingSection = React.memo(function CurrentReadingSection({ recentBooks, stats, loading, insightOfDayKey }: CurrentReadingSectionProps) {
+export const CurrentReadingSection = React.memo(function CurrentReadingSection({ recentBooks, stats, loading, insightOfDayKey, insightText }: CurrentReadingSectionProps) {
   const t = useTranslations('dashboard');
   const tc = useTranslations('common');
   const locale = useLocale();
@@ -255,7 +257,7 @@ export const CurrentReadingSection = React.memo(function CurrentReadingSection({
       <QuickActions />
 
       {/* Card 3: Quick Insight */}
-      <InsightCard insightKey={insightOfDayKey} />
+      <InsightCard insightKey={insightOfDayKey} insightText={insightText ?? null} />
     </div>
   );
 });

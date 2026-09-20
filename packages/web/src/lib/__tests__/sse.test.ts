@@ -96,4 +96,41 @@ describe('consumeSSEStream', () => {
 
     expect(onId).toHaveBeenLastCalledWith('req_abc:2');
   });
+
+  it('forwards research phase/sources/brief frames to onMeta (J2)', async () => {
+    const onMeta = vi.fn();
+    const response = makeResponse([
+      'data: {"request_id":"r-1"}\n\n',
+      'data: {"phase":"searching"}\n\n',
+      'data: {"phase":"sources","sources":[{"source_id":1,"book_title":"Book One"}],"books_searched":1}\n\n',
+      'data: {"phase":"synthesizing"}\n\n',
+      'data: {"brief":{"summary":"s","findings":[],"follow_ups":[],"sources":[],"books_searched":1}}\n\n',
+      'data: [DONE]\n\n',
+    ]);
+
+    consumeSSEStream(response, vi.fn(), vi.fn(), vi.fn(), undefined, onMeta);
+    await vi.runAllTimersAsync();
+
+    expect(onMeta.mock.calls.map(([m]) => m)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ request_id: 'r-1' }),
+      expect.objectContaining({ phase: 'searching' }),
+      expect.objectContaining({ phase: 'sources', books_searched: 1, sources: [expect.objectContaining({ source_id: 1, book_title: 'Book One' })] }),
+      expect.objectContaining({ phase: 'synthesizing' }),
+      expect.objectContaining({ brief: expect.objectContaining({ summary: 's' }) }),
+    ]));
+  });
+
+  it('forwards cooperative-cancellation frames from the research stream (J2)', async () => {
+    const onMeta = vi.fn();
+    const response = makeResponse([
+      'data: {"request_id":"r-2"}\n\n',
+      'data: {"cancelled":true}\n\n',
+      'data: [DONE]\n\n',
+    ]);
+
+    consumeSSEStream(response, vi.fn(), vi.fn(), vi.fn(), undefined, onMeta);
+    await vi.runAllTimersAsync();
+
+    expect(onMeta).toHaveBeenCalledWith(expect.objectContaining({ cancelled: true }));
+  });
 });

@@ -51,6 +51,21 @@ export type SSEMeta = {
   fallback_used?: boolean;
   primary_model?: string;
   primary_provider?: string;
+  // Research stream frames (J2): phase progress + final brief payload.
+  // Chat streams never carry these keys, so forwarding is additive.
+  phase?: 'searching' | 'sources' | 'synthesizing';
+  sources?: SSEResearchSource[];
+  books_searched?: number;
+  brief?: Record<string, unknown>;
+  cancelled?: boolean;
+};
+
+export type SSEResearchSource = {
+  source_id: number;
+  book_id?: string | null;
+  book_title: string;
+  author?: string;
+  chapter_title?: string;
 };
 export type SSEError = 'persist_failed' | 'internal_error' | (string & {});
 
@@ -114,21 +129,26 @@ export function consumeSSEStream(
         return;
       }
 
-      try {
-        const parsed = JSON.parse(payload) as {
-          token?: string;
-          content?: string;
-          error?: string;
-          request_id?: string;
-          id?: string;
-          results?: SSEToolResult[];
-          proposals?: SSEProposal[];
-          type?: string;
-          model?: string;
-          fallback_used?: boolean;
-          primary_model?: string;
-          primary_provider?: string;
-        };
+        try {
+          const parsed = JSON.parse(payload) as {
+            token?: string;
+            content?: string;
+            error?: string;
+            request_id?: string;
+            id?: string;
+            results?: SSEToolResult[];
+            proposals?: SSEProposal[];
+            type?: string;
+            model?: string;
+            fallback_used?: boolean;
+            primary_model?: string;
+            primary_provider?: string;
+            phase?: 'searching' | 'sources' | 'synthesizing';
+            sources?: SSEResearchSource[];
+            books_searched?: number;
+            brief?: Record<string, unknown>;
+            cancelled?: boolean;
+          };
         // B3: quality-disclosure metadata event. Emitted BEFORE fallback
         // chunks when primary provider failed mid-stream — surfaces the
         // model downgrade so the client can warn the user that response
@@ -159,6 +179,17 @@ export function consumeSSEStream(
         // First-frame request_id so the client can cancel the stream by id.
         if (onMeta && (parsed.request_id !== undefined) && parsed.type !== 'metadata') {
           onMeta({ request_id: parsed.request_id });
+        }
+        // Research stream frames (J2): forward phase progress, early
+        // citations, the final brief, and cooperative cancellation.
+        if (onMeta && (parsed.phase !== undefined || parsed.brief !== undefined || parsed.cancelled !== undefined)) {
+          onMeta({
+            phase: parsed.phase,
+            sources: parsed.sources,
+            books_searched: parsed.books_searched,
+            brief: parsed.brief,
+            cancelled: parsed.cancelled,
+          });
         }
         if (parsed.error) {
           safeError(parsed.error as SSEError);
