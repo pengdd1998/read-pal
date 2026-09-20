@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api/client';
+import { ProvidersCard } from '@/components/ops/ProvidersCard';
+import { SeriesChart, type SeriesPoint } from '@/components/ops/SeriesChart';
 
 interface MetricsData {
   window_hours: number;
@@ -14,7 +16,14 @@ interface MetricsData {
   estimated_cost_usd: number;
   error_breakdown: Record<string, number>;
   guardrail_hits_today: Record<string, number>;
-  by_label: Array<{ label: string; calls: number; success_rate: number; p95_latency_ms: number | null; total_tokens: number }>;
+  by_label: Array<{
+    label: string; calls: number; success_rate: number; p95_latency_ms: number | null;
+    total_tokens: number; cost_usd: number; p95_ttft_ms: number | null; prompt_version: string | null;
+  }>;
+  series: SeriesPoint[];
+  by_provider: Record<string, { calls: number; success_rate: number; p95_latency_ms: number | null }>;
+  by_model: Record<string, { calls: number; success_rate: number; p95_latency_ms: number | null }>;
+  fallback: { used: number; total: number };
 }
 
 const Card = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
@@ -29,7 +38,7 @@ export default function OpsLlmPage() {
   const t = useTranslations('opsLlm');
   const [key, setKey] = useState('');
   const [authed, setAuthed] = useState(false);
-  const [hours, setHours] = useState(24);
+  const [hours, setHours] = useState(720);
   const [data, setData] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -54,6 +63,7 @@ export default function OpsLlmPage() {
       if (res.success && res.data) {
         setData(res.data);
         setAuthed(true);
+        sessionStorage.setItem('ops-key', k);
       } else {
         setAuthed(false);
       }
@@ -95,27 +105,34 @@ export default function OpsLlmPage() {
   }
 
   const lat = data?.latency_ms;
+  const errors = Object.entries(data?.error_breakdown ?? {}).sort((a, b) => b[1] - a[1]);
+
   return (
     <div className="container-content px-4 sm:px-6 py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold">🛰️ {t('title')}</h1>
-        <div className="flex gap-1.5">
-          {[1, 24, 168].map((h) => (
-            <button
-              key={h}
-              type="button"
-              onClick={() => setHours(h)}
-              className={`px-3.5 py-1.5 rounded-lg text-sm font-medium ${
-                hours === h ? 'bg-amber-600 text-white' : 'bg-surface-1 text-gray-600 dark:text-gray-300'
-              }`}
-            >
-              {h === 1 ? t('w_1h') : h === 24 ? t('w_24h') : t('w_7d')}
-            </button>
-          ))}
+        <div className="flex gap-1.5 items-center">
+          <a href="/ops/llm/traces" className="px-3.5 py-1.5 rounded-lg text-sm font-medium bg-surface-1 text-gray-600 dark:text-gray-300 hover:border-primary-400 border border-transparent hover:border">
+            🔍 {t('traces_link')}
+          </a>
+          <div className="flex gap-1.5">
+            {[24, 168, 720].map((h) => (
+              <button
+                key={h}
+                type="button"
+                onClick={() => setHours(h)}
+                className={`px-3.5 py-1.5 rounded-lg text-sm font-medium ${
+                  hours === h ? 'bg-amber-600 text-white' : 'bg-surface-1 text-gray-600 dark:text-gray-300'
+                }`}
+              >
+                {h === 24 ? t('w_24h') : h === 168 ? t('w_7d') : t('w_30d')}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
         <Card label={t('calls')} value={String(data?.total_calls ?? '—')} sub={`${data?.fresh_calls ?? 0} fresh`} />
         <Card
           label={t('success_rate')}
@@ -126,8 +143,49 @@ export default function OpsLlmPage() {
         <Card
           label={t('guardrails')}
           value={String(data?.guardrail_hits_today?.total ?? 0)}
-          sub={Object.entries(data?.error_breakdown ?? {}).slice(0, 2).map(([k2, v]) => `${k2}:${v}`).join(' ') || undefined}
+          sub={data && data.fallback.total > 0 ? t('fallback_sub', data.fallback) : undefined}
         />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div className="bg-surface-0 rounded-2xl border border-surface-3 p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">{t('series_calls')}</h2>
+          <SeriesChart points={data?.series ?? []} metric="calls" formatValue={(v) => `${v}`} />
+        </div>
+        <div className="bg-surface-0 rounded-2xl border border-surface-3 p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">{t('series_p95')}</h2>
+          <SeriesChart points={data?.series ?? []} metric="p95_latency_ms" formatValue={(v) => `${(v / 1000).toFixed(1)}s`} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div className="bg-surface-0 rounded-2xl border border-surface-3 p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">{t('errors_title')}</h2>
+          {errors.length === 0 ? (
+            <div className="text-xs text-gray-400">{t('errors_none')}</div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {errors.map(([name, count]) => (
+                <span key={name} className="px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 text-xs text-red-700 dark:text-red-300">
+                  {name} · {count}
+                </span>
+              ))}
+            </div>
+          )}
+          {data && Object.keys(data.by_provider).length > 0 && (
+            <div className="mt-4 pt-4 border-t border-surface-3">
+              <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-1.5">{t('by_provider')}</div>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(data.by_provider).map(([name, p]) => (
+                  <span key={name} className="px-2.5 py-1 rounded-full bg-surface-1 border border-surface-3 text-xs">
+                    {name}: {p.calls} · {(p.success_rate * 100).toFixed(0)}%
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        <ProvidersCard />
       </div>
 
       <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">{t('by_label')}</h2>
@@ -139,7 +197,10 @@ export default function OpsLlmPage() {
               <th className="px-4 py-3">{t('t_calls')}</th>
               <th className="px-4 py-3">{t('t_success')}</th>
               <th className="px-4 py-3">p95</th>
+              <th className="px-4 py-3">{t('t_ttft')}</th>
               <th className="px-4 py-3">{t('t_tokens')}</th>
+              <th className="px-4 py-3">{t('t_cost')}</th>
+              <th className="px-4 py-3">ver</th>
             </tr>
           </thead>
           <tbody>
@@ -153,11 +214,14 @@ export default function OpsLlmPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3">{row.p95_latency_ms != null ? `${(row.p95_latency_ms / 1000).toFixed(1)}s` : '—'}</td>
+                <td className="px-4 py-3">{row.p95_ttft_ms != null ? `${(row.p95_ttft_ms / 1000).toFixed(1)}s` : '—'}</td>
                 <td className="px-4 py-3">{row.total_tokens.toLocaleString()}</td>
+                <td className="px-4 py-3 tabular-nums">${row.cost_usd.toFixed(4)}</td>
+                <td className="px-4 py-3 text-xs text-gray-500">{row.prompt_version ?? '—'}</td>
               </tr>
             ))}
             {(!data?.by_label || data.by_label.length === 0) && (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">{t('empty')}</td></tr>
+              <tr><td colSpan={8} className="px-4 py-8 text-center text-gray-400">{t('empty')}</td></tr>
             )}
           </tbody>
         </table>
