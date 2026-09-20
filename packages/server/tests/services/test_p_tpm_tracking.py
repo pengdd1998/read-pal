@@ -12,7 +12,7 @@ and disabled-by-default (max_tpm=0 or tpm_enforced=False) is a no-op.
 
 from __future__ import annotations
 
-from tests.fixtures.credentials import fake_api_key
+from tests.fixtures.fake_credentials import fake_api_key
 
 import time
 from unittest.mock import patch

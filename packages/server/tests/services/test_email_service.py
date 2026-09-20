@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.services.email_service import _build_reset_html, send_password_reset_email
-from tests.fixtures.credentials import fake_api_key
+from tests.fixtures.fake_credentials import fake_api_key
 
 
 # ---------------------------------------------------------------------------

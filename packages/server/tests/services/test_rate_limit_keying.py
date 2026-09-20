@@ -23,7 +23,7 @@ from app.middleware.daily_llm_budget import enforce_daily_llm_budget
 from app.middleware.rate_limiter import _ip_key, _user_key
 from app.schemas.settings import ZoteroValidateRequest
 from app.utils.request_identity import client_ip, jwt_user_id
-from tests.fixtures.credentials import fake_api_key
+from tests.fixtures.fake_credentials import fake_api_key
 
 
 class _FakeClient:

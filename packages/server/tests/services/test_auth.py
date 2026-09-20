@@ -3,7 +3,7 @@
 import pytest
 
 from tests.conftest import auth_headers, register_user
-from tests.fixtures.credentials import fake_password
+from tests.fixtures.fake_credentials import fake_password
 
 
 # ---------------------------------------------------------------------------

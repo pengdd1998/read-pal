@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.exc import DBAPIError
 
-from tests.fixtures.credentials import fake_api_key
+from tests.fixtures.fake_credentials import fake_api_key
 from app.services.rag import (
     RAG_CACHE_PREFIX,
     _chunk_text,

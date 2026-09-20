@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from tests.conftest import _TestSession, register_user
-from tests.fixtures.credentials import fake_password
+from tests.fixtures.fake_credentials import fake_password
 
 
 # ---------------------------------------------------------------------------

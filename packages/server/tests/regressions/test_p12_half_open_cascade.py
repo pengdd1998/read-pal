@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from app.services.llm.circuit_breaker import CircuitBreaker, CircuitState
-from tests.fixtures.credentials import fake_api_key
+from tests.fixtures.fake_credentials import fake_api_key
 
 
 class TestCircuitBreakerProbeInFlight:

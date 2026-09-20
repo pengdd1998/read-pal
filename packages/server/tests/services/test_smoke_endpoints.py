@@ -31,7 +31,7 @@ import uuid
 
 import httpx
 import pytest
-from tests.fixtures.credentials import fake_password
+from tests.fixtures.fake_credentials import fake_password
 
 pytestmark = [
     pytest.mark.smoke,

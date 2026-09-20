@@ -1,6 +1,6 @@
 """Tests for hot-pluggable LLM providers (registry hot-reload + ops router)."""
 
-from tests.fixtures.credentials import fake_api_key
+from tests.fixtures.fake_credentials import fake_api_key
 import json
 import os
 from unittest.mock import patch

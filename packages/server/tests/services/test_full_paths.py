@@ -13,7 +13,7 @@ import sys
 import time
 
 import httpx
-from tests.fixtures.credentials import fake_password
+from tests.fixtures.fake_credentials import fake_password
 
 BASE = 'http://localhost:8000/api/v1'
 client = httpx.Client(timeout=120)  # 120s for LLM calls on rate-limited tiers

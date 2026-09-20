@@ -12,7 +12,7 @@ import pytest
 from jose import jwt as jose_jwt
 
 from app.services import auth
-from tests.fixtures.credentials import fake_api_key, fake_password
+from tests.fixtures.fake_credentials import fake_api_key, fake_password
 
 
 # ---------------------------------------------------------------------------
