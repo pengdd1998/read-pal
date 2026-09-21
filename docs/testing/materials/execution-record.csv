@@ -1464,3 +1464,26 @@ Call log:
 20260920,自动化(ZCode),A2部署验证,PROD,https入口,J4天缓存,P1,PASS,,响应对比,双载完全同句(秒回);trace=0系响应缓存命中(合法路径);附注:种书进度字段2000%致洞察文案夸大(数据面小瑕疵另记)
 20260920,自动化(ZCode),A2部署验证,PROD,ssh直查,A2#6-rollup,P1,PASS,,psql,llm_metrics_rollup=9行(迁移0030+writer同事务upsert生产生效)
 20260920,自动化(ZCode),A2部署验证,PROD,https自签入口,A2#3#5-SSE,P0,PASS,,/tmp/prod_chat.txt,chat流端到端:caddy透传SSE完整;tool_status帧在流中(planner+工具阶段生产运行);实质回答1292字;planner延迟数据点已采(G14复测素材)
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-02,提案写入,P0,FAIL,,companion-tools-v2/report.md,"新会话首问首响=0ms（planner 9s 超时+直答降级）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-03,提案写入,P0,PASS,,companion-tools-v2/report.md,"赞赏不触发提案卡片"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"卡片=false, 措辞声称已保存=false（应'待确认'语义）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"卡片态=timeout, 落库匹配=0"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"保存请求幂等头=undefined, 端点=undefined"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-02,提案写入,P1,FAIL,,companion-tools-v2/report.md,"闪卡提案+保存=no-card"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-02,提案写入,P0,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"闪卡页可见=false（闪卡页结构差异时人工复核）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"提案挂起=false, 未确认写入数=0（必须 0）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-02,提案写入,P0,PASS,,companion-tools-v2/report.md,"直接写入声称=false, 落库数=10（提案确认路径外零写入）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-04,提案写入,P0,PASS,,companion-tools-v2/report.md,"双意图提案卡数=0（协议 ≤1）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-07,提案写入,P2,PASS,,companion-tools-v2/report.md,"无内容提案卡=false（不出卡/要求补充为佳）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-05,提案写入,P1,FAIL,,companion-tools-v2/report.md,"注入内容保存后无执行（noExec=true）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-01,提案写入,P1,PASS,,companion-tools-v2/report.md,"未确认提案刷新后消失=true; 已落库持久=true"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"toolTrace 徽标呈现=false（上轮转交项复验）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"reads 路由数据引用=false"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-02,提案写入,P2,FAIL,,companion-tools-v2/report.md,"双轮落库=0"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"提案帧时机以卡片与回答同屏出现为准（WT1-01 已见同屏）；帧级时序待录屏终裁"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-04,提案写入,P2,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"暗色/窄视口截图留档待人工（kg4 同口径）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-05,提案写入,P2,PASS,,companion-tools-v2/report.md,"WT1-01/02 preview 与请求一致（卡片文本已核对）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-04,提案写入,P2,SKIP,,companion-tools-v2/report.md,"离线 error+retry 场景需精确断网时机——人工复核"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,"dismiss 关闭路径待人工（非数据安全项）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,"双标签并发幂等——幂等中间件单测背书，人工复核"
+20260921,自动化(ZCode),G14归因,E1-L,SSE实证,WT4-01,伴读工具,P2,RECLASSIFIED,,sse流,规则意图问题(阅读进度)→tool_status帧含get_reading_progress ok=true;hook映射(toolTrace=meta.results)与ToolTrace渲染链在位(K4曾实测15ms);套件FAIL系LLM路径降级时仅ok=false条目按设计不渲染徽标=伪影非缺陷
