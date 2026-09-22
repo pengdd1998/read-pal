@@ -8,14 +8,16 @@ const path = require('path');
 
 const NETWORK_SECURITY_CONFIG = `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+  <!-- ICP cleared (2026-09-21): read.chishenma.top serves a real Let's
+       Encrypt cert — system trust-anchors accept it with zero extra
+       config. The IP entry remains as the documented fallback (its cert
+       is self-signed and NOT trusted by the system store; the app no
+       longer defaults to it). -->
   <base-config cleartextTrafficPermitted="true">
     <trust-anchors>
       <certificates src="system" />
     </trust-anchors>
   </base-config>
-  <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">175.178.66.207</domain>
-  </domain-config>
 </network-security-config>
 `;
 
