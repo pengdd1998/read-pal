@@ -1487,3 +1487,4 @@ Call log:
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,"dismiss 关闭路径待人工（非数据安全项）"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,"双标签并发幂等——幂等中间件单测背书，人工复核"
 20260921,自动化(ZCode),G14归因,E1-L,SSE实证,WT4-01,伴读工具,P2,RECLASSIFIED,,sse流,规则意图问题(阅读进度)→tool_status帧含get_reading_progress ok=true;hook映射(toolTrace=meta.results)与ToolTrace渲染链在位(K4曾实测15ms);套件FAIL系LLM路径降级时仅ok=false条目按设计不渲染徽标=伪影非缺陷
+20260921,自动化(ZCode),ICP解锁,PROD,dig+openssl+curl,域名TLS上线,P0,PASS,,caddy日志+cert,read.chishenma.top获Let's Encrypt正式证书(HTTP-01四验证节点全通;重启caddy清备案期退避锁);https入口health 200(DB+Redis ok);双地址=域名主入口+IP回退;Android release断链根因消除
