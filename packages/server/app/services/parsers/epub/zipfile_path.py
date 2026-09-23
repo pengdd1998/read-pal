@@ -16,6 +16,8 @@ from app.services.parsers.epub.footnotes import annotate_footnotes
 from app.services.parsers.epub.footnote_defs import (
     MAX_FOOTNOTE_DEFS,
     extract_footnote_definitions,
+    rewrite_footnote_hrefs,
+    scoped_footnote_key,
     strip_footnote_blocks,
 )
 from app.services.parsers.epub.html_helpers import (
@@ -263,11 +265,9 @@ def _build_chapters(
     full_text_parts: list[str] = []
     order = 0
     # Scoped definition map: ``rpfnd-ch{chapterIndex}-{anchorId}`` → text.
-    # Per-chapter footnote numbering restarts (every chapter defines its
-    # own note_1), so a flat {anchorId: text} map gets silently corrupted
-    # by whichever notes-bearing file is processed last (2026-09-23
-    # badcase: marker [1] in ch2 popped another chapter's note_1 — a
-    # Kipling bio instead of the pound-unit note).
+    # Per-chapter footnote numbering restarts, so a flat {anchorId: text}
+    # map gets corrupted by whichever notes-bearing file is processed last
+    # (2026-09-23 badcase: marker [1] popped another chapter's note_1).
     footnote_defs: dict[str, str] = {}
     # Pass A: extract per-file definitions BEFORE enrichment, so marker
     # rewriting (pass C) can resolve targets in files not yet processed.
@@ -338,51 +338,14 @@ def _build_chapters(
         src = chapter_files[i]
         for frag, body in defs_by_file.get(src, {}).items():
             if len(footnote_defs) < MAX_FOOTNOTE_DEFS:
-                footnote_defs[f'rpfnd-ch{i}-{frag}'] = body
-        ch['rawContent'] = _rewrite_footnote_hrefs(
+                footnote_defs[scoped_footnote_key(i, frag)] = body
+        ch['rawContent'] = rewrite_footnote_hrefs(
             ch['rawContent'], src, file_to_idx,
         )
 
     return chapters, full_text_parts, footnote_defs
 
 
-
-
-def _rewrite_footnote_hrefs(
-    html: str,
-    src_file: str,
-    file_to_idx: dict[str, int],
-) -> str:
-    """Point marker anchors at their chapter-scoped definition keys.
-
-    ``href="part0003.html#note_1"`` (cross-file InDesign form) and
-    ``href="#note_1"`` (same-file form) both become
-    ``href="#rpfnd-ch{i}-note_1"`` where ``i`` is the final chapter index
-    of the file that owns the definition. The scoped fragment is an
-    opaque lookup key for the metadata map — collision-free across the
-    per-chapter note numbering. Targets outside the surviving chapter
-    list keep their original href (frontend shows its cross-ref
-    fallback); noteBack_/fnref_ backlinks are never touched.
-    """
-    def _sub(m: re.Match) -> str:
-        file_part, _, frag = m.group(2).partition('#')
-        resolved = resolve_epub_path(src_file, file_part) if file_part else src_file
-        idx = file_to_idx.get(resolved)
-        if idx is None:
-            return m.group(0)
-        return f'{m.group(1)}#rpfnd-ch{idx}-{frag}{m.group(3)}'
-
-    return _MARKER_HREF_RE.sub(_sub, html)
-
-
-# Marker anchors whose href targets a definition id (mirrors
-# FOOTNOTE_REF_RE's fragment rules; captures the href value).
-_MARKER_HREF_RE = re.compile(
-    r'(<a\s[^>]*?href\s*=\s*["\'])'
-    r'([^"\']*#(?:note(?!back)|fn(?!ref)|footnote|endnote)[\w.-]*)'
-    r'(["\'])',
-    re.IGNORECASE,
-)
 
 
 def _enrich_html(

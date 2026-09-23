@@ -49,9 +49,9 @@ from app.models.book_content import BookContent  # noqa: E402
 from app.services.parsers.epub.boilerplate import coalesce_fragments_text  # noqa: E402
 from app.services.parsers.epub.footnote_defs import (  # noqa: E402
     extract_footnote_definitions,
+    rewrite_footnote_hrefs,
     strip_footnote_blocks,
 )
-from app.services.parsers.epub.zipfile_path import _rewrite_footnote_hrefs  # noqa: E402
 from app.services.text_helpers import html_to_structured_text  # noqa: E402
 from app.services.upload_content_store import invalidate_cached_chapters  # noqa: E402
 
@@ -107,7 +107,7 @@ async def main() -> None:
                 if stripped == raw:
                     continue
                 changed = True
-                rewritten = _rewrite_footnote_hrefs(stripped, file_names[i], file_to_idx)
+                rewritten = rewrite_footnote_hrefs(stripped, file_names[i], file_to_idx)
                 ch['rawContent'] = rewritten
                 text = html_to_structured_text(rewritten)
                 ch['content'] = coalesce_fragments_text(text)

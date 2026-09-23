@@ -19,6 +19,8 @@ import re
 
 import structlog
 
+from app.services.parsers.epub.html_helpers import resolve_epub_path
+
 logger = structlog.get_logger('read-pal.epub_parser')
 
 # Definition anchors: id/note/endnote/fn prefixes plus generic
@@ -114,3 +116,45 @@ def strip_footnote_blocks(html: str) -> str:
         return '' if _WRAPPER_ID_RE.search(m.group(1)) else m.group(0)
 
     return _WRAPPER_RE.sub(_drop, html)
+
+
+def scoped_footnote_key(chapter_index: int, anchor_id: str) -> str:
+    """Metadata-map key for a definition owned by chapter ``chapter_index``."""
+    return f'rpfnd-ch{chapter_index}-{anchor_id}'
+
+
+def rewrite_footnote_hrefs(
+    html: str,
+    src_file: str,
+    file_to_idx: dict[str, int],
+) -> str:
+    """Point marker anchors at their chapter-scoped definition keys.
+
+    ``href="part0003.html#note_1"`` (cross-file InDesign form) and
+    ``href="#note_1"`` (same-file form) both become
+    ``href="#rpfnd-ch{i}-note_1"`` where ``i`` is the final chapter index
+    of the file that owns the definition. The scoped fragment is an
+    opaque lookup key for the metadata map — collision-free across the
+    per-chapter note numbering. Targets outside the surviving chapter
+    list keep their original href (frontend shows its cross-ref
+    fallback); noteBack_/fnref_ backlinks are never touched.
+    """
+    def _sub(m: re.Match) -> str:
+        file_part, _, frag = m.group(2).partition('#')
+        resolved = resolve_epub_path(src_file, file_part) if file_part else src_file
+        idx = file_to_idx.get(resolved)
+        if idx is None:
+            return m.group(0)
+        return f'{m.group(1)}#{scoped_footnote_key(idx, frag)}{m.group(3)}'
+
+    return _MARKER_HREF_RE.sub(_sub, html)
+
+
+# Marker anchors whose href targets a definition id (mirrors
+# FOOTNOTE_REF_RE's fragment rules; captures the href value).
+_MARKER_HREF_RE = re.compile(
+    r'(<a\s[^>]*?href\s*=\s*["\'])'
+    r'([^"\']*#(?:note(?!back)|fn(?!ref)|footnote|endnote)[\w.-]*)'
+    r'(["\'])',
+    re.IGNORECASE,
+)
