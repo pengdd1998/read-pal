@@ -119,8 +119,17 @@ async function staleWhileRevalidate(request, cacheName) {
 
   const fetchPromise = fetch(request).then((response) => {
     if (response.ok) {
-      const cache = caches.open(cacheName);
-      cache.then((c) => c.put(request, response.clone()));
+      // Clone MUST run synchronously here, before `return response` hands
+      // the body to the page: once the page starts reading the stream,
+      // clone() throws "Response body is already used" (deferring it
+      // behind caches.open() was exactly that race — the put never ran,
+      // so these chunks silently never cached). The clone tees the
+      // stream, so putting it later is safe even while the page reads
+      // the original.
+      const copy = response.clone();
+      caches.open(cacheName)
+        .then((c) => c.put(request, copy))
+        .catch(() => { /* cache-write failure is non-fatal */ });
     }
     return response;
   }).catch(() => cached || new Response('', { status: 503, statusText: 'Offline' }));
