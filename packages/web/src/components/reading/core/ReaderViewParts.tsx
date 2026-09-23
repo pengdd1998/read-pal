@@ -255,9 +255,11 @@ export function useReaderViewLogic({
     const el = contentDivRef.current;
     if (!el) return;
     // noteBack_* is this book family's marker id; fnref_* is EPUB convention
-    // for the reference side. Both name markers, not definitions.
+    // for the reference side. Both name markers, not definitions. rpfnd-* is
+    // the parser's chapter-scoped definition key (per-chapter note numbering
+    // restarts, so the raw note_1 fragment alone is ambiguous).
     const isDefinitionFragment = (frag: string) =>
-      /^(?:note(?!back)|fn(?!ref)|footnote|endnote)[\w.-]*$/i.test(frag);
+      /^(?:rpfnd-ch\d+-|note(?!back)|fn(?!ref)|footnote|endnote)[\w.-]*$/i.test(frag);
     const escapeHtml = (s: string) =>
       s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const resolveRemoteDefinition = async (

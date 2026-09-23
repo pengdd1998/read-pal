@@ -60,8 +60,11 @@ def extract_footnote_definitions(raw_html: str, chapter_href: str) -> dict[str, 
     Handles the LuBianYeCan shape: the reading chapter contains BOTH the
     clickable marker (``id="noteBack_N"``) and, a few paragraphs later,
     the definition (``id="note_N"`` with the note text). Definitions are
-    keyed by their own id; the frontend resolves marker→definition via
-    the marker's href target (``#note_3`` → ``note_3``).
+    keyed by their own id; per-chapter numbering restarts (chapter 1 and
+    chapter 2 both define ``note_1``), so callers must NOT merge results
+    across files into one flat dict — the last file would silently
+    overwrite every earlier chapter's notes (2026-09-23 badcase: marker
+    [1] popped another chapter's Kipling bio).
     """
     out: dict[str, str] = {}
 
@@ -94,3 +97,20 @@ def extract_footnote_definitions(raw_html: str, chapter_href: str) -> dict[str, 
             chapter_href, len(out),
         )
     return out
+
+
+def strip_footnote_blocks(html: str) -> str:
+    """Remove recognized notecontent definition paragraphs from chapter HTML.
+
+    Pairs with extraction: once the note bodies live in the metadata map,
+    keeping the ``<p class="notecontent">`` blocks in the chapter leaks
+    them into the reading flow (2026-09-23 badcase: the whole end-of-
+    chapter notes list rendered as plain paragraphs). Only wrappers whose
+    inner anchor matches the definition shape are dropped — a
+    ``notecontent`` paragraph without a definition anchor is ordinary
+    content and stays.
+    """
+    def _drop(m: re.Match) -> str:
+        return '' if _WRAPPER_ID_RE.search(m.group(1)) else m.group(0)
+
+    return _WRAPPER_RE.sub(_drop, html)
