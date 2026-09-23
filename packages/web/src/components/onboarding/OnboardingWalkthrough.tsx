@@ -6,14 +6,19 @@ import { useRouter } from '@/i18n/navigation';
 import { authFetch } from '@/lib/auth-fetch';
 import { safeGetItem, safeSetItem } from '@/lib/offline/safe-storage';
 import { useToast } from '@/components/shared/Toast';
+import { useAuth } from '@/components/AuthProvider';
 import { WelcomeStep } from '@/components/onboarding/WelcomeStep';
 import { CompanionStep } from '@/components/onboarding/CompanionStep';
 import { ReadyStep } from '@/components/onboarding/ReadyStep';
 import { StepIndicator } from '@/components/onboarding/StepIndicator';
 import { warn } from '@/lib/logger';
-import { useModalFocus } from '@/hooks/useModalFocus';
 
-const STORAGE_KEY = 'read-pal-onboarding-complete';
+// Per-USER completion marker. The legacy browser-wide key meant a second
+// account on the same browser never saw the walkthrough (2026-09-21
+// finding). The legacy key seeds the current user's marker once — the
+// person who completed it is by definition the account that was signed in.
+const STORAGE_KEY_PREFIX = 'read-pal-onboarding-complete';
+const LEGACY_STORAGE_KEY = 'read-pal-onboarding-complete';
 
 export const PERSONAS = [
   { id: 'sage', name: 'Sage', emoji: '🦉', personalityKey: 'persona_sage_personality', descKey: 'persona_sage_desc' },
@@ -27,9 +32,14 @@ type Step = 'welcome' | 'companion' | 'ready';
 const STEPS: Step[] = ['welcome', 'companion', 'ready'];
 
 /**
- * Lightweight onboarding for users who land on the dashboard directly
- * (e.g., returning users on a new device). If the user has already
- * completed the welcome page flow, this is skipped entirely.
+ * Lightweight onboarding for users who land on the dashboard directly.
+ *
+ * Renders as a native ``<dialog>`` + ``showModal()`` (2026-09-21 layering
+ * fix): the browser Top Layer sits above EVERY stacking context, so the
+ * old failure mode — a ``z-50`` fixed overlay trapped inside an
+ * ``animate-fade-in`` ancestor's animation-forged stacking context while
+ * the sticky ``z-40`` header painted on top — is impossible by spec.
+ * Native ``::backdrop``, focus trap, and Esc-to-close come free.
  */
 
 export const PersonaIcon = React.memo(function PersonaIcon({ type, className }: { type: string; className?: string }) {
@@ -63,6 +73,7 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
   const router = useRouter();
   const t = useTranslations('welcome');
   const { toast } = useToast();
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>('welcome');
   const [mounted, setMounted] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
@@ -70,40 +81,64 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
   const [saving, setSaving] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
-  useModalFocus(cardRef);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closingRef = useRef(false);
+
+  const userKey = user?.id ? `${STORAGE_KEY_PREFIX}:${user.id}` : null;
 
   useEffect(() => {
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, []);
 
+  // Gate on the per-user marker; wait for auth to resolve before deciding.
   useEffect(() => {
+    if (!userKey) return;
     try {
-      const completed = safeGetItem(STORAGE_KEY);
-      if (completed !== 'true') {
-        setMounted(true);
-        requestAnimationFrame(() => {
-          setOverlayVisible(true);
-        });
+      const completed = safeGetItem(userKey);
+      if (completed === 'true') return;
+      // Legacy browser-wide marker → seed this user's key (whoever
+      // completed it was signed in at the time).
+      if (safeGetItem(LEGACY_STORAGE_KEY) === 'true') {
+        safeSetItem(userKey, 'true');
+        return;
       }
+      setMounted(true);
     } catch (err) {
       warn('OnboardingWalkthrough: load state failed', err);
     }
-  }, []);
+  }, [userKey]);
+
+  // Open the native modal once mounted.
+  useEffect(() => {
+    if (mounted && dialogRef.current && !dialogRef.current.open) {
+      dialogRef.current.showModal();
+      requestAnimationFrame(() => setOverlayVisible(true));
+    }
+  }, [mounted]);
 
   const complete = useCallback(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
     try {
-      safeSetItem(STORAGE_KEY, 'true');
+      if (userKey) safeSetItem(userKey, 'true');
     } catch (err) {
       warn('OnboardingWalkthrough: save state failed', err);
     }
     setOverlayVisible(false);
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
+      dialogRef.current?.close();
       setMounted(false);
+      closingRef.current = false;
       timerRef.current = null;
     }, 300);
-  }, []);
+  }, [userKey]);
+
+  // Native Esc (cancel) on the dialog — fires wherever keyboard focus is.
+  const handleCancel = useCallback((e: React.SyntheticEvent) => {
+    e.preventDefault(); // we own the close animation
+    complete();
+  }, [complete]);
 
   const goTo = useCallback((next: Step) => {
     setTransitioning(true);
@@ -127,30 +162,12 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
       toast(t('persona_save_error'), 'error');
     }
     complete();
-  }, [selectedPersona, complete]);
+  }, [selectedPersona, complete, toast, t]);
 
   const goToWelcome = useCallback(() => {
     complete();
     router.push('/welcome');
   }, [complete, router]);
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (!mounted) return;
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        complete();
-      }
-    },
-    [mounted, complete],
-  );
-
-  useEffect(() => {
-    if (mounted) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [mounted, handleKeyDown]);
 
   if (!mounted) return null;
 
@@ -158,72 +175,59 @@ export const OnboardingWalkthrough = React.memo(function OnboardingWalkthrough()
   const persona = PERSONAS.find((p) => p.id === selectedPersona) ?? PERSONAS[1];
 
   return (
-    <div
-      className={`fixed inset-0 z-50 overflow-y-auto transition-all duration-300 ease-out ${
-        overlayVisible ? 'opacity-100' : 'opacity-0'
-      }`}
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="onboarding-modal"
       aria-label={t('onboarding_aria_label')}
+      onCancel={handleCancel}
+      // Click on the dialog element itself = the ::backdrop area (content
+      // stops propagation) — same dismiss affordance as before.
+      onClick={(e) => { if (e.target === dialogRef.current) complete(); }}
     >
-      {/* Backdrop */}
-      <div
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
-          overlayVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-        onClick={complete}
-        tabIndex={-1}
-        onKeyDown={(e) => { if (e.key === 'Escape') complete(); }}
-     />
-
-      {/* Card — wrapper keeps vertical centering on tall viewports while
-          allowing the container to scroll on short ones (was: clipped) */}
       <div className="min-h-full flex items-center justify-center py-6">
-      <div
-        ref={cardRef}
-        tabIndex={-1}
-        className={`relative w-full max-w-lg mx-4 max-h-[calc(100vh-3rem)] overflow-y-auto bg-surface-0 rounded-2xl shadow-2xl transition-all duration-300 ease-out ${
-          overlayVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Skip */}
-        <button type="button"
-          onClick={complete}
-          className="absolute top-4 right-4 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-400 transition-colors z-10"
+        <div
+          className={`relative w-full max-w-lg mx-4 max-h-[calc(100vh-3rem)] overflow-y-auto bg-surface-0 rounded-2xl shadow-2xl transition-all duration-300 ease-out ${
+            overlayVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          }`}
+          onClick={(e) => e.stopPropagation()}
         >
-          {t('onboarding_skip')}
-        </button>
+          {/* Skip — bordered, 14px (was a 12px bare grey text in the corner) */}
+          <button type="button"
+            onClick={complete}
+            className="absolute top-4 right-4 px-3 py-1.5 text-sm font-medium rounded-lg border border-surface-3 bg-surface-0 text-gray-600 dark:text-gray-300 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors z-10"
+          >
+            {t('onboarding_skip')}
+          </button>
 
-        {/* Content */}
-        <div className={`px-8 pt-10 pb-8 transition-all duration-300 ease-out ${fadeClass}`}>
-          {step === 'welcome' && (
-            <WelcomeStep onContinue={() => goTo('companion')} />
-          )}
-          {step === 'companion' && (
-            <CompanionStep
-              personas={PERSONAS}
-              selectedPersona={selectedPersona}
-              personaName={persona.name}
-              onSelect={setSelectedPersona}
-              onBack={() => goTo('welcome')}
-              onContinue={() => goTo('ready')}
-            />
-          )}
-          {step === 'ready' && (
-            <ReadyStep
-              personaEmoji={persona.emoji}
-              personaName={persona.name}
-              saving={saving}
-              onFinish={handleFinish}
-              onGoToWelcome={goToWelcome}
-            />
-          )}
+          {/* Content */}
+          <div className={`px-8 pt-10 pb-8 transition-all duration-300 ease-out ${fadeClass}`}>
+            {step === 'welcome' && (
+              <WelcomeStep onContinue={() => goTo('companion')} />
+            )}
+            {step === 'companion' && (
+              <CompanionStep
+                personas={PERSONAS}
+                selectedPersona={selectedPersona}
+                personaName={persona.name}
+                onSelect={setSelectedPersona}
+                onBack={() => goTo('welcome')}
+                onContinue={() => goTo('ready')}
+              />
+            )}
+            {step === 'ready' && (
+              <ReadyStep
+                personaEmoji={persona.emoji}
+                personaName={persona.name}
+                saving={saving}
+                onFinish={handleFinish}
+                onGoToWelcome={goToWelcome}
+              />
+            )}
+          </div>
+
+          <StepIndicator steps={STEPS} currentStep={step} />
         </div>
-
-        <StepIndicator steps={STEPS} currentStep={step} />
       </div>
-      </div>
-    </div>
+    </dialog>
   );
 });

@@ -960,7 +960,32 @@
   50% { box-shadow: 0 0 16px rgba(217, 119, 6, 0.6); }
 }
 
-.animate-fade-in { animation: fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
+/* fill-mode backwards (was: both — onboarding layering bug 2026-09-21):
+   `both` keeps the animation "applied" after it finishes, which by CSS
+   spec makes the element hold a stacking context FOREVER — any z-50
+   overlay rendered inside such a subtree (e.g. OnboardingWalkthrough in
+   the dashboard) is trapped below the sticky z-40 header, no amount of
+   z-index can rescue it. `backwards` animates in from the start state
+   and releases the context when finished. */
+.animate-fade-in { animation: fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+
+/* Onboarding modal (<dialog> Top Layer): above every stacking context by
+   spec — header/backdrop-filter/z-index cannot pierce it. Native focus
+   trap + Esc (cancel) come free. */
+dialog.onboarding-modal {
+  padding: 0;
+  border: none;
+  background: transparent;
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+dialog.onboarding-modal::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
 .animate-bounce-in { animation: bounce-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-scale-in { animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-chapter-fade { animation: chapter-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
