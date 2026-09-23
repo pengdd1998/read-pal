@@ -13,6 +13,10 @@ on:
         default: true
         type: boolean
   push:
+    branches:
+      - main
+    paths:
+      - 'packages/mobile/**'
     tags:
       - 'V*'
   pull_request:

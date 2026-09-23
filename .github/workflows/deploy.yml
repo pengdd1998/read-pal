@@ -269,11 +269,11 @@ jobs:
               local url="$2"
               local status="000"
               for i in 1 2 3 4 5 6; do
-                # -k: the only live entry today is the IP site with its
-                # self-signed cert (read.chishenma.top cannot obtain one
-                # until ICP filing passes — DNSPod serves a block page to
-                # the ACME challenge). Revisit when the filing clears.
-                status=$(curl -sk -o /dev/null -w '%{http_code}' --max-time 10 "$url" || echo "000")
+                # Domain entry (read.chishenma.top) carries a real Let's
+                # Encrypt cert since ICP cleared (2026-09-21); the IP site
+                # remains as fallback. Check the domain WITHOUT -k so a
+                # cert regression fails the gate loudly.
+                status=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$url" || echo "000")
                 if [ "$status" = "200" ]; then
                   echo "  $name OK (attempt $i)"
                   return 0
@@ -310,8 +310,8 @@ jobs:
                 && docker exec edge-caddy caddy validate --config /etc/caddy/Caddyfile \
                 && docker exec edge-caddy caddy reload --config /etc/caddy/Caddyfile || true
               sleep 10
-              if check_health "API (rollback)" "https://175.178.66.207/api/v1/health" \
-                 && check_health "Web (rollback)" "https://175.178.66.207/en"; then
+              if check_health "API (rollback)" "https://read.chishenma.top/api/v1/health" \
+                 && check_health "Web (rollback)" "https://read.chishenma.top/en"; then
                 echo "✅ Rollback successful — service restored to ${PREV_SHA}"
               else
                 echo "❌ Rollback ALSO failed health checks — manual intervention required."
@@ -323,8 +323,8 @@ jobs:
             # the cutover): the IP site with its self-signed cert — the
             # domain cannot get a cert until ICP filing passes (DNSPod
             # blocks the ACME challenge), so -k in check_health and IP URLs.
-            if ! check_health "API" "https://175.178.66.207/api/v1/health" || \
-               ! check_health "Web" "https://175.178.66.207/en"; then
+            if ! check_health "API" "https://read.chishenma.top/api/v1/health" || \
+               ! check_health "Web" "https://read.chishenma.top/en"; then
               rollback
               exit 1
             fi
