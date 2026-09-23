@@ -42,6 +42,7 @@ from collections import Counter
 sys.path.insert(0, '.')
 
 from sqlalchemy import select  # noqa: E402
+from sqlalchemy.orm.attributes import flag_modified  # noqa: E402
 
 from app.db import async_session  # noqa: E402
 from app.models.book import Book  # noqa: E402
@@ -117,12 +118,18 @@ async def main() -> None:
                 continue
             n_rows += 1
             fixed_hashes[row.content_hash] = scoped
-            # Keep the slim chapters column (no rawContent) in sync.
+            # JSONB change detection compares the loaded value with the
+            # assigned one by equality — in-place mutation of the loaded
+            # dicts (or rebuilding an identical-content list) compares
+            # equal and the column never lands in the UPDATE. flag_modified
+            # is the canonical escape hatch for mutable JSONB.
+            row.raw_chapters = [dict(ch) for ch in chapters if isinstance(ch, dict)]
             row.chapters = [
                 {k: v for k, v in ch.items() if k != 'rawContent'}
                 for ch in chapters if isinstance(ch, dict)
             ]
-            row.raw_chapters = chapters
+            flag_modified(row, 'raw_chapters')
+            flag_modified(row, 'chapters')
             meta = dict(row.metadata_ or {})
             meta['footnote_definitions'] = scoped
             row.metadata_ = meta
