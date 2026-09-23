@@ -219,3 +219,7 @@ dark-audit/
 # Mimosa security-plugin runtime state (baseline snapshots, ~1000 files per
 # dir — tool output, never source). 2026-09-18: flooded the pending view.
 .mimosa/
+
+# Local agent workspace state (risk-review 09-22: untracked, `git add -A` sweep-in)
+.zcode/
+.video_agent/

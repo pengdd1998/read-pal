@@ -207,7 +207,14 @@ async def process_pdf(file_path: str) -> dict:
         raise PdfParseError('pdf_corrupt_or_unsupported') from exc
     if total_pages > MAX_PDF_PAGES:
         raise PdfParseError('pdf_too_many_pages', max_pages=MAX_PDF_PAGES, actual_pages=total_pages)
-    metadata = _extract_pdf_metadata(reader)
+    try:
+        # Risk-review 09-21 residual: a malformed /Info dict raises here
+        # — outside the pypdf→PdfParseError conversion ladder this was the
+        # last 500 escape hatch on the upload path.
+        metadata = _extract_pdf_metadata(reader)
+    except (DependencyError, PdfReadError) as exc:
+        logger.warning('pdf_parser.metadata_failed: %s', str(exc)[:200])
+        raise PdfParseError('pdf_corrupt_or_unsupported') from exc
 
     try:
         pages_text, pages_html = _extract_page_text(reader)

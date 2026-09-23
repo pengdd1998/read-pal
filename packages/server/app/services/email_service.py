@@ -6,6 +6,7 @@ logged to console instead of being sent.
 """
 
 import logging
+import http.client
 import smtplib
 import urllib.request
 from email.mime.text import MIMEText
@@ -120,21 +121,25 @@ async def send_password_reset_email(email: str, token: str) -> None:
             or settings.smtp_user
             or 'noreply@readpal.app'
         )
-        if settings.resend_api_key:
-            _send_via_resend(
-                settings, from_, email,
-                'Reset your read-pal password', _build_reset_html(reset_url),
-            )
-        else:
-            _send_via_smtp(
-                settings,
-                from_,
-                email,
-                'Reset your read-pal password',
-                _build_reset_html(reset_url),
-            )
+        # risk-review 09-21: both transports are synchronous (smtplib /
+        # urllib) and would block the event loop up to SMTP_TIMEOUT_SECONDS
+        # (10s) per send — offload to a worker thread.
+        import asyncio as _asyncio
+
+        await _asyncio.to_thread(
+            _send_via_resend if settings.resend_api_key else _send_via_smtp,
+            settings, from_, email,
+            'Reset your read-pal password', _build_reset_html(reset_url),
+        )
         logger.info('Password reset email sent to %s', email)
-    except (smtplib.SMTPException, TimeoutError, ConnectionError, OSError):
+    except (
+        smtplib.SMTPException, TimeoutError, ConnectionError, OSError,
+        http.client.HTTPException,  # risk-review 09-21: BadStatusLine/
+        # IncompleteRead escape urllib's URLError(OSError) wrapping and
+        # surfaced as a 500 — on the "email exists" branch only, a rare
+        # account-enumeration oracle.
+        ValueError,  # malformed payload serialization
+    ):
         logger.warning(
             'Mail delivery failed for password reset email to %s — '
             'user will not receive the reset link',

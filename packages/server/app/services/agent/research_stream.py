@@ -204,6 +204,13 @@ async def research_sse_stream(
     await register_stream_cross_worker(actual_request_id)
 
     if not await acquire_stream_slot(actual_request_id):
+        # Risk-review 09-21: this raise sits BEFORE the try/finally, so the
+        # registry entries above would leak — _INFLIGHT_STREAMS has no
+        # sweeper/TTL (stream_registry.py) and the Redis owner key lingers
+        # its full 300s. Roll both back explicitly, mirroring the slot
+        # counter's own DECR rollback in concurrency.py.
+        release_stream(actual_request_id)
+        await release_stream_cross_worker(actual_request_id)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={

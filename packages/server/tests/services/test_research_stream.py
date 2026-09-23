@@ -16,6 +16,7 @@ test_research_agent.py).
 
 import asyncio
 import json
+import uuid
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -285,3 +286,54 @@ class TestResearchStreamRouter:
         assert resp.status_code == 200
         assert resp.headers["content-type"].startswith("text/event-stream")
         assert 'data: {"request_id": "r-1"}' in resp.text
+
+
+class TestCapacityRejectionRegistryHygiene:
+    """Risk-review 09-21: the 503 path used to leak the in-flight registry
+    entries (register ran before the slot check; the raise sat outside the
+    try/finally that releases). A sweeper-less dict leak per rejection."""
+
+    @pytest.mark.asyncio
+    async def test_rejected_stream_releases_registry(self, monkeypatch):
+        from app.services.agent import stream_registry
+
+        seen = []
+
+        def fake_register(rid):
+            seen.append(('reg', rid))
+            return asyncio.Event()
+
+        async def fake_register_cross(rid):
+            seen.append(('regx', rid))
+
+        async def fake_acquire(rid):
+            return False  # capacity full
+
+        released = []
+
+        monkeypatch.setattr(rs, 'register_stream', fake_register)
+        monkeypatch.setattr(rs, 'register_stream_cross_worker', fake_register_cross)
+        monkeypatch.setattr(rs, 'acquire_stream_slot', fake_acquire)
+        monkeypatch.setattr(
+            rs, 'release_stream',
+            lambda rid: released.append(('rel', rid)),
+        )
+        released_cross = []
+
+        async def fake_release_cross(rid):
+            released_cross.append(rid)
+
+        monkeypatch.setattr(rs, 'release_stream_cross_worker', fake_release_cross)
+
+        from fastapi import HTTPException
+
+        with pytest.raises(HTTPException) as exc_info:
+            async for _chunk in research_sse_stream(
+                None, uuid.uuid4(), '任何问题', request_id='cap-1',
+            ):
+                pass
+
+        assert exc_info.value.status_code == 503
+        assert ('reg', 'cap-1') in seen and ('regx', 'cap-1') in seen
+        assert ('rel', 'cap-1') in released, 'local registry entry must roll back'
+        assert released_cross == ['cap-1'], 'cross-worker owner key must roll back'
