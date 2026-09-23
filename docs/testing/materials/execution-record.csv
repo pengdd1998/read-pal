@@ -710,8 +710,8 @@ Call log:
 20260905,自动化(ZCode),工程化验证,E1-A,Chromium headless,V4-visual,工程验证,P1,PASS,,visual/baseline,基线首采8页+复检无回归(2%容差)——V4补全
 20260905,自动化(ZCode),工程化验证,E1-A,Chromium headless,ENG-3,工程验证,P1,PASS_WITH_ISSUE,BUG-无,llm/observability.py:430,"JSONL由llm_trace_jsonl_path门控,默认空=关闭(设计);启用需配置路径——端到端断言待启用后补"
 20260905,自动化(ZCode),工程化验证,E1-A,Chromium headless,V6-rerun,工程验证,P0,PASS_WITH_ISSUE,,e2e-core/report.md,暖环境复测21/10仍flake——自建工具环境敏感;READ/ANNO/CHAT以同批次L1 S3/S4/S5 100/100为稳定等价证据(03§9)
-20260914,自动化(ZCode),TL执行,E1-A,Chromium headless,TS-036,P2,PASS,,tl/report-partial.json,高亮原文引用=true
-20260914,自动化(ZCode),TL执行,E1-A,Chromium headless,TS-037,P2,FAIL,,tl/report-partial.json,实质回答长度=22
+20260914,自动化(ZCode),TL执行,E1-A,Chromium headless,TS-036,伴读工具,P2,PASS,,tl/report-partial.json,高亮原文引用=true
+20260914,自动化(ZCode),TL执行,E1-A,Chromium headless,TS-037,伴读工具,P2,FAIL,,tl/report-partial.json,实质回答长度=22
 20260914,自动化(ZCode),TL执行·终,E1-A,Chromium headless,TS-036,伴读工具,P2,PASS,,tl/report.md,数据准确复验通过(修复后脚本)
 20260914,自动化(ZCode),TL执行·终,E1-A,Chromium headless,TL-RECOVERY,伴读工具,P1,BLOCKED,,tl/report.md,"卡流恢复三连失败:停止点击无效→刷新重开面板后重发仍遇disabled——升级BUG-卡流不可恢复(用户唯一出路整页刷新),S2候选"
 20260914,自动化(ZCode),TL执行,E1-A,Chromium headless,TS-036,伴读工具,undefined,PASS,,tl/report.md,高亮原文引用=true
@@ -775,51 +775,51 @@ Call log:
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-04,提案写入,P2,SKIP,,companion-tools-v2/report.md,离线 error+retry 场景需精确断网时机——人工复核
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,dismiss 关闭路径待人工（非数据安全项）
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,双标签并发幂等——幂等中间件单测背书，人工复核
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-01,脚注气泡,P0,PASS,,footnote-bubble/report.md,"章内角标→气泡: 含注1正文"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN2-01,脚注气泡,P0,PASS,,footnote-bubble/report.md,"章内直查路径"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-02,脚注气泡,P1,PASS,,footnote-bubble/report.md,"关闭后可重复打开"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN2-02,脚注气泡,P0,PASS,,footnote-bubble/report.md,"跨章解析: 气泡含跨章正文(缺陷③复测通过)"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN5-04,脚注气泡,P1,PASS,,footnote-bubble/report.md,"注入脚注无执行(noExec=true);解析层已剥标签"
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-01,脚注气泡,P0,PASS,,footnote-bubble/report.md,章内角标→气泡: 含注1正文
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN2-01,脚注气泡,P0,PASS,,footnote-bubble/report.md,章内直查路径
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-02,脚注气泡,P1,PASS,,footnote-bubble/report.md,关闭后可重复打开
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN2-02,脚注气泡,P0,PASS,,footnote-bubble/report.md,跨章解析: 气泡含跨章正文(缺陷③复测通过)
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN5-04,脚注气泡,P1,PASS,,footnote-bubble/report.md,注入脚注无执行(noExec=true);解析层已剥标签
 20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN3-01,脚注气泡,P0,PASS,,footnote-bubble/report.md,"笔记制备=true, 只读气泡含原文=true"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN3-02,脚注气泡,P1,PASS,,footnote-bubble/report.md,"2 高亮+1 笔记并存渲染（bubble 统一观察）"
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN3-02,脚注气泡,P1,PASS,,footnote-bubble/report.md,2 高亮+1 笔记并存渲染（bubble 统一观察）
 20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN5-05,脚注气泡,P2,PASS,,footnote-bubble/report.md,"坏锚点: clicked, 无未捕获异常=true"
 20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN4-01,脚注气泡,P0,PASS,,footnote-bubble/report.md,"移动端角标气泡/抽屉: {'clicked':true,'drawerLike':true,'fullish':true}"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN5-01,脚注气泡,P0,PASS,,footnote-bubble/report.md,"B 无脚注书 footnotes 含 A 书内容=false（佐证API: {'definitions':{}}）"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN5-02,脚注气泡,P0,PASS,,footnote-bubble/report.md,"zipfile clobber 修复复测=FN-M2 全书气泡内容可得(本轮主链即证)"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN5-03,脚注气泡,P1,PASS,,footnote-bubble/report.md,"消费者已上线(FN2-02 跨章 API 解析即证)"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-04,脚注气泡,P2,PASS_WITH_ISSUE,,footnote-bubble/report.md,"长脚注/引号气泡留截图人工复核"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-05,脚注气泡,P2,PASS_WITH_ISSUE,,footnote-bubble/report.md,"暗色气泡截图留档待人工(kg4 同口径)"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-06,脚注气泡,P2,PASS,,footnote-bubble/report.md,"无脚注书无角标无报错"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN2-04,脚注气泡,P2,PASS_WITH_ISSUE,,footnote-bubble/report.md,"跨章解析延迟观察:网络面板留档"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN2-05,脚注气泡,P2,PASS,,footnote-bubble/report.md,"快速连续点击(前序流程隐含覆盖)"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN3-03,脚注气泡,P1,SKIP,,footnote-bubble/report.md,"删除笔记联动待人工(非本轮改动面)"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN3-04,脚注气泡,P2,PASS_WITH_ISSUE,,footnote-bubble/report.md,"emoji/长文本气泡留档待人工"
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN5-01,脚注气泡,P0,PASS,,footnote-bubble/report.md,B 无脚注书 footnotes 含 A 书内容=false（佐证API: {'definitions':{}}）
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN5-02,脚注气泡,P0,PASS,,footnote-bubble/report.md,zipfile clobber 修复复测=FN-M2 全书气泡内容可得(本轮主链即证)
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN5-03,脚注气泡,P1,PASS,,footnote-bubble/report.md,消费者已上线(FN2-02 跨章 API 解析即证)
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-04,脚注气泡,P2,PASS_WITH_ISSUE,,footnote-bubble/report.md,长脚注/引号气泡留截图人工复核
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-05,脚注气泡,P2,PASS_WITH_ISSUE,,footnote-bubble/report.md,暗色气泡截图留档待人工(kg4 同口径)
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN1-06,脚注气泡,P2,PASS,,footnote-bubble/report.md,无脚注书无角标无报错
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN2-04,脚注气泡,P2,PASS_WITH_ISSUE,,footnote-bubble/report.md,跨章解析延迟观察:网络面板留档
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN2-05,脚注气泡,P2,PASS,,footnote-bubble/report.md,快速连续点击(前序流程隐含覆盖)
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN3-03,脚注气泡,P1,SKIP,,footnote-bubble/report.md,删除笔记联动待人工(非本轮改动面)
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN3-04,脚注气泡,P2,PASS_WITH_ISSUE,,footnote-bubble/report.md,emoji/长文本气泡留档待人工
 20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN3-05,脚注气泡,P2,SKIP,,footnote-bubble/report.md,"TP-B 无 TP-A 书副本(隔离已证),跳过"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN4-02,脚注气泡,P1,PASS_WITH_ISSUE,,footnote-bubble/report.md,"抽屉滚动行为截图留档待人工"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN4-04,脚注气泡,P2,SKIP,,footnote-bubble/report.md,"横竖屏待人工"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN4-05,脚注气泡,P2,SKIP,,footnote-bubble/report.md,"iOS Safari 惯性滚动待真机"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN6-01,脚注气泡,P1,PASS,,footnote-bubble/report.md,"划选/高亮/笔记 CRUD 主链本轮全通"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN6-02,脚注气泡,P1,PASS,,footnote-bubble/report.md,"console error=0"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN6-03,脚注气泡,P1,PASS,,footnote-bubble/report.md,"两书气泡/角标同组件族(本轮同链路)"
-20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN6-04,脚注气泡,P2,PASS,,footnote-bubble/report.md,"录屏/截图已存 shots/"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,"密码要求清单元素=10"
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN4-02,脚注气泡,P1,PASS_WITH_ISSUE,,footnote-bubble/report.md,抽屉滚动行为截图留档待人工
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN4-04,脚注气泡,P2,SKIP,,footnote-bubble/report.md,横竖屏待人工
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN4-05,脚注气泡,P2,SKIP,,footnote-bubble/report.md,iOS Safari 惯性滚动待真机
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN6-01,脚注气泡,P1,PASS,,footnote-bubble/report.md,划选/高亮/笔记 CRUD 主链本轮全通
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN6-02,脚注气泡,P1,PASS,,footnote-bubble/report.md,console error=0
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN6-03,脚注气泡,P1,PASS,,footnote-bubble/report.md,两书气泡/角标同组件族(本轮同链路)
+20260915,自动化(ZCode),FN执行,E1-A,Chromium headless,FN6-04,脚注气泡,P2,PASS,,footnote-bubble/report.md,录屏/截图已存 shots/
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,密码要求清单元素=10
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-03,核心闭环,P1,PASS,,e2e-core/report.md,"仍在注册页=true, 行内错误=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-01,核心闭环,P0,PASS,,e2e-core/report.md,"跳转=/dashboard, token=true, cookie=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-04,核心闭环,P1,PASS,,e2e-core/report.md,"停留=true, 错误提示=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,"错误密码不跳转"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,"UI 登录跳转 dashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,"/zh/auth?mode=login&next=%2Fzh%2Fdashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"被登出（刷新链路待人工复核）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,"Alice 出现在书库"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,错误密码不跳转
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,UI 登录跳转 dashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,/zh/auth?mode=login&next=%2Fzh%2Fdashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,被登出（刷新链路待人工复核）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,Alice 出现在书库
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-14,核心闭环,P2,PASS_WITH_ISSUE,,e2e-core/report.md,"无封面书入库, 破图=1"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-08,核心闭环,?,FAIL,,e2e-core/report.md,"ENOENT: no such file or directory, open 'docs/毛泽东选集(1991版)1.pdf'"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,"UI 错误提示=true（API 已定型 422）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,"拖拽/选择上传中文书成功"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"详情页作者可见=false"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,"现代中文出版书入库"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,"可见书名=5/5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,"搜索命中=1"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,"重命名后卡片同步"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,UI 错误提示=true（API 已定型 422）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,拖拽/选择上传中文书成功
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,详情页作者可见=false
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,现代中文出版书入库
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,可见书名=5/5
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,搜索命中=1
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,重命名后卡片同步
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-07,核心闭环,P0,PASS,,e2e-core/report.md,"删除成功=true, 卡片消失=true（UI 二次确认交互在 LIBR-07a 人工补）"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-01,核心闭环,P0,FAIL,,e2e-core/report.md,"段落=0, 顶栏按钮=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,?,FAIL,,e2e-core/report.md,"locator.click: Timeout 30000ms exceeded.
@@ -849,43 +849,43 @@ Call log:
      - retrying click action
        - waiting 500ms
 "
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,FAIL,,e2e-core/report.md,"Chapter I. → Chapter I."
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,FAIL,,e2e-core/report.md,Chapter I. → Chapter I.
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-06,核心闭环,P0,PASS,,e2e-core/report.md,"离开时=Chapter I., 重进=Chapter I."
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,"刷新后 scrollTop=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,"字号按钮未命中"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,DEGRADED,,e2e-core/report.md,"书签按钮未命中"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,FAIL,,e2e-core/report.md,"命中=0"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,刷新后 scrollTop=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,字号按钮未命中
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,DEGRADED,,e2e-core/report.md,书签按钮未命中
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,FAIL,,e2e-core/report.md,命中=0
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-02,核心闭环,?,FAIL,,e2e-core/report.md,"page.evaluate: TypeError: Failed to execute 'selectNodeContents' on 'Range': parameter 1 is not of type 'Node'.
     at eval (eval at evaluate (:302:30), <anonymous>:4:51)
     at UtilityScript.evaluate (<anonymous>:304:16)
     at UtilityScript.<anonymous> (<anonymous>:1:44)"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-03,核心闭环,P0,FAIL,,e2e-core/report.md,"刷新前=0, 后=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,"面板输入框=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,"流式推进=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,"历史消息=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,"1 字符增量请求=0（防抖应=0）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,面板输入框=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,流式推进=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,历史消息=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,1 字符增量请求=0（防抖应=0）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,STAT-01,核心闭环,P1,PASS,,e2e-core/report.md,"文本=731, 标题=13"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,"镜像列表页渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,"i18n key 泄漏=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,"坏 localStorage 不白屏"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,"密码要求清单元素=10"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,镜像列表页渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,i18n key 泄漏=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,坏 localStorage 不白屏
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,密码要求清单元素=10
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-03,核心闭环,P1,PASS,,e2e-core/report.md,"仍在注册页=true, 行内错误=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-01,核心闭环,P0,PASS,,e2e-core/report.md,"跳转=/dashboard, token=true, cookie=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-04,核心闭环,P1,PASS,,e2e-core/report.md,"停留=true, 错误提示=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,"错误密码不跳转"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,"UI 登录跳转 dashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,"/zh/auth?mode=login&next=%2Fzh%2Fdashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"被登出（刷新链路待人工复核）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,"Alice 出现在书库"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,错误密码不跳转
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,UI 登录跳转 dashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,/zh/auth?mode=login&next=%2Fzh%2Fdashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,被登出（刷新链路待人工复核）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,Alice 出现在书库
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-14,核心闭环,P2,PASS,,e2e-core/report.md,"无封面书入库, 破图=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-08,核心闭环,P1,PASS,,e2e-core/report.md,"错误提示=true, 书目=0(无残留)"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,"UI 错误提示=true（API 已定型 422）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,"拖拽/选择上传中文书成功"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"详情页作者可见=false"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,"现代中文出版书入库"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,"可见书名=5/5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,"搜索命中=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,"重命名后卡片同步"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,UI 错误提示=true（API 已定型 422）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,拖拽/选择上传中文书成功
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,详情页作者可见=false
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,现代中文出版书入库
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,可见书名=5/5
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,搜索命中=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,重命名后卡片同步
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-07,核心闭环,P0,PASS,,e2e-core/report.md,"删除成功=true, 卡片消失=true（UI 二次确认交互在 LIBR-07a 人工补）"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-01,核心闭环,P0,FAIL,,e2e-core/report.md,"段落=1, 顶栏按钮=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,?,FAIL,,e2e-core/report.md,"locator.click: Timeout 30000ms exceeded.
@@ -915,47 +915,47 @@ Call log:
      - retrying click action
        - waiting 500ms
 "
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,FAIL,,e2e-core/report.md,"Chapter I. → Chapter I."
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,FAIL,,e2e-core/report.md,Chapter I. → Chapter I.
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-06,核心闭环,P0,PASS,,e2e-core/report.md,"离开时=Chapter I., 重进=Chapter I."
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,"刷新后 scrollTop=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,"字号按钮未命中"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,DEGRADED,,e2e-core/report.md,"书签按钮未命中"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,FAIL,,e2e-core/report.md,"命中=0"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,刷新后 scrollTop=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,字号按钮未命中
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,DEGRADED,,e2e-core/report.md,书签按钮未命中
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,FAIL,,e2e-core/report.md,命中=0
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-02,核心闭环,P0,PASS,,e2e-core/report.md,"API=11, DOM mark=1"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-03,核心闭环,P0,PASS,,e2e-core/report.md,"刷新前=1, 后=1"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,"面板输入框=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,"流式推进=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,"历史消息=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,"1 字符增量请求=0（防抖应=0）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,面板输入框=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,流式推进=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,历史消息=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,1 字符增量请求=0（防抖应=0）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,STAT-01,核心闭环,P1,PASS,,e2e-core/report.md,"文本=731, 标题=13"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,"镜像列表页渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,"i18n key 泄漏=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,"坏 localStorage 不白屏"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,"密码要求清单元素=10"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,镜像列表页渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,i18n key 泄漏=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,坏 localStorage 不白屏
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,密码要求清单元素=10
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-03,核心闭环,P1,PASS,,e2e-core/report.md,"仍在注册页=true, 行内错误=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-01,核心闭环,P0,PASS,,e2e-core/report.md,"跳转=/dashboard, token=true, cookie=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-04,核心闭环,P1,PASS,,e2e-core/report.md,"停留=true, 错误提示=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,"错误密码不跳转"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,"UI 登录跳转 dashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,"/zh/auth?mode=login&next=%2Fzh%2Fdashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"被登出（刷新链路待人工复核）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,"Alice 出现在书库"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,错误密码不跳转
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,UI 登录跳转 dashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,/zh/auth?mode=login&next=%2Fzh%2Fdashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,被登出（刷新链路待人工复核）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,Alice 出现在书库
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-14,核心闭环,P2,PASS,,e2e-core/report.md,"无封面书入库, 破图=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-08,核心闭环,P1,PASS,,e2e-core/report.md,"错误提示=true, 书目=0(无残留)"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,"UI 错误提示=true（API 已定型 422）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,"拖拽/选择上传中文书成功"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"详情页作者可见=false"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,"现代中文出版书入库"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,"可见书名=5/5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,"搜索命中=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,"重命名后卡片同步"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,UI 错误提示=true（API 已定型 422）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,拖拽/选择上传中文书成功
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,详情页作者可见=false
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,现代中文出版书入库
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,可见书名=5/5
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,搜索命中=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,重命名后卡片同步
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-07,核心闭环,P0,PASS,,e2e-core/report.md,"删除成功=true, 卡片消失=true（UI 二次确认交互在 LIBR-07a 人工补）"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-01,核心闭环,P0,PASS,,e2e-core/report.md,"段落=1, 顶栏按钮=5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,FAIL,,e2e-core/report.md,"跳转后标题=Chapter I."
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,FAIL,,e2e-core/report.md,"正文指纹  PREFACE. … →  PREFACE. …"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,FAIL,,e2e-core/report.md,跳转后标题=Chapter I.
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,FAIL,,e2e-core/report.md,正文指纹  PREFACE. … →  PREFACE. …
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-06,核心闭环,P0,PASS,,e2e-core/report.md,"离开时=Chapter I., 重进=Chapter I."
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,"刷新后 scrollTop=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,"字号按钮未命中（设置菜单未展开）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,刷新后 scrollTop=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,字号按钮未命中（设置菜单未展开）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,?,FAIL,,e2e-core/report.md,"locator.click: Timeout 30000ms exceeded.
 Call log:
   - waiting for locator('button[aria-label*='书签'], button[aria-label*='收藏'], button[aria-label*='bookmark']').first()
@@ -1012,39 +1012,39 @@ Call log:
 "
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-02,核心闭环,P0,PASS,,e2e-core/report.md,"API=11, DOM mark=1"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-03,核心闭环,P0,PASS,,e2e-core/report.md,"刷新前=1, 后=1"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,"面板输入框=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,"流式推进=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,"历史消息=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,"1 字符增量请求=0（防抖应=0）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,面板输入框=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,流式推进=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,历史消息=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,1 字符增量请求=0（防抖应=0）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,STAT-01,核心闭环,P1,PASS,,e2e-core/report.md,"文本=731, 标题=13"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,"镜像列表页渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,"i18n key 泄漏=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,"坏 localStorage 不白屏"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,"密码要求清单元素=10"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,镜像列表页渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,i18n key 泄漏=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,坏 localStorage 不白屏
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,密码要求清单元素=10
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-03,核心闭环,P1,PASS,,e2e-core/report.md,"仍在注册页=true, 行内错误=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-01,核心闭环,P0,PASS,,e2e-core/report.md,"跳转=/dashboard, token=true, cookie=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-04,核心闭环,P1,PASS,,e2e-core/report.md,"停留=true, 错误提示=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,"错误密码不跳转"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,"UI 登录跳转 dashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,"/zh/auth?mode=login&next=%2Fzh%2Fdashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"被登出（刷新链路待人工复核）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,"Alice 出现在书库"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,错误密码不跳转
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,UI 登录跳转 dashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,/zh/auth?mode=login&next=%2Fzh%2Fdashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,被登出（刷新链路待人工复核）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,Alice 出现在书库
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-14,核心闭环,P2,PASS,,e2e-core/report.md,"无封面书入库, 破图=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-08,核心闭环,P1,PASS,,e2e-core/report.md,"错误提示=true, 书目=0(无残留)"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"UI 错误提示=false（API 已定型 422）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,"拖拽/选择上传中文书成功"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"详情页作者可见=false"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,"现代中文出版书入库"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,"可见书名=5/5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,"搜索命中=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,"重命名后卡片同步"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,UI 错误提示=false（API 已定型 422）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,拖拽/选择上传中文书成功
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,详情页作者可见=false
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,现代中文出版书入库
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,可见书名=5/5
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,搜索命中=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,重命名后卡片同步
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-07,核心闭环,P0,PASS,,e2e-core/report.md,"删除成功=true, 卡片消失=true（UI 二次确认交互在 LIBR-07a 人工补）"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-01,核心闭环,P0,PASS,,e2e-core/report.md,"段落=1, 顶栏按钮=5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,DEGRADED,,e2e-core/report.md,"目录行未渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,"Chapter I. → A note for Mis（Shift+→ 跳章）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,DEGRADED,,e2e-core/report.md,目录行未渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,Chapter I. → A note for Mis（Shift+→ 跳章）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-06,核心闭环,P0,PASS,,e2e-core/report.md,"离开时=A note for Mis, 重进=A note for Mis"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,"滚动范围=0px 滚到=0px 刷新后=0px (阈值20) 记录={'current_page':1,'scroll_progress':0,'current_segment':0,'saved_at':17896853968"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,"字号按钮未命中（设置菜单未展开）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,字号按钮未命中（设置菜单未展开）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,?,FAIL,,e2e-core/report.md,"locator.click: Timeout 30000ms exceeded.
 Call log:
   - waiting for locator('button[aria-label*='书签'], button[aria-label*='收藏'], button[aria-label*='bookmark']').first()
@@ -1101,42 +1101,42 @@ Call log:
 "
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-02,核心闭环,P0,PASS,,e2e-core/report.md,"API=11, DOM mark=1"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-03,核心闭环,P0,PASS,,e2e-core/report.md,"刷新前=1, 后=1"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,"面板输入框=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,"流式推进=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,"历史消息=2"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,面板输入框=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,流式推进=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,历史消息=2
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,?,FAIL,,e2e-core/report.md,"page.goto: Timeout 30000ms exceeded.
 Call log:
   - navigating to 'http://localhost:3000/zh/search', waiting until 'networkidle'
 "
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,STAT-01,核心闭环,P1,PASS,,e2e-core/report.md,"文本=732, 标题=13"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,"镜像列表页渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,"i18n key 泄漏=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,"坏 localStorage 不白屏"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,"密码要求清单元素=10"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,镜像列表页渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,i18n key 泄漏=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,坏 localStorage 不白屏
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,密码要求清单元素=10
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-03,核心闭环,P1,PASS,,e2e-core/report.md,"仍在注册页=true, 行内错误=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-01,核心闭环,P0,PASS,,e2e-core/report.md,"跳转=/dashboard, token=true, cookie=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-04,核心闭环,P1,PASS,,e2e-core/report.md,"停留=true, 错误提示=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,"错误密码不跳转"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,"UI 登录跳转 dashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,"/zh/auth?mode=login&next=%2Fzh%2Fdashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"被登出（刷新链路待人工复核）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,"Alice 出现在书库"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,错误密码不跳转
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,UI 登录跳转 dashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,/zh/auth?mode=login&next=%2Fzh%2Fdashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,被登出（刷新链路待人工复核）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,Alice 出现在书库
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-14,核心闭环,P2,PASS,,e2e-core/report.md,"无封面书入库, 破图=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-08,核心闭环,P1,PASS,,e2e-core/report.md,"错误提示=true, 书目=0(无残留)"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,"UI 错误提示=true（API 已定型 422）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,"拖拽/选择上传中文书成功"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS,,e2e-core/report.md,"详情页作者可见=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,"现代中文出版书入库"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,"可见书名=5/5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,"搜索命中=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,"重命名后卡片同步"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,UI 错误提示=true（API 已定型 422）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,拖拽/选择上传中文书成功
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS,,e2e-core/report.md,详情页作者可见=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,现代中文出版书入库
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,可见书名=5/5
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,搜索命中=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,重命名后卡片同步
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-07,核心闭环,P0,PASS,,e2e-core/report.md,"删除成功=true, 卡片消失=true（UI 二次确认交互在 LIBR-07a 人工补）"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-01,核心闭环,P0,PASS,,e2e-core/report.md,"段落=1, 顶栏按钮=5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,DEGRADED,,e2e-core/report.md,"目录行未渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,"Chapter I. → A note for Mis（Shift+→ 跳章）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,DEGRADED,,e2e-core/report.md,目录行未渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,Chapter I. → A note for Mis（Shift+→ 跳章）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-06,核心闭环,P0,PASS,,e2e-core/report.md,"离开时=A note for Mis, 重进=A note for Mis"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,"滚动范围=0px 滚到=0px 刷新后=0px (阈值20) 记录={'current_page':1,'scroll_progress':0,'current_segment':0,'saved_at':17896859283"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,"字号按钮未命中（设置菜单未展开）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,字号按钮未命中（设置菜单未展开）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,?,FAIL,,e2e-core/report.md,"locator.click: Timeout 30000ms exceeded.
 Call log:
   - waiting for locator('button[aria-label*='书签'], button[aria-label*='收藏'], button[aria-label*='bookmark']').first()
@@ -1193,42 +1193,42 @@ Call log:
 "
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-02,核心闭环,P0,PASS,,e2e-core/report.md,"API=11, DOM mark=1"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-03,核心闭环,P0,PASS,,e2e-core/report.md,"刷新前=1, 后=1"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,"面板输入框=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,"流式推进=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,"历史消息=2"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,面板输入框=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,流式推进=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,历史消息=2
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,?,FAIL,,e2e-core/report.md,"page.goto: Timeout 30000ms exceeded.
 Call log:
   - navigating to 'http://localhost:3000/zh/search', waiting until 'networkidle'
 "
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,STAT-01,核心闭环,P1,PASS,,e2e-core/report.md,"文本=732, 标题=13"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,"镜像列表页渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,"i18n key 泄漏=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,"坏 localStorage 不白屏"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,"密码要求清单元素=10"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,镜像列表页渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,i18n key 泄漏=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,坏 localStorage 不白屏
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,密码要求清单元素=10
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-03,核心闭环,P1,PASS,,e2e-core/report.md,"仍在注册页=true, 行内错误=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-01,核心闭环,P0,PASS,,e2e-core/report.md,"跳转=/dashboard, token=true, cookie=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-04,核心闭环,P1,PASS,,e2e-core/report.md,"停留=true, 错误提示=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,"错误密码不跳转"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,"UI 登录跳转 dashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,"/zh/auth?mode=login&next=%2Fzh%2Fdashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"被登出（刷新链路待人工复核）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,"Alice 出现在书库"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,错误密码不跳转
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,UI 登录跳转 dashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,/zh/auth?mode=login&next=%2Fzh%2Fdashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,被登出（刷新链路待人工复核）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,Alice 出现在书库
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-14,核心闭环,P2,PASS,,e2e-core/report.md,"无封面书入库, 破图=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-08,核心闭环,P1,PASS,,e2e-core/report.md,"错误提示=true, 书目=0(无残留)"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,"UI 错误提示=true（API 已定型 422）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,"拖拽/选择上传中文书成功"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"详情页作者可见=false"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,"现代中文出版书入库"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,"可见书名=5/5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,"搜索命中=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,"重命名后卡片同步"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,UI 错误提示=true（API 已定型 422）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,拖拽/选择上传中文书成功
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,详情页作者可见=false
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,现代中文出版书入库
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,可见书名=5/5
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,搜索命中=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,重命名后卡片同步
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-07,核心闭环,P0,PASS,,e2e-core/report.md,"删除成功=true, 卡片消失=true（UI 二次确认交互在 LIBR-07a 人工补）"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-01,核心闭环,P0,PASS,,e2e-core/report.md,"段落=1, 顶栏按钮=5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,PASS,,e2e-core/report.md,"跳转后 标题=CHAPTER XVI. 计数=第 4/15 · 1/13CHA"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,FAIL,,e2e-core/report.md,"CHAPTER XVI. → CHAPTER XVI.（Shift+→ 跳章）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,PASS,,e2e-core/report.md,跳转后 标题=CHAPTER XVI. 计数=第 4/15 · 1/13CHA
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,FAIL,,e2e-core/report.md,CHAPTER XVI. → CHAPTER XVI.（Shift+→ 跳章）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-06,核心闭环,P0,PASS,,e2e-core/report.md,"离开时=CHAPTER XVI., 重进=CHAPTER XVI."
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,"滚动范围=0px 滚到=0px 刷新后=0px (阈值20) 记录={'current_page':4,'scroll_progress':0,'current_segment':2,'saved_at':17896864265"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,"字号按钮未命中（设置菜单未展开）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,字号按钮未命中（设置菜单未展开）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,?,FAIL,,e2e-core/report.md,"locator.click: Timeout 30000ms exceeded.
 Call log:
   - waiting for locator('button[aria-label*='书签'], button[aria-label*='收藏'], button[aria-label*='bookmark']').first()
@@ -1285,206 +1285,208 @@ Call log:
 "
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-02,核心闭环,P0,PASS,,e2e-core/report.md,"API=11, DOM mark=1"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-03,核心闭环,P0,PASS,,e2e-core/report.md,"刷新前=1, 后=1"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,"面板输入框=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,"流式推进=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,"历史消息=2"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,面板输入框=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,流式推进=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,历史消息=2
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,?,FAIL,,e2e-core/report.md,"page.goto: Timeout 30000ms exceeded.
 Call log:
   - navigating to 'http://localhost:3000/zh/search', waiting until 'networkidle'
 "
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,STAT-01,核心闭环,P1,PASS,,e2e-core/report.md,"文本=736, 标题=13"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,"镜像列表页渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,"i18n key 泄漏=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,"坏 localStorage 不白屏"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,"密码要求清单元素=10"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,镜像列表页渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,i18n key 泄漏=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,坏 localStorage 不白屏
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,密码要求清单元素=10
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-03,核心闭环,P1,PASS,,e2e-core/report.md,"仍在注册页=true, 行内错误=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-01,核心闭环,P0,PASS,,e2e-core/report.md,"跳转=/dashboard, token=true, cookie=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-04,核心闭环,P1,PASS,,e2e-core/report.md,"停留=true, 错误提示=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,"错误密码不跳转"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,"UI 登录跳转 dashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,"/zh/auth?mode=login&next=%2Fzh%2Fdashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"被登出（刷新链路待人工复核）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,"Alice 出现在书库"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,错误密码不跳转
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,UI 登录跳转 dashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,/zh/auth?mode=login&next=%2Fzh%2Fdashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,被登出（刷新链路待人工复核）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,Alice 出现在书库
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-14,核心闭环,P2,PASS,,e2e-core/report.md,"无封面书入库, 破图=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-08,核心闭环,P1,PASS,,e2e-core/report.md,"错误提示=true, 书目=0(无残留)"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,"UI 错误提示=true（API 已定型 422）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,"拖拽/选择上传中文书成功"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"详情页作者可见=false"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,"现代中文出版书入库"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,"可见书名=5/5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,"搜索命中=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,"重命名后卡片同步"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,UI 错误提示=true（API 已定型 422）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,拖拽/选择上传中文书成功
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,详情页作者可见=false
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,现代中文出版书入库
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,可见书名=5/5
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,搜索命中=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,重命名后卡片同步
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-07,核心闭环,P0,PASS,,e2e-core/report.md,"删除成功=true, 卡片消失=true（UI 二次确认交互在 LIBR-07a 人工补）"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-01,核心闭环,P0,PASS,,e2e-core/report.md,"段落=1, 顶栏按钮=5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,PASS,,e2e-core/report.md,"跳转后 标题=CHAPTER XVI. 计数=第 4/15 · 1/13CHA"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,"CHAPTER XVI. → “to assure you（Shift+→ 跳章）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,PASS,,e2e-core/report.md,跳转后 标题=CHAPTER XVI. 计数=第 4/15 · 1/13CHA
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,CHAPTER XVI. → “to assure you（Shift+→ 跳章）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-06,核心闭环,P0,PASS,,e2e-core/report.md,"离开时=“to assure you, 重进=“to assure you"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,FAIL,,e2e-core/report.md,"滚动范围=0px 滚到=0px 刷新后=0px (阈值20) 记录={'current_page':4,'scroll_progress':0,'current_segment':15,'saved_at':1789687318"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,"字号按钮未命中（设置菜单未展开）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,PASS,,e2e-core/report.md,"批注接口记录=10"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,PASS,,e2e-core/report.md,"命中=2"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,字号按钮未命中（设置菜单未展开）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,PASS,,e2e-core/report.md,批注接口记录=10
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,PASS,,e2e-core/report.md,命中=2
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-02,核心闭环,P0,PASS,,e2e-core/report.md,"API=11, DOM mark=1"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-03,核心闭环,P0,PASS,,e2e-core/report.md,"刷新前=1, 后=1"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,"面板输入框=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,"流式推进=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,"历史消息=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,"1 字符增量请求=0（防抖应=0）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,面板输入框=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,流式推进=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,历史消息=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,1 字符增量请求=0（防抖应=0）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,STAT-01,核心闭环,P1,PASS,,e2e-core/report.md,"文本=736, 标题=13"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,"镜像列表页渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,"i18n key 泄漏=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,"坏 localStorage 不白屏"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,"密码要求清单元素=10"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,镜像列表页渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,i18n key 泄漏=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,坏 localStorage 不白屏
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,密码要求清单元素=10
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-03,核心闭环,P1,PASS,,e2e-core/report.md,"仍在注册页=true, 行内错误=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-01,核心闭环,P0,PASS,,e2e-core/report.md,"跳转=/dashboard, token=true, cookie=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-04,核心闭环,P1,PASS,,e2e-core/report.md,"停留=true, 错误提示=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,"错误密码不跳转"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,"UI 登录跳转 dashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,"/zh/auth?mode=login&next=%2Fzh%2Fdashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"被登出（刷新链路待人工复核）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,"Alice 出现在书库"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,错误密码不跳转
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,UI 登录跳转 dashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,/zh/auth?mode=login&next=%2Fzh%2Fdashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,被登出（刷新链路待人工复核）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,Alice 出现在书库
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-14,核心闭环,P2,PASS,,e2e-core/report.md,"无封面书入库, 破图=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-08,核心闭环,P1,PASS,,e2e-core/report.md,"错误提示=true, 书目=0(无残留)"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,"UI 错误提示=true（API 已定型 422）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,"拖拽/选择上传中文书成功"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"详情页作者可见=false"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,"现代中文出版书入库"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,"可见书名=5/5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,"搜索命中=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,"重命名后卡片同步"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,UI 错误提示=true（API 已定型 422）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,拖拽/选择上传中文书成功
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,详情页作者可见=false
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,现代中文出版书入库
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,可见书名=5/5
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,搜索命中=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,重命名后卡片同步
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-07,核心闭环,P0,PASS,,e2e-core/report.md,"删除成功=true, 卡片消失=true（UI 二次确认交互在 LIBR-07a 人工补）"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-01,核心闭环,P0,PASS,,e2e-core/report.md,"段落=1, 顶栏按钮=5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,PASS,,e2e-core/report.md,"跳转后 标题=CHAPTER XVI. 计数=第 4/15 · 1/13CHA"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,"CHAPTER XVI. → “to assure you（Shift+→ 跳章）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,PASS,,e2e-core/report.md,跳转后 标题=CHAPTER XVI. 计数=第 4/15 · 1/13CHA
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,CHAPTER XVI. → “to assure you（Shift+→ 跳章）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-06,核心闭环,P0,PASS,,e2e-core/report.md,"离开时=“to assure you, 重进=“to assure you"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,PASS,,e2e-core/report.md,"滚动范围=2052px 滚到=1259px 刷新后=1266px (阈值821) 记录={'current_page':4,'scroll_progress':0.6135477582846004,'current_segment':0,'save"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,"字号按钮未命中（设置菜单未展开）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,PASS,,e2e-core/report.md,"批注接口记录=10"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,PASS,,e2e-core/report.md,"命中=5"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,字号按钮未命中（设置菜单未展开）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,PASS,,e2e-core/report.md,批注接口记录=10
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,PASS,,e2e-core/report.md,命中=5
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-02,核心闭环,P0,PASS,,e2e-core/report.md,"API=11, DOM mark=1"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-03,核心闭环,P0,PASS,,e2e-core/report.md,"刷新前=1, 后=1"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,"面板输入框=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,"流式推进=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,"历史消息=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,"1 字符增量请求=0（防抖应=0）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,面板输入框=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,流式推进=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,历史消息=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,P1,PASS,,e2e-core/report.md,1 字符增量请求=0（防抖应=0）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,STAT-01,核心闭环,P1,PASS,,e2e-core/report.md,"文本=736, 标题=13"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,"镜像列表页渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,"i18n key 泄漏=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,"坏 localStorage 不白屏"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,"密码要求清单元素=10"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,镜像列表页渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,i18n key 泄漏=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,坏 localStorage 不白屏
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-02,核心闭环,P1,PASS,,e2e-core/report.md,密码要求清单元素=10
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-03,核心闭环,P1,PASS,,e2e-core/report.md,"仍在注册页=true, 行内错误=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-01,核心闭环,P0,PASS,,e2e-core/report.md,"跳转=/dashboard, token=true, cookie=true"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-04,核心闭环,P1,PASS,,e2e-core/report.md,"停留=true, 错误提示=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,"错误密码不跳转"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,"UI 登录跳转 dashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,"/zh/auth?mode=login&next=%2Fzh%2Fdashboard"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"被登出（刷新链路待人工复核）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,"Alice 出现在书库"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-06,核心闭环,P1,PASS,,e2e-core/report.md,错误密码不跳转
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-05,核心闭环,P0,PASS,,e2e-core/report.md,UI 登录跳转 dashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-09,核心闭环,P0,PASS,,e2e-core/report.md,/zh/auth?mode=login&next=%2Fzh%2Fdashboard
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,AUTH-10,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,被登出（刷新链路待人工复核）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-01,核心闭环,P0,PASS,,e2e-core/report.md,Alice 出现在书库
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-14,核心闭环,P2,PASS,,e2e-core/report.md,"无封面书入库, 破图=0"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-08,核心闭环,P1,PASS,,e2e-core/report.md,"错误提示=true, 书目=0(无残留)"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,"UI 错误提示=true（API 已定型 422）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,"拖拽/选择上传中文书成功"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,"详情页作者可见=false"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,"现代中文出版书入库"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,"可见书名=5/5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,"搜索命中=2"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,"重命名后卡片同步"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-10,核心闭环,P1,PASS,,e2e-core/report.md,UI 错误提示=true（API 已定型 422）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-02,核心闭环,P0,PASS,,e2e-core/report.md,拖拽/选择上传中文书成功
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-03,核心闭环,P1,PASS_WITH_ISSUE,,e2e-core/report.md,详情页作者可见=false
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,UPLD-04,核心闭环,P0,PASS,,e2e-core/report.md,现代中文出版书入库
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-01,核心闭环,P0,PASS,,e2e-core/report.md,可见书名=5/5
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-02,核心闭环,P1,PASS,,e2e-core/report.md,搜索命中=2
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-05,核心闭环,P1,PASS,,e2e-core/report.md,重命名后卡片同步
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,LIBR-07,核心闭环,P0,PASS,,e2e-core/report.md,"删除成功=true, 卡片消失=true（UI 二次确认交互在 LIBR-07a 人工补）"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-01,核心闭环,P0,PASS,,e2e-core/report.md,"段落=1, 顶栏按钮=5"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,PASS,,e2e-core/report.md,"跳转后 标题=CHAPTER XVI. 计数=第 4/15 · 1/13CHA"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,"CHAPTER XVI. → “to assure you（Shift+→ 跳章）"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-02,核心闭环,P0,PASS,,e2e-core/report.md,跳转后 标题=CHAPTER XVI. 计数=第 4/15 · 1/13CHA
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-03,核心闭环,P0,PASS,,e2e-core/report.md,CHAPTER XVI. → “to assure you（Shift+→ 跳章）
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-06,核心闭环,P0,PASS,,e2e-core/report.md,"离开时=“to assure you, 重进=“to assure you"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-07,核心闭环,P1,PASS,,e2e-core/report.md,"滚动范围=2052px 滚到=1259px 刷新后=1265px (阈值821) 记录={'current_page':4,'scroll_progress':0.6135477582846004,'current_segment':0,'save"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,"字号按钮未命中（设置菜单未展开）"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,PASS,,e2e-core/report.md,"批注接口记录=10"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,PASS,,e2e-core/report.md,"命中=5"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-08,核心闭环,P1,DEGRADED,,e2e-core/report.md,字号按钮未命中（设置菜单未展开）
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-12,核心闭环,P1,PASS,,e2e-core/report.md,批注接口记录=10
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,READ-13,核心闭环,P2,PASS,,e2e-core/report.md,命中=5
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-02,核心闭环,P0,PASS,,e2e-core/report.md,"API=11, DOM mark=1"
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ANNO-03,核心闭环,P0,PASS,,e2e-core/report.md,"刷新前=1, 后=1"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,"面板输入框=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,"流式推进=true"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,"历史消息=2"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-01,核心闭环,P0,PASS,,e2e-core/report.md,面板输入框=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-02,核心闭环,P0,PASS,,e2e-core/report.md,流式推进=true
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,CHAT-03,核心闭环,P0,PASS,,e2e-core/report.md,历史消息=2
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,SRCH-01,核心闭环,?,FAIL,,e2e-core/report.md,"page.goto: Timeout 30000ms exceeded.
 Call log:
   - navigating to 'http://localhost:3000/zh/search', waiting until 'networkidle'
 "
 20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,STAT-01,核心闭环,P1,PASS,,e2e-core/report.md,"文本=736, 标题=13"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,"镜像列表页渲染"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,"i18n key 泄漏=0"
-20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,"坏 localStorage 不白屏"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-02,提案写入,P0,FAIL,,companion-tools-v2/report.md,"新会话首问首响=0ms（planner 9s 超时+直答降级）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-03,提案写入,P0,PASS,,companion-tools-v2/report.md,"赞赏不触发提案卡片"
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,MEMB-01,核心闭环,P1,PASS,,e2e-core/report.md,镜像列表页渲染
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,XCUT-04,核心闭环,P1,PASS,,e2e-core/report.md,i18n key 泄漏=0
+20260917,自动化(ZCode),W4工作区,E1-A,Chromium headless,ROBUST-08,核心闭环,P3,PASS,,e2e-core/report.md,坏 localStorage 不白屏
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-02,提案写入,P0,FAIL,,companion-tools-v2/report.md,新会话首问首响=0ms（planner 9s 超时+直答降级）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-03,提案写入,P0,PASS,,companion-tools-v2/report.md,赞赏不触发提案卡片
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-01,提案写入,P0,PASS,,companion-tools-v2/report.md,"卡片=true, 措辞声称已保存=false（应'待确认'语义）"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-01,提案写入,P0,PASS,,companion-tools-v2/report.md,"卡片态=saved, 落库匹配=1"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-03,提案写入,P1,PASS,,companion-tools-v2/report.md,"保存请求幂等头=true, 端点=0/api/v1/annotations"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-02,提案写入,P1,PASS,,companion-tools-v2/report.md,"闪卡提案+保存=saved"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-02,提案写入,P0,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"闪卡页可见=false（闪卡页结构差异时人工复核）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-02,提案写入,P1,PASS,,companion-tools-v2/report.md,闪卡提案+保存=saved
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-02,提案写入,P0,PASS_WITH_ISSUE,,companion-tools-v2/report.md,闪卡页可见=false（闪卡页结构差异时人工复核）
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"提案挂起=false, 未确认写入数=0（必须 0）"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-02,提案写入,P0,PASS,,companion-tools-v2/report.md,"直接写入声称=false, 落库数=11（提案确认路径外零写入）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-04,提案写入,P0,PASS,,companion-tools-v2/report.md,"双意图提案卡数=0（协议 ≤1）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-07,提案写入,P2,PASS,,companion-tools-v2/report.md,"无内容提案卡=false（不出卡/要求补充为佳）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-05,提案写入,P1,FAIL,,companion-tools-v2/report.md,"注入内容保存后无执行（noExec=true）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-01,提案写入,P1,PASS,,companion-tools-v2/report.md,"未确认提案刷新后消失=true; 已落库持久=true"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"toolTrace 徽标呈现=false（上轮转交项复验）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"reads 路由数据引用=false"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-02,提案写入,P2,FAIL,,companion-tools-v2/report.md,"双轮落库=0"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"提案帧时机以卡片与回答同屏出现为准（WT1-01 已见同屏）；帧级时序待录屏终裁"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-04,提案写入,P2,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"暗色/窄视口截图留档待人工（kg4 同口径）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-05,提案写入,P2,PASS,,companion-tools-v2/report.md,"WT1-01/02 preview 与请求一致（卡片文本已核对）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-04,提案写入,P2,SKIP,,companion-tools-v2/report.md,"离线 error+retry 场景需精确断网时机——人工复核"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,"dismiss 关闭路径待人工（非数据安全项）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,"双标签并发幂等——幂等中间件单测背书，人工复核"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-02,提案写入,P0,FAIL,,companion-tools-v2/report.md,"新会话首问首响=0ms（planner 9s 超时+直答降级）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-03,提案写入,P0,PASS,,companion-tools-v2/report.md,"赞赏不触发提案卡片"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-04,提案写入,P0,PASS,,companion-tools-v2/report.md,双意图提案卡数=0（协议 ≤1）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-07,提案写入,P2,PASS,,companion-tools-v2/report.md,无内容提案卡=false（不出卡/要求补充为佳）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-05,提案写入,P1,FAIL,,companion-tools-v2/report.md,注入内容保存后无执行（noExec=true）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-01,提案写入,P1,PASS,,companion-tools-v2/report.md,未确认提案刷新后消失=true; 已落库持久=true
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,toolTrace 徽标呈现=false（上轮转交项复验）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,reads 路由数据引用=false
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-02,提案写入,P2,FAIL,,companion-tools-v2/report.md,双轮落库=0
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,提案帧时机以卡片与回答同屏出现为准（WT1-01 已见同屏）；帧级时序待录屏终裁
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-04,提案写入,P2,PASS_WITH_ISSUE,,companion-tools-v2/report.md,暗色/窄视口截图留档待人工（kg4 同口径）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-05,提案写入,P2,PASS,,companion-tools-v2/report.md,WT1-01/02 preview 与请求一致（卡片文本已核对）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-04,提案写入,P2,SKIP,,companion-tools-v2/report.md,离线 error+retry 场景需精确断网时机——人工复核
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,dismiss 关闭路径待人工（非数据安全项）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,双标签并发幂等——幂等中间件单测背书，人工复核
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-02,提案写入,P0,FAIL,,companion-tools-v2/report.md,新会话首问首响=0ms（planner 9s 超时+直答降级）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-03,提案写入,P0,PASS,,companion-tools-v2/report.md,赞赏不触发提案卡片
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"卡片=false, 措辞声称已保存=false（应'待确认'语义）"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"卡片态=timeout, 落库匹配=0"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"保存请求幂等头=undefined, 端点=undefined"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-02,提案写入,P1,FAIL,,companion-tools-v2/report.md,"闪卡提案+保存=no-card"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-02,提案写入,P0,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"闪卡页可见=false（闪卡页结构差异时人工复核）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-02,提案写入,P1,FAIL,,companion-tools-v2/report.md,闪卡提案+保存=no-card
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-02,提案写入,P0,PASS_WITH_ISSUE,,companion-tools-v2/report.md,闪卡页可见=false（闪卡页结构差异时人工复核）
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"提案挂起=false, 未确认写入数=0（必须 0）"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-02,提案写入,P0,PASS,,companion-tools-v2/report.md,"直接写入声称=false, 落库数=10（提案确认路径外零写入）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-04,提案写入,P0,PASS,,companion-tools-v2/report.md,"双意图提案卡数=0（协议 ≤1）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-07,提案写入,P2,PASS,,companion-tools-v2/report.md,"无内容提案卡=false（不出卡/要求补充为佳）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-05,提案写入,P1,FAIL,,companion-tools-v2/report.md,"注入内容保存后无执行（noExec=true）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-01,提案写入,P1,PASS,,companion-tools-v2/report.md,"未确认提案刷新后消失=true; 已落库持久=true"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"toolTrace 徽标呈现=false（上轮转交项复验）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-03,提案写入,P1,PASS,,companion-tools-v2/report.md,"reads 路由数据引用=true"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-02,提案写入,P2,FAIL,,companion-tools-v2/report.md,"双轮落库=0"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"提案帧时机以卡片与回答同屏出现为准（WT1-01 已见同屏）；帧级时序待录屏终裁"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-04,提案写入,P2,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"暗色/窄视口截图留档待人工（kg4 同口径）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-05,提案写入,P2,PASS,,companion-tools-v2/report.md,"WT1-01/02 preview 与请求一致（卡片文本已核对）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-04,提案写入,P2,SKIP,,companion-tools-v2/report.md,"离线 error+retry 场景需精确断网时机——人工复核"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,"dismiss 关闭路径待人工（非数据安全项）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,"双标签并发幂等——幂等中间件单测背书，人工复核"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-04,提案写入,P0,PASS,,companion-tools-v2/report.md,双意图提案卡数=0（协议 ≤1）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-07,提案写入,P2,PASS,,companion-tools-v2/report.md,无内容提案卡=false（不出卡/要求补充为佳）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-05,提案写入,P1,FAIL,,companion-tools-v2/report.md,注入内容保存后无执行（noExec=true）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-01,提案写入,P1,PASS,,companion-tools-v2/report.md,未确认提案刷新后消失=true; 已落库持久=true
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,toolTrace 徽标呈现=false（上轮转交项复验）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-03,提案写入,P1,PASS,,companion-tools-v2/report.md,reads 路由数据引用=true
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-02,提案写入,P2,FAIL,,companion-tools-v2/report.md,双轮落库=0
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,提案帧时机以卡片与回答同屏出现为准（WT1-01 已见同屏）；帧级时序待录屏终裁
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-04,提案写入,P2,PASS_WITH_ISSUE,,companion-tools-v2/report.md,暗色/窄视口截图留档待人工（kg4 同口径）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-05,提案写入,P2,PASS,,companion-tools-v2/report.md,WT1-01/02 preview 与请求一致（卡片文本已核对）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-04,提案写入,P2,SKIP,,companion-tools-v2/report.md,离线 error+retry 场景需精确断网时机——人工复核
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,dismiss 关闭路径待人工（非数据安全项）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,双标签并发幂等——幂等中间件单测背书，人工复核
 20260920,自动化(ZCode),G14c排查,E1-L,静态分析,WT5-02,提案写入,P2,INVESTIGATED,,13-companion-tools-v2-test-plan.md,静态契约端到端一致(非schema漂移);断点限于UI路径;H1=卡片DOM缺口/H2=错误态吞没;复现需健康planner供给→独立立案
-20260920,自动化(ZCode),GAP D3,E1-L,静态走查,RM6-01,阅读之书,P0,VERIFIED-CODE,,docs/archive/2026-09/scripts/rm-browser-run.mjs,代码链路完整:列表Link→详情→ActionButtons(aria-label=下载HTML与探针匹配);历史SKIP系探针2.5s等待<冷启动详情加载(记录已注'详情未展开');剩余=放宽超时的浏览器走查补录(与D2同类,需本地全栈+已生成镜像)
-20260920,自动化(ZCode),GAP D2,E1-L,SSE载荷级,BND-S05,P0,PASS,,/tmp/bnd_sse.txt(载荷),进度ch4/问结局:答案=纯引导语(答案藏在书里);整条SSE流(含RAG/工具帧)零后期情节token(亚哈/标枪/沉没/生还等全无);guard=true
+20260920,自动化(ZCode),GAP D3,E1-L,静态走查,RM6-01,阅读之书,P0,VERIFIED-CODE,,docs/archive/2026-09/scripts/rm-browser-run.mjs,"代码链路完整:列表Link→详情→ActionButtons(aria-label=下载HTML与探针匹配);历史SKIP系探针2.5s等待<冷启动详情加载;剩余=放宽超时的浏览器走查补录(与D2同类,需本地全栈+已生成镜像)"
+20260920,自动化(ZCode),GAP D2,E1-L,SSE载荷级,BND-S05,AI边界,P0,PASS,,/tmp/bnd_sse.txt(载荷),进度ch4/问结局:答案=纯引导语;整条SSE流(含RAG/工具帧)零后期情节token;guard=true
 20260920,自动化(ZCode),GAP D3补测,E1-L,Chromium headless,RM6-01,阅读之书,P0,PASS,,/tmp/Pride and Prejudice_reading_mirror.html,放宽超时(30s)走查:列表卡→详情→下载钮可达;文件名=Pride and Prejudice_reading_mirror.html(书名净化形态);自包含HTML(内联style零外链);10节9259B;历史SKIP确认系探针2.5s<冷启动
-20260920,自动化(ZCode),GAP D3补测,E1-L,Chromium headless,KG3-01+03,知识图谱,P0/P1,PASS,,/tmp/kg3-panel.png,5标注→建图→节点可见;点击节点NodeDetailPanel开(概念/来源);关闭钮清面板(1→0);观察:Esc未绑定关闭(规格三路径其一即满足,不构成缺陷)
-20260920,自动化(ZCode),A2部署验证,PROD,https入口(自签),P7.6-PDF门,P0,PASS,,sse载荷,损坏→422 PDF_CORRUPT_OR_UNSUPPORTED;加密→422 PDF_ENCRYPTED(生产实弹)
-20260920,自动化(ZCode),A2部署验证,PROD,https入口(自签),P7.7三态,P0,PASS,,sse载荷,全新用户(种书无chunk)→no_results:true 三态分类生产生效;帧序request_id→searching→brief→[DONE]完整
-20260920,自动化(ZCode),A2部署验证,PROD,https入口,J4天缓存,P1,PASS,,响应对比,双载完全同句(秒回);trace=0系响应缓存命中(合法路径);附注:种书进度字段2000%致洞察文案夸大(数据面小瑕疵另记)
-20260920,自动化(ZCode),A2部署验证,PROD,ssh直查,A2#6-rollup,P1,PASS,,psql,llm_metrics_rollup=9行(迁移0030+writer同事务upsert生产生效)
-20260920,自动化(ZCode),A2部署验证,PROD,https自签入口,A2#3#5-SSE,P0,PASS,,/tmp/prod_chat.txt,chat流端到端:caddy透传SSE完整;tool_status帧在流中(planner+工具阶段生产运行);实质回答1292字;planner延迟数据点已采(G14复测素材)
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-02,提案写入,P0,FAIL,,companion-tools-v2/report.md,"新会话首问首响=0ms（planner 9s 超时+直答降级）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-03,提案写入,P0,PASS,,companion-tools-v2/report.md,"赞赏不触发提案卡片"
+20260920,自动化(ZCode),GAP D3补测,E1-L,Chromium headless,KG3-01+03,知识图谱,P0/P1,PASS,,/tmp/kg3-panel.png,"5标注→建图→节点可见;点击节点NodeDetailPanel开(概念/来源);关闭钮清面板;观察:Esc未绑定关闭(规格三路径其一即满足,不构成缺陷)"
+20260920,自动化(ZCode),A2部署验证,PROD,https入口(自签),P7.6-PDF门,上传,P0,PASS,,sse载荷,损坏→422 PDF_CORRUPT_OR_UNSUPPORTED;加密→422 PDF_ENCRYPTED(生产实弹)
+20260920,自动化(ZCode),A2部署验证,PROD,https入口(自签),P7.7三态,研究,P0,PASS,,sse载荷,全新用户(种书无chunk)→no_results:true 三态分类生产生效;帧序request_id→searching→brief→[DONE]完整
+20260920,自动化(ZCode),A2部署验证,PROD,https入口,J4天缓存,研究,P1,PASS,,响应对比,双载完全同句(秒回);trace=0系响应缓存命中(合法路径);附注:种书进度字段2000%致洞察文案夸大(数据面小瑕疵另记)
+20260920,自动化(ZCode),A2部署验证,PROD,ssh直查,A2#6-rollup,洞察,P1,PASS,,psql,llm_metrics_rollup=9行(迁移0030+writer同事务upsert生产生效)
+20260920,自动化(ZCode),A2部署验证,PROD,https自签入口,A2#3#5-SSE,监控,P0,PASS,,/tmp/prod_chat.txt,chat流端到端:caddy透传SSE完整;tool_status帧在流中(planner+工具阶段生产运行);实质回答1292字;planner延迟数据点已采(G14复测素材)
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-02,提案写入,P0,FAIL,,companion-tools-v2/report.md,新会话首问首响=0ms（planner 9s 超时+直答降级）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-03,提案写入,P0,PASS,,companion-tools-v2/report.md,赞赏不触发提案卡片
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"卡片=false, 措辞声称已保存=false（应'待确认'语义）"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"卡片态=timeout, 落库匹配=0"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"保存请求幂等头=undefined, 端点=undefined"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-02,提案写入,P1,FAIL,,companion-tools-v2/report.md,"闪卡提案+保存=no-card"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-02,提案写入,P0,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"闪卡页可见=false（闪卡页结构差异时人工复核）"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-02,提案写入,P1,FAIL,,companion-tools-v2/report.md,闪卡提案+保存=no-card
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-02,提案写入,P0,PASS_WITH_ISSUE,,companion-tools-v2/report.md,闪卡页可见=false（闪卡页结构差异时人工复核）
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"提案挂起=false, 未确认写入数=0（必须 0）"
 20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-02,提案写入,P0,PASS,,companion-tools-v2/report.md,"直接写入声称=false, 落库数=10（提案确认路径外零写入）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-04,提案写入,P0,PASS,,companion-tools-v2/report.md,"双意图提案卡数=0（协议 ≤1）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-07,提案写入,P2,PASS,,companion-tools-v2/report.md,"无内容提案卡=false（不出卡/要求补充为佳）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-05,提案写入,P1,FAIL,,companion-tools-v2/report.md,"注入内容保存后无执行（noExec=true）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-01,提案写入,P1,PASS,,companion-tools-v2/report.md,"未确认提案刷新后消失=true; 已落库持久=true"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,"toolTrace 徽标呈现=false（上轮转交项复验）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"reads 路由数据引用=false"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-02,提案写入,P2,FAIL,,companion-tools-v2/report.md,"双轮落库=0"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"提案帧时机以卡片与回答同屏出现为准（WT1-01 已见同屏）；帧级时序待录屏终裁"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-04,提案写入,P2,PASS_WITH_ISSUE,,companion-tools-v2/report.md,"暗色/窄视口截图留档待人工（kg4 同口径）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-05,提案写入,P2,PASS,,companion-tools-v2/report.md,"WT1-01/02 preview 与请求一致（卡片文本已核对）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-04,提案写入,P2,SKIP,,companion-tools-v2/report.md,"离线 error+retry 场景需精确断网时机——人工复核"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,"dismiss 关闭路径待人工（非数据安全项）"
-20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,"双标签并发幂等——幂等中间件单测背书，人工复核"
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-04,提案写入,P0,PASS,,companion-tools-v2/report.md,双意图提案卡数=0（协议 ≤1）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-07,提案写入,P2,PASS,,companion-tools-v2/report.md,无内容提案卡=false（不出卡/要求补充为佳）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT3-05,提案写入,P1,FAIL,,companion-tools-v2/report.md,注入内容保存后无执行（noExec=true）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-01,提案写入,P1,PASS,,companion-tools-v2/report.md,未确认提案刷新后消失=true; 已落库持久=true
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-01,提案写入,P0,FAIL,,companion-tools-v2/report.md,toolTrace 徽标呈现=false（上轮转交项复验）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT4-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,reads 路由数据引用=false
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-02,提案写入,P2,FAIL,,companion-tools-v2/report.md,双轮落库=0
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-03,提案写入,P1,PASS_WITH_ISSUE,,companion-tools-v2/report.md,提案帧时机以卡片与回答同屏出现为准（WT1-01 已见同屏）；帧级时序待录屏终裁
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-04,提案写入,P2,PASS_WITH_ISSUE,,companion-tools-v2/report.md,暗色/窄视口截图留档待人工（kg4 同口径）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT1-05,提案写入,P2,PASS,,companion-tools-v2/report.md,WT1-01/02 preview 与请求一致（卡片文本已核对）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-04,提案写入,P2,SKIP,,companion-tools-v2/report.md,离线 error+retry 场景需精确断网时机——人工复核
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT2-05,提案写入,P2,SKIP,,companion-tools-v2/report.md,dismiss 关闭路径待人工（非数据安全项）
+20260914,自动化(ZCode),WT执行,E1-A,Chromium headless,WT5-03,提案写入,P2,SKIP,,companion-tools-v2/report.md,双标签并发幂等——幂等中间件单测背书，人工复核
 20260921,自动化(ZCode),G14归因,E1-L,SSE实证,WT4-01,伴读工具,P2,RECLASSIFIED,,sse流,规则意图问题(阅读进度)→tool_status帧含get_reading_progress ok=true;hook映射(toolTrace=meta.results)与ToolTrace渲染链在位(K4曾实测15ms);套件FAIL系LLM路径降级时仅ok=false条目按设计不渲染徽标=伪影非缺陷
-20260921,自动化(ZCode),ICP解锁,PROD,dig+openssl+curl,域名TLS上线,P0,PASS,,caddy日志+cert,read.chishenma.top获Let's Encrypt正式证书(HTTP-01四验证节点全通;重启caddy清备案期退避锁);https入口health 200(DB+Redis ok);双地址=域名主入口+IP回退;Android release断链根因消除
+20260921,自动化(ZCode),ICP解锁,PROD,dig+openssl+curl,域名TLS上线,平台,P0,PASS,,caddy日志+cert,read.chishenma.top获Let's Encrypt正式证书(HTTP-01四验证节点全通;重启caddy清备案期退避锁);https入口health 200(DB+Redis ok);双地址=域名主入口+IP回退;Android release断链根因消除
+2026-09-22,自动化(ZCode),W4工作区,E1-A,Chromium headless,P0-core-loop(V6汇总),核心闭环,P0,FAIL,,e2e-core/report.md,11例中4败(域名切换过渡期);短格式原行已按12列标准改写
+2026-09-23,自动化(ZCode),W4工作区,E1-A,Chromium headless,P0-core-loop(V6汇总),核心闭环,P0,PASS,,e2e-core/report.md,11/11全绿(域名正式入口切换后);短格式原行已按12列标准改写
