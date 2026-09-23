@@ -71,20 +71,44 @@ class _TraceWriter:
             self._buf = self._buf[self.MAX_BUFFER:]
 
         try:
+            from sqlalchemy.exc import IntegrityError
+
             from app.db import async_session
             from app.models.llm_trace import LLMCallTrace
             from app.services.llm.rollup import upsert_traces
 
-            async with db_error_guard('observability.trace_flush', batch_size=len(batch)):
-                async with async_session() as session:
-                    session.add_all([LLMCallTrace(**t) for t in batch])
-                    # P-C: fold the same batch into the hourly rollup in the
-                    # same transaction — a rollup gap is then only possible
-                    # when the trace write itself failed.
-                    await upsert_traces(session, batch)
-                    await session.commit()
-            logger.debug('Trace flush: %d records written', len(batch))
-            return len(batch)
+            # Risk-review 09-21: two uvicorn workers can flush into the
+            # same (hour, label, provider) key in the same hour — the
+            # second committer hits a composite-PK IntegrityError and the
+            # whole batch (traces + rollup) rolls back. Retry once on a
+            # fresh session: the re-read picks up the winner's row and the
+            # merge folds on top. A second conflict loses the batch to the
+            # existing except below — self-heals on nothing (traces are
+            # gone), bounded at <=50 observability rows, never user data.
+            for attempt in (1, 2):
+                try:
+                    async with db_error_guard(
+                        'observability.trace_flush', batch_size=len(batch),
+                    ):
+                        async with async_session() as session:
+                            session.add_all([LLMCallTrace(**t) for t in batch])
+                            # P-C: fold the same batch into the hourly rollup
+                            # in the same transaction — a rollup gap is then
+                            # only possible when the trace write itself failed.
+                            await upsert_traces(session, batch)
+                            await session.commit()
+                    logger.debug(
+                        'Trace flush: %d records written (attempt %d)',
+                        len(batch), attempt,
+                    )
+                    return len(batch)
+                except IntegrityError:
+                    if attempt == 2:
+                        raise
+                    logger.warning(
+                        'Rollup PK race on flush (%d rows) — retrying once',
+                        len(batch),
+                    )
         except Exception:
             logger.warning(
                 'Trace flush failed (%d records dropped)',
