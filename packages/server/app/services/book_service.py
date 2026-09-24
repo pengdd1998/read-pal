@@ -87,9 +87,26 @@ async def get_footnote_definitions(
 
     Lets the reader resolve markers whose definition lives in another
     chapter (same-DOM lookup only covers same-chapter notes).
+
+    The shared book_contents row is the canonical home (one copy per
+    content, like chunks and covers); the per-book copies in
+    books.metadata are legacy duplication, kept only as the fallback for
+    books without a content hash.
     """
     book = await get_book(db, user_id, book_id)
-    if not book or not isinstance(book.metadata_, dict):
+    if not book:
+        return {}
+    if book.content_hash:
+        from app.models.book_content import BookContent
+
+        shared = (await db.execute(
+            select(BookContent).where(BookContent.content_hash == book.content_hash),
+        )).scalar_one_or_none()
+        if shared is not None and isinstance(shared.metadata_, dict):
+            defs = shared.metadata_.get('footnote_definitions')
+            if isinstance(defs, dict):
+                return defs
+    if not isinstance(book.metadata_, dict):
         return {}
     defs = book.metadata_.get('footnote_definitions')
     return defs if isinstance(defs, dict) else {}
