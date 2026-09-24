@@ -44,15 +44,20 @@ class BookChunk(Base):
         default=uuid.uuid4,
         server_default=text('gen_random_uuid()'),
     )
-    book_id: Mapped[UUID] = mapped_column(
+    # 0032: both nullable — content-addressed rows (content_hash set) are
+    # anchored by the hash alone. Anchoring shared chunks to the FIRST
+    # uploader's book/document made user deletion CASCADE away the chunks
+    # every other copy of the book searches through (2026-09-24). Per-book
+    # values remain for legacy NULL-hash rows.
+    book_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey('books.id', ondelete='CASCADE'),
-        nullable=False,
+        nullable=True,
     )
-    document_id: Mapped[UUID] = mapped_column(
+    document_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey('documents.id', ondelete='CASCADE'),
-        nullable=False,
+        nullable=True,
     )
     # Shared content identity (design r2 step 4): chunks of the same file
     # bytes are stored ONCE and found via content_hash; book_id still names
