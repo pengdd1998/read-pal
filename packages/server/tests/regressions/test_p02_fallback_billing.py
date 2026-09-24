@@ -32,6 +32,10 @@ def _make_settings(token_budget: int = 0):
     # the TPM path, so keep the check inert (otherwise MagicMock attribute
     # access on `state.config.max_tpm` blows up the `> 0` comparison).
     settings.tpm_enforced = False
+    # P-D: keep the DB content channel OFF — MagicMock auto-attrs are
+    # truthy and the streaming settlement hook would buffer content rows.
+    settings.llm_trace_capture_content = False
+    settings.llm_trace_content_db = False
     return settings
 
 

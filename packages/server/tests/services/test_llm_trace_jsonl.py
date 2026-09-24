@@ -21,6 +21,8 @@ def _settings_mock(**kwargs):
         llm_trace_jsonl_path=kwargs.get('jsonl_path', ''),
         llm_trace_capture_content=kwargs.get('capture', False),
         llm_trace_capture_chars=kwargs.get('chars', 800),
+        llm_trace_content_db=kwargs.get('content_db', False),
+        llm_trace_content_chars=kwargs.get('content_chars', 20000),
     )
 
 

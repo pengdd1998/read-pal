@@ -81,6 +81,13 @@ services:
       LOG_JSON: ${LOG_JSON:-true}
       LLM_LOG_ENABLED: ${LLM_LOG_ENABLED:-true}
       LLM_LOG_RETENTION_DAYS: ${LLM_LOG_RETENTION_DAYS:-90}
+      # P-D: opt-in raw prompt/output capture into llm_trace_contents.
+      # Default off — content reaches the DB only on explicit deployment
+      # opt-in; rows prune at the retention horizon (backups keep them
+      # up to ~4 weeks longer).
+      LLM_TRACE_CONTENT_DB: ${LLM_TRACE_CONTENT_DB:-false}
+      LLM_TRACE_CONTENT_CHARS: ${LLM_TRACE_CONTENT_CHARS:-20000}
+      LLM_TRACE_CONTENT_RETENTION_DAYS: ${LLM_TRACE_CONTENT_RETENTION_DAYS:-7}
       # SMTP Configuration (optional)
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}

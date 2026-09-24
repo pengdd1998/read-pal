@@ -157,3 +157,33 @@ async def get_trace_chain(
         'all_success': all(t.success for t in rows),
         'spans': [_span_dict(t) for t in rows],
     }
+
+
+async def get_trace_content(
+    db: AsyncSession, request_id: str,
+) -> dict[str, Any] | None:
+    """P-D: one captured raw prompt/output row, ops-facing shape.
+
+    Returns None when the row is absent (never captured — feature off at
+    the time, cache-served call, failed call — or past retention). The
+    caller distinguishes "feature disabled" from "row missing" via
+    settings itself; ``user_id`` never leaves this layer raw.
+    """
+    from app.models.llm_trace_content import LLMTraceContent
+
+    row = (await db.execute(
+        select(LLMTraceContent).where(LLMTraceContent.request_id == request_id),
+    )).scalar_one_or_none()
+    if row is None:
+        return None
+    return {
+        'request_id': row.request_id,
+        'label': row.label,
+        'model': row.model,
+        'prompt_version': row.prompt_version,
+        'prompt_text': row.prompt_text,
+        'output_text': row.output_text,
+        'prompt_truncated': row.prompt_truncated,
+        'output_truncated': row.output_truncated,
+        'created_at': row.created_at.isoformat(timespec='milliseconds') if row.created_at else None,
+    }

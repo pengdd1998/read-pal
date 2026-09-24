@@ -51,7 +51,10 @@ store.
 **Observability + metrics** (engineering-upgrade 2026-09-05):
 - `packages/server/app/services/llm/observability.py:1` — `_log_call` sole
   structured-log exit + JSONL sink (`LLM_TRACE_JSONL_PATH`) + opt-in content
-  capture (`LLM_TRACE_CAPTURE_CONTENT`, file-only, never DB)
+  capture (`LLM_TRACE_CAPTURE_CONTENT`, file-only) + P-D opt-in DB content
+  channel (`LLM_TRACE_CONTENT_DB`, default off, 7d retention — ops-key-only
+  read via /requests/{id}/content; see ops/observability/monitoring-upgrade-plan.md
+  for the privacy boundary)
 - `packages/server/app/services/llm/metrics.py:1` — five minimal indicators
   (success rate / p95 / token cost / error classes / guardrail hits) via
   `GET /api/v1/stats/llm`; guardrail counters in `app/utils/output_filter.py`

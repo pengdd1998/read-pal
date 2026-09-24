@@ -207,6 +207,23 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
         db, user_id, book_id, message, messages,
         collected_parts, actual_request_id, lang=lang,
     )
+    # P-D: single settlement hook for streaming content capture. Runs only
+    # on the success path (cancel/error returned above), where the full
+    # turn is in hand — messages (raw model input incl. system prompt and
+    # context assembly) + collected_parts (raw output, PRE output-filter:
+    # guardrail-blocked text is part of what triage needs to see). Both
+    # channels gate themselves off unless the deployment opted in.
+    from app.services.llm.observability import capture_llm_content
+    capture_llm_content(
+        request_id=actual_request_id,
+        label='companion.stream',
+        model=model_used,
+        prompt_version=None,
+        messages=messages,
+        output_text=''.join(collected_parts),
+        user_id=str(user_id),
+        book_id=str(book_id) if book_id else None,
+    )
     if assistant_db_id is None:
         # Tell the client the streamed response couldn't be saved.
         # Client should keep visible text (user already read it) but

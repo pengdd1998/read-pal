@@ -96,36 +96,66 @@ def capture_llm_content(
     user_id: str | None = None,
     book_id: str | None = None,
 ) -> None:
-    """Opt-in prompt/output preview capture for badcase replay (B4).
+    """Opt-in prompt/output preview capture for badcase replay (B4 / P-D).
 
-    Writes an ``event='llm_content'`` record to the JSONL sink ONLY — never
-    to the DB, never to structlog (content must not land in log streams).
-    Gated by ``Settings.llm_trace_capture_content`` (default False) because
-    previews can contain user-authored text; truncation is enforced by
-    ``llm_trace_capture_chars``.
+    Fan-out, independently gated channels:
+
+    - JSONL: ``event='llm_content'`` record, gated by
+      ``llm_trace_capture_content`` (default False) — content never lands
+      in structlog streams regardless of flags.
+    - DB (P-D): buffered row for ``llm_trace_contents`` via
+      ``_trace_writer.add_content``, gated by ``llm_trace_content_db``
+      (default False) with its own truncation cap
+      (``llm_trace_content_chars`` — triage needs longer context than the
+      800-char file preview).
+
+    Existing call sites pass through unchanged; callers opt the DB channel
+    in purely via deployment env.
     """
     try:
         settings = get_settings()
     except Exception:  # noqa: BLE001 — settings read must never raise here
         return
-    if not settings.llm_trace_capture_content:
-        return
-    cap = max(int(settings.llm_trace_capture_chars), 0)
-    prompt_preview = '\n'.join(
+
+    prompt_full = '\n'.join(
         f'[{getattr(m, "type", "?")}] {getattr(m, "content", "")}'
         for m in messages
-    )[:cap]
-    _jsonl_sink.write({
-        'event': 'llm_content',
-        'request_id': request_id,
-        'label': label,
-        'model': model,
-        'prompt_version': prompt_version,
-        'user_id': user_id,
-        'book_id': book_id,
-        'prompt_preview': prompt_preview,
-        'output_preview': (output_text or '')[:cap],
-    })
+    )
+
+    if settings.llm_trace_capture_content:
+        cap = max(int(settings.llm_trace_capture_chars), 0)
+        _jsonl_sink.write({
+            'event': 'llm_content',
+            'request_id': request_id,
+            'label': label,
+            'model': model,
+            'prompt_version': prompt_version,
+            'user_id': user_id,
+            'book_id': book_id,
+            'prompt_preview': prompt_full[:cap],
+            'output_preview': (output_text or '')[:cap],
+        })
+
+    if settings.llm_trace_content_db:
+        # Deferred import: _writer imports this module for _jsonl_sink —
+        # a module-level import would cycle.
+        from app.services.llm.observability._writer import _trace_writer
+
+        from app.services.llm.observability._core import _current_http_request_id
+        cap = max(int(settings.llm_trace_content_chars), 0)
+        _trace_writer.add_content({
+            'request_id': request_id[:12],
+            'http_request_id': _current_http_request_id(),
+            'label': label[:100],
+            'model': model[:50],
+            'prompt_version': prompt_version[:32] if prompt_version else None,
+            'prompt_text': prompt_full[:cap],
+            'output_text': (output_text or '')[:cap],
+            'prompt_truncated': len(prompt_full) > cap,
+            'output_truncated': len(output_text or '') > cap,
+            'user_id': user_id,
+            'book_id': book_id,
+        })
 
 
 # ---------------------------------------------------------------------------

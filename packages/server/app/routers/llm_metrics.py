@@ -101,3 +101,39 @@ async def get_llm_trace_chain(
             detail={'code': 'TRACE_NOT_FOUND', 'message': 'No traces for this request id.'},
         )
     return GenericResponse(success=True, data=data)
+
+
+@router.get('/requests/{request_id}/content', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
+async def get_llm_trace_content(
+    request_id: str,
+    db: AsyncSession = Depends(get_db),
+) -> GenericResponse:
+    """P-D: captured raw prompt/output for one call (ops-only).
+
+    404 body carries ``reason``: ``capture_disabled`` when the deployment
+    never opted in (``LLM_TRACE_CONTENT_DB=false``), ``not_found`` when
+    the row is absent (cache-served call, failed call, pre-feature row,
+    or past the retention horizon)."""
+    from app.config import get_settings
+    from app.services.llm.trace_queries import get_trace_content
+
+    if not get_settings().llm_trace_content_db:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                'code': 'TRACE_CONTENT_UNAVAILABLE',
+                'reason': 'capture_disabled',
+                'message': 'Content capture is off (LLM_TRACE_CONTENT_DB).',
+            },
+        )
+    data = await get_trace_content(db, request_id)
+    if data is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                'code': 'TRACE_CONTENT_UNAVAILABLE',
+                'reason': 'not_found',
+                'message': 'No captured content for this request id.',
+            },
+        )
+    return GenericResponse(success=True, data=data)

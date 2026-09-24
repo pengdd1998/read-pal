@@ -27,6 +27,9 @@ class _TraceWriter:
 
     MAX_BUFFER = 50
     FLUSH_INTERVAL = 5.0
+    # P-D: content rows are wider (up to llm_trace_content_chars per side)
+    # — keep the batch smaller so a flush stays one cheap transaction.
+    CONTENT_MAX_BUFFER = 20
     # Engineering-upgrade follow-up: retention prune check cadence. Actual
     # deletion boundary is LLM_LOG_RETENTION_DAYS; checking every 6h (and
     # once immediately at startup, via _last_prune_monotonic starting at 0)
@@ -35,6 +38,7 @@ class _TraceWriter:
 
     def __init__(self) -> None:
         self._buf: list[dict[str, Any]] = []
+        self._content_buf: list[dict[str, Any]] = []
         self._task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
         # Init at startup, NOT 0: 0 made the first flush tick (~5s after
@@ -62,6 +66,20 @@ class _TraceWriter:
         self._buf.append(trace)
         if len(self._buf) >= self.MAX_BUFFER:
             asyncio.ensure_future(self.flush())
+
+    def add_content(self, row: dict[str, Any]) -> None:
+        """P-D: buffer a raw prompt/output row for llm_trace_contents.
+
+        Independently gated (LLM_TRACE_CONTENT_DB): a deployment that opts
+        into traces but not content capture never buffers a byte. Same
+        fire-and-forget contract as traces — a flush failure drops the
+        batch with a warning, never raises into the LLM call path.
+        """
+        if not get_settings().llm_trace_content_db:
+            return
+        self._content_buf.append(row)
+        if len(self._content_buf) >= self.CONTENT_MAX_BUFFER:
+            asyncio.ensure_future(self.flush_contents())
 
     async def flush(self) -> int:
         async with self._lock:
@@ -117,11 +135,68 @@ class _TraceWriter:
             )
             return 0
 
+    async def flush_contents(self) -> int:
+        """P-D: persist buffered content rows with ON CONFLICT DO NOTHING.
+
+        request_id is a 12-hex per-call id (uuid4().hex[:12]) — unique in
+        practice, but not guaranteed: a prefix collision (or a capture
+        hook firing twice across a retry) would raise IntegrityError and
+        pollute the whole batch. The dialect insert with DO NOTHING makes
+        duplicates a silent no-op instead.
+        """
+        async with self._lock:
+            if not self._content_buf:
+                return 0
+            batch = self._content_buf[:self.CONTENT_MAX_BUFFER]
+            self._content_buf = self._content_buf[self.CONTENT_MAX_BUFFER:]
+
+        try:
+            from app.db import async_session
+            from app.models.llm_trace_content import LLMTraceContent
+
+            # Dedupe within the batch first (dialect-independent, covers the
+            # capture-hook-fires-twice case deterministically); the ON
+            # CONFLICT clause below only needs to cover cross-flush and
+            # cross-worker races.
+            by_id: dict[str, dict[str, Any]] = {}
+            for row in batch:
+                by_id.setdefault(row['request_id'], row)
+            values = list(by_id.values())
+
+            async with db_error_guard(
+                'observability.content_flush', batch_size=len(values),
+            ):
+                async with async_session() as session:
+                    dialect = session.bind.dialect.name if session.bind else 'postgresql'
+                    if dialect == 'postgresql':
+                        from sqlalchemy.dialects.postgresql import insert as pg_insert
+                        stmt = pg_insert(LLMTraceContent).values(values).on_conflict_do_nothing(
+                            index_elements=['request_id'],
+                        )
+                    else:
+                        from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+                        stmt = sqlite_insert(LLMTraceContent).values(values).on_conflict_do_nothing(
+                            index_elements=['request_id'],
+                        )
+                    await session.execute(stmt)
+                    await session.commit()
+            logger.debug('Content flush: %d rows written', len(values))
+            return len(values)
+        except Exception:
+            logger.warning(
+                'Content flush failed (%d rows dropped)',
+                len(batch),
+                exc_info=True,
+            )
+            return 0
+
     async def _flush_loop(self) -> None:
         while True:
             await asyncio.sleep(self.FLUSH_INTERVAL)
             if self._buf:
                 await self.flush()
+            if self._content_buf:
+                await self.flush_contents()
             self._flush_jsonl_sink()
             await self._maybe_prune()
 
@@ -213,10 +288,43 @@ class _TraceWriter:
                     logger.info('Rollup prune: deleted %d rows older than 90d', pruned)
             except Exception:  # noqa: BLE001 — rollup prune must not affect traces
                 logger.warning('Rollup prune failed', exc_info=True)
+
+            await self._prune_contents(factory, settings)
             return total_deleted
         except Exception:
             logger.warning('Trace prune failed', exc_info=True)
             return 0
+
+    async def _prune_contents(self, factory: Any, settings: Any) -> None:
+        """P-D: content retention rides the prune cadence with its own
+        (shorter) horizon — captured raw I/O is telemetry, not data of
+        record. ``<= 0`` disables (keep-forever), mirroring the trace knob.
+        Failures warn and never affect the trace prune that calls this.
+        """
+        try:
+            from sqlalchemy import delete
+
+            from app.models.llm_trace_content import LLMTraceContent
+
+            content_days = settings.llm_trace_content_retention_days
+            content_deleted = 0
+            if content_days > 0:
+                content_cutoff = datetime.now(UTC) - timedelta(days=content_days)
+                async with factory() as session:
+                    result = await session.execute(
+                        delete(LLMTraceContent).where(
+                            LLMTraceContent.created_at < content_cutoff,
+                        ),
+                    )
+                    await session.commit()
+                    content_deleted = result.rowcount or 0
+            if content_deleted:
+                logger.info(
+                    'Content prune: deleted %d rows older than %dd',
+                    content_deleted, content_days,
+                )
+        except Exception:  # noqa: BLE001 — content prune must not affect traces
+            logger.warning('Content prune failed', exc_info=True)
 
 
 _trace_writer = _TraceWriter()

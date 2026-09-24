@@ -2077,7 +2077,7 @@
     "s8_item3_label": "Self-host:",
     "s8_item3_text": "Deploy read-pal on your own infrastructure for complete data sovereignty",
     "s9_title": "9. AI Data Processing",
-    "s9_body": "When you chat with the AI reading companion, your messages and relevant book context are sent to the AI model provider (Zhipu AI / GLM API) for processing. The provider's own privacy policy applies to data they receive. Conversations are stored in your local database and are not used to train AI models by read-pal.",
+    "s9_body": "When you chat with the AI reading companion, your messages and relevant book context are sent to the AI model provider (Zhipu AI / GLM API) for processing. The provider's own privacy policy applies to data they receive. Conversations are stored in the server-side database (your own server for self-hosted deployments). Operators may also temporarily retain raw model input/output for troubleshooting behind an explicit opt-in diagnostic switch (off by default, auto-deleted within 7 days). read-pal never uses conversations to train AI models.",
     "s10_title": "10. Contact",
     "s10_body_prefix": "For privacy-related questions or data requests, please open an issue at",
     "s10_body_link": "github.com/pengdd1998/read-pal/issues",
@@ -2372,6 +2372,15 @@
     "t_success": "Success",
     "t_tokens": "Total tokens",
     "empty": "No calls in window",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "content_view": "I/O",
+    "content_prompt": "Input (sent to model)",
+    "content_output": "Output (raw model reply)",
+    "content_truncated": "truncated",
+    "content_copy": "copy",
+    "content_empty_cache": "cache-served — no live call content",
+    "content_empty_failed": "failed call — content not captured",
+    "content_empty_expired": "not captured or past retention",
+    "content_disabled_banner": "Content capture is off — set LLM_TRACE_CONTENT_DB=true and redeploy to enable"
   }
 }

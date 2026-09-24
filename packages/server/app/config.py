@@ -196,6 +196,15 @@ class Settings(BaseSettings):
     # text — enable temporarily while triaging, then turn off.
     llm_trace_capture_content: bool = False
     llm_trace_capture_chars: int = 800
+    # P-D (2026-09-24): raw prompt/output capture into llm_trace_contents.
+    # Default OFF — content must not reach the DB without an explicit
+    # deployment opt-in. Independent caps/retention from the JSONL channel
+    # (triage needs longer context than an 800-char file preview).
+    # Retention note: rows prune from the DB at this horizon, but pg_dump
+    # backups (daily/ 7d + weekly/ 28d) keep them up to ~4 weeks longer.
+    llm_trace_content_db: bool = False
+    llm_trace_content_chars: int = 20000
+    llm_trace_content_retention_days: int = 7
 
     # Cache TTL (duration strings — parsed to seconds)
     cache_llm_ttl: str = '30m'

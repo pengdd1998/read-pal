@@ -38,6 +38,9 @@ def _settings(**kw):
         llm_trace_jsonl_path=kw.get('jsonl_path', ''),
         llm_trace_capture_content=kw.get('capture', False),
         llm_trace_capture_chars=800,
+        llm_trace_content_db=kw.get('content_db', False),
+        llm_trace_content_chars=20000,
+        llm_trace_content_retention_days=7,
         llm_log_retention_days=kw.get('retention', 90),
     )
 

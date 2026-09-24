@@ -32,15 +32,26 @@ jq -r 'select(.ts > now-3600 and .success == false) | .error_type' llm_traces.js
 jq -r 'select(.label == "companion.stream" and .success) | .latency_ms' llm_traces.jsonl | sort -n | awk '{a[NR]=$1} END {print a[int(NR*0.95)]}'
 ```
 
-## 三、内容捕获（badcase 回放素材，B4）
+## 三、内容捕获（badcase 回放素材，B4 / P-D）
 
-`LLM_TRACE_CAPTURE_CONTENT=true`（且 JSONL 通道开启）时，每次成功调用的
-prompt/output 预览（截断至 `LLM_TRACE_CAPTURE_CHARS`，默认 800）以
-`event=llm_content` 行写入 JSONL——**只进文件，绝不进 DB、不进日志流**。
+两个独立 opt-in 通道（`capture_llm_content` fan-out，可分别开启）：
 
-⚠ 预览含用户文本：只在 triage 时临时开启，结束后关闭。对话类调用本身有
-`chat_messages` 全量留存，日常无需开此开关；它服务的是非对话调用
-（flashcard / 摘要 / reading-plan 等）的回放。
+1. **JSONL**（B4）：`LLM_TRACE_CAPTURE_CONTENT=true` 且 JSONL 通道开启时，
+   prompt/output 预览（截断至 `LLM_TRACE_CAPTURE_CHARS`，默认 800）以
+   `event=llm_content` 行写文件——不进日志流。
+2. **DB**（P-D，2026-09-24）：`LLM_TRACE_CONTENT_DB=true` 时写入
+   `llm_trace_contents`（每侧截断 `LLM_TRACE_CONTENT_CHARS` 默认 20000，
+   保留 `LLM_TRACE_CONTENT_RETENTION_DAYS` 默认 7 天，随 trace prune 同
+   6h 节奏清理）。**含流式主路径**（`companion.stream` settlement 单点
+   钩子）：prompt 含 system prompt + 完整上下文装配，output 为
+   **pre-filter 原始输出**（被护栏拦下的文本也在内——这正是排障价值所
+   在）。读取仅 ops-key：`GET /stats/llm/requests/{id}/content`，列表/链
+   接口不含内容、不回 user_id 原值。
+
+⚠ 两个通道都含用户文本。隐私口径（两层保留）：DB 行 7 天 prune，但
+pg_dump 备份（daily/ 7 天 + weekly/ 28 天）中最长存活约 4 周。只在实际
+排障期开启；对话调用本身有 `chat_messages` 留存，此开关服务的是原始
+模型 I/O（含上下文装配与 pre-filter 输出）的回放。
 
 ## 四、告警建议（人工阈值，先观察一周再定）
 

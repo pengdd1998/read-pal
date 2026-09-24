@@ -2077,7 +2077,7 @@
     "s8_item3_label": "自托管：",
     "s8_item3_text": "在你自己的基础设施上部署 read-pal，实现完全的数据自主权",
     "s9_title": "9. AI 数据处理",
-    "s9_body": "当你与 AI 阅读伴侣对话时，你的消息和相关书籍内容会发送到 AI 模型提供商（智谱 AI / GLM API）进行处理。提供商的隐私政策适用于他们收到的数据。对话存储在你的本地数据库中，read-pal 不会将其用于训练 AI 模型。",
+    "s9_body": "当你与 AI 阅读伴侣对话时，你的消息和相关书籍内容会发送到 AI 模型提供商（智谱 AI / GLM API）进行处理。提供商的隐私政策适用于他们收到的数据。对话存储于服务端数据库中（自托管部署即你的服务器）；运营方还可在显式开启诊断开关时，短期保留与模型交互的原始输入输出用于排障（默认关闭、最多 7 天自动删除）。read-pal 不会将其用于训练 AI 模型。",
     "s10_title": "10. 联系方式",
     "s10_body_prefix": "如有隐私相关问题或数据请求，请在以下地址提交 issue：",
     "s10_body_link": "github.com/pengdd1998/read-pal/issues",
@@ -2372,6 +2372,15 @@
     "t_success": "成功率",
     "t_tokens": "总 Tokens",
     "empty": "窗口内无调用",
-    "loading": "加载中…"
+    "loading": "加载中…",
+    "content_view": "输入/输出",
+    "content_prompt": "输入（发送给模型）",
+    "content_output": "输出（模型原始返回）",
+    "content_truncated": "已截断",
+    "content_copy": "复制",
+    "content_empty_cache": "缓存命中——无真实调用内容",
+    "content_empty_failed": "失败调用——未捕获内容",
+    "content_empty_expired": "未捕获或已过保留期",
+    "content_disabled_banner": "内容捕获未开启：设置 LLM_TRACE_CONTENT_DB=true 并重建后端后生效"
   }
 }
