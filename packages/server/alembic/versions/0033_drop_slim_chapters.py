@@ -17,6 +17,7 @@ Downgrade is lossless: the slim copy is derivable from raw_chapters.
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import text
+from sqlalchemy.dialects.postgresql import JSONB
 
 revision = '0033'
 down_revision = '0032'
@@ -27,7 +28,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.add_column('book_contents', sa.Column('chapters', sa.JSONB(), nullable=True))
+    op.add_column('book_contents', sa.Column('chapters', JSONB(), nullable=True))
     # Rebuild the slim projection (raw minus the rawContent key).
     op.get_bind().execute(text("""
         UPDATE book_contents
