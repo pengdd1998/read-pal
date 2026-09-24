@@ -1,5 +1,6 @@
 """Search strategies: semantic (pgVector) and keyword-based fallback."""
 
+import re
 from typing import Any
 from uuid import UUID
 
@@ -72,7 +73,12 @@ def _build_search_sql(chapter_clause: str) -> str:
         'd.chapters AS chapters, '
         '1 - (bc.embedding <=> CAST(:query_emb AS vector)) AS similarity '
         'FROM book_chunks bc '
-        'JOIN documents d ON d.id = bc.document_id '
+        # LEFT since 0032: content-addressed rows carry NULL document_id —
+        # an INNER join silently dropped every rebuilt shared chunk and
+        # degraded semantic search to keyword-only. The join only supplies
+        # chapter titles; rows without it fall back to the chunk's own
+        # [title] prefix.
+        'LEFT JOIN documents d ON d.id = bc.document_id '
         'WHERE (bc.book_id = :book_id OR bc.content_hash = :content_hash) '
         'AND bc.embedding IS NOT NULL '
         'AND (bc.embedding <=> CAST(:query_emb AS vector)) < :distance_threshold '
@@ -141,12 +147,18 @@ def _rows_to_results(rows: list[tuple]) -> list[dict[str, Any]]:
         mapped = row._mapping  # type: ignore[union-attr]
         chapter_index = mapped['chapter_index']
         chapters = mapped['chapters']
-        chapter_title = 'Untitled'
+        content = mapped['content']
+        chapter_title = None
         if isinstance(chapters, list) and 0 <= chapter_index < len(chapters):
-            chapter_title = chapters[chapter_index].get('title', 'Untitled')
+            chapter_title = chapters[chapter_index].get('title')
+        if not chapter_title:
+            # 0032 rows have no document — the chunker's [title] prefix is
+            # the authoritative chapter label for content-addressed chunks.
+            m = re.match(r'\[([^\]]*)\]', content or '')
+            chapter_title = m.group(1) if m else 'Untitled'
         results.append({
             'title': chapter_title,
-            'content': mapped['content'],
+            'content': content,
             'similarity': float(mapped['similarity']),
         })
     return results
