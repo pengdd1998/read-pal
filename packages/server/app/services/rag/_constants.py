@@ -63,3 +63,9 @@ def _get_http_client() -> httpx.AsyncClient:
 
 def _stable_hash(text: str) -> str:
     return hashlib.md5(text.encode()).hexdigest()[:16]
+
+
+# P3.2 fusion constant — literature default (Cormack et al.): score for a
+# result at rank r is 1 / (RRF_K + r). Lives here since rank.py needs it
+# without importing search (circular).
+RRF_K = 60

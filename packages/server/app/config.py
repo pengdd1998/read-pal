@@ -206,6 +206,14 @@ class Settings(BaseSettings):
     llm_trace_content_chars: int = 20000
     llm_trace_content_retention_days: int = 7
 
+    # P2 rerank (2026-09-24 0.95 push): cross-encoder scoring over the
+    # chapter-aggregated candidate pool. Gated by key presence — unset
+    # keeps the zero-dependency P1 ordering. Defaults target SiliconFlow's
+    # /rerank endpoint (BAAI/bge-reranker-v2-m3); any compatible API works.
+    rerank_base_url: str = 'https://api.siliconflow.cn/v1'
+    rerank_api_key: str | None = None
+    rerank_model: str = 'BAAI/bge-reranker-v2-m3'
+
     # Cache TTL (duration strings — parsed to seconds)
     cache_llm_ttl: str = '30m'
     cache_rag_ttl: str = '30m'

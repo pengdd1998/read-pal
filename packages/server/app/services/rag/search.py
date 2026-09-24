@@ -10,14 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.rag._constants import logger, _tokenize_with_bigrams
 from app.services.rag.embedding import get_query_embedding
+from app.services.rag.rank import (
+    _FUSION_POOL_FLOOR,
+    chapter_coverage_merge,
+    rerank_chunks,
+)
 from app.models.book_chunk import BookChunk
 
-# P3.2: Reciprocal Rank Fusion constant. Standard value from the original
-# RRF paper (Cormack et al., 2009). Score for a result at rank r in a
-# single result list is 1 / (RRF_K + r). Smaller k → top ranks dominate;
-# larger k → smoother fusion. 60 is the literature default and works
-# across retrieval systems without per-collection tuning.
-RRF_K = 60
+# Re-exported for existing importers; the canonical home is _constants
+# (rank.py needs it without a circular import).
+from app.services.rag._constants import RRF_K  # noqa: E402,F401
 
 
 def _build_embedding_literal(query_emb: list[float]) -> str:
@@ -319,9 +321,8 @@ def reciprocal_rank_fuse(
     Each input list must already be ordered best-first (rank 0 = best).
     Output is a fresh list ordered by fused score, truncated to ``top_k``.
 
-    RRF is parameter-light (only ``k``, default 60) and needs no extra
-    model call — the right KISS choice over a learned reranker. The score
-    itself isn't surfaced to callers; only the order matters.
+    RRF is parameter-light (only ``k``, default 60) and needs no model
+    call. The score isn't surfaced; only the order matters.
 
     Chunks appearing in multiple lists have their per-list contributions
     summed — the whole point of fusion is that a chunk retrieved by both
@@ -357,29 +358,22 @@ async def hybrid_chunk_search(
 ) -> list[dict[str, Any]]:
     """Hybrid search: run semantic + keyword, fuse with RRF.
 
-    P3.2 replaces the previous "cascading fallback" strategy. Cascading
-    fallback had a known weakness: if semantic returned anything at all,
-    even low-relevance hits, the keyword path never ran — so exact-term
-    matches (character names, technical IDs, quoted phrases) got buried.
+    P3.2 replaced the "cascading fallback" strategy — if semantic returned
+    anything, even low-relevance hits, the keyword path never ran and
+    exact-term matches got buried. Both signals now always run and a
+    chunk that BOTH retrievers rank highly shoots to the top.
 
-    Hybrid fusion solves this: both signals always run, and a chunk that
-    BOTH retrievers rank highly shoots to the top. The pool_size (2x
-    top_k by default) gives RRF enough candidates to fuse meaningfully
-    without over-fetching.
-
-    The two paths run SEQUENTIALLY: AsyncSession forbids concurrent
-    operations, and the previous asyncio.gather raced the connection
-    checkout on fresh sessions (same class as the dashboard partials
-    bug). Both are millisecond-scale queries — the parallelism bought
-    nothing. ``query_emb`` lets multi-book callers embed once and reuse.
+    The two paths run SEQUENTIALLY (AsyncSession forbids concurrent
+    operations); both are millisecond-scale. ``query_emb`` lets
+    multi-book callers embed once and reuse.
 
     Falls back to legacy keyword chapter search only when both paths
     return empty (e.g. book has chunks disabled or out of range).
     """
-    # Pull a wider candidate pool from each retriever so RRF has signal
-    # to work with — fusing top_k=3 against top_k=3 caps the fusion at
-    # 6 candidates and rarely changes order vs. just picking semantic.
-    pool = max(pool_size or 2 * top_k, top_k)
+    # Wide pool (0.95 push): gold chapter sits in the pool-50 fused list
+    # for 100% of paraphrase eval queries — recall intact, truncation is
+    # the only loss (see rank.py).
+    pool = max(pool_size or max(2 * top_k, _FUSION_POOL_FLOOR), top_k)
 
     semantic = await _semantic_chapter_search(
         db, book_id, query, top_k=pool, max_chapter_index=max_chapter_index,
@@ -395,6 +389,11 @@ async def hybrid_chunk_search(
     if not semantic and not keyword:
         return []
 
-    return reciprocal_rank_fuse(
-        [semantic, keyword], top_k=top_k, k=RRF_K,
+    fused = reciprocal_rank_fuse(
+        [semantic, keyword], top_k=pool, k=RRF_K,
     )
+    boosted = chapter_coverage_merge(fused, top_k=top_k)
+    reranked = await rerank_chunks(query, boosted)
+    return (reranked or boosted)[:top_k]
+
+
