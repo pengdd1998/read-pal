@@ -8,7 +8,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.rag._constants import logger, _tokenize_with_bigrams
-from app.services.rag.embedding import get_embeddings
+from app.services.rag.embedding import get_query_embedding
 from app.models.book_chunk import BookChunk
 
 # P3.2: Reciprocal Rank Fusion constant. Standard value from the original
@@ -97,11 +97,14 @@ async def _semantic_chapter_search(
     it for every book instead of re-calling the embedding API per book.
     """
     if query_emb is None:
-        # Interactive path: one quick retry max — a throttled embedding
-        # account must not add patient backoff to every question's TTFT; the
-        # keyword fallback takes over immediately.
-        query_emb = (await get_embeddings([query], retry_delays=(1.0,)) or [None])[0]
+        # P1: cached + resilient query embedding (was a single 1.0s retry —
+        # a cold embedding service silently degraded whole sessions to
+        # keyword-only; see the 2026-09-24 RAG diagnosis).
+        query_emb = await get_query_embedding(query)
     if query_emb is None:
+        logger.warning(
+            'semantic.query_embed_failed — hybrid degrades to keyword-only',
+        )
         return []
 
     emb_literal = _build_embedding_literal(query_emb)

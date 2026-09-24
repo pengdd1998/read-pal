@@ -67,8 +67,8 @@ def _hermetic_stream_deps(monkeypatch):
     client (harmless but noisy); the cancel test installs its own.
     """
     monkeypatch.setattr(
-        "app.services.rag.search.get_embeddings",
-        AsyncMock(return_value=[None]),
+        "app.services.rag.search.get_query_embedding",
+        AsyncMock(return_value=None),
     )
     monkeypatch.setattr(rs, "register_stream", lambda _rid: asyncio.Event())
     monkeypatch.setattr(rs, "acquire_stream_slot", AsyncMock(return_value=True))

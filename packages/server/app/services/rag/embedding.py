@@ -151,3 +151,38 @@ async def _get_embedding(text: str) -> list[float] | None:
     """Get a single embedding vector (thin wrapper over the batch API)."""
     vectors = await get_embeddings([text])
     return vectors[0] if vectors else None
+
+
+# P1 (2026-09-24 RAG diagnosis): query-side embedding resilience. The
+# interactive semantic path used a single 1s retry — a cold/slow embedding
+# service (local Ollama loading bge-m3 takes ~10s) silently killed the
+# semantic path for whole sessions, degrading hybrid search to keyword-only
+# (the 09-16 eval's paraphrase 7% collapse). Two mitigations: a Redis
+# short-TTL cache (repeat questions skip the API entirely) and a two-step
+# backoff that still bounds added TTFT to ~2.5s worst case.
+QUERY_EMBEDDING_CACHE_TTL = 600  # 10 min — conversations repeat queries
+
+
+async def get_query_embedding(query: str) -> list[float] | None:
+    """Embed a search query, with a short-TTL cache and resilient backoff.
+
+    Distinct from ``get_embeddings`` (bulk, patient retries): this is the
+    interactive single-text path where latency and liveness both matter.
+    Returns None only when the provider is genuinely unavailable — the
+    caller then falls back to the keyword path.
+    """
+    import hashlib
+
+    from app.core.cache import cache_get, cache_set
+
+    _, _, model = _resolve_provider()
+    key = f'rag:qemb:{model}:{hashlib.sha256(query.encode()).hexdigest()[:24]}'
+    cached = await cache_get(key)
+    if isinstance(cached, list) and cached:
+        return cached
+
+    vectors = await get_embeddings([query], retry_delays=(0.5, 2.0))
+    emb = vectors[0] if vectors else None
+    if emb is not None:
+        await cache_set(key, emb, ttl=QUERY_EMBEDDING_CACHE_TTL)
+    return emb

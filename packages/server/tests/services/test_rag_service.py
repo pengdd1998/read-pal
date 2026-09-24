@@ -315,10 +315,51 @@ class TestPrecomputeBookEmbeddings:
 
 class TestSemanticSearch:
     @pytest.mark.asyncio
+    async def test_query_embedding_cached_and_resilient(self):
+        """P1 get_query_embedding: Redis hit skips the API; miss falls through."""
+        from unittest.mock import AsyncMock, patch
+
+        from app.services.rag.embedding import get_query_embedding
+
+        # Cache hit — provider must not be called
+        with (
+            patch('app.core.cache.cache_get', new=AsyncMock(return_value=[0.1, 0.2])),
+            patch('app.services.rag.embedding.get_embeddings', new=AsyncMock()) as ge,
+            patch('app.core.cache.cache_set', new=AsyncMock()) as cs,
+        ):
+            emb = await get_query_embedding('repeat question')
+            assert emb == [0.1, 0.2]
+            ge.assert_not_awaited()
+            cs.assert_not_awaited()
+
+        # Cache miss — resilient schedule, result cached
+        with (
+            patch('app.core.cache.cache_get', new=AsyncMock(return_value=None)),
+            patch('app.services.rag.embedding.get_embeddings',
+                  new=AsyncMock(return_value=[[0.3, 0.4]])) as ge,
+            patch('app.core.cache.cache_set', new=AsyncMock()) as cs,
+        ):
+            emb = await get_query_embedding('fresh question')
+            assert emb == [0.3, 0.4]
+            ge.assert_awaited_once()
+            _, kwargs = ge.await_args
+            assert kwargs.get('retry_delays') == (0.5, 2.0)
+            cs.assert_awaited_once()
+
+        # Provider failure — None propagates, nothing cached
+        with (
+            patch('app.core.cache.cache_get', new=AsyncMock(return_value=None)),
+            patch('app.services.rag.embedding.get_embeddings',
+                  new=AsyncMock(return_value=[None])),
+            patch('app.core.cache.cache_set', new=AsyncMock()) as cs,
+        ):
+            assert await get_query_embedding('doomed question') is None
+            cs.assert_not_awaited()
+
     async def test_no_query_embedding(self):
         mock_db = AsyncMock()
         mock_db.add = MagicMock()
-        with patch('app.services.rag.search.get_embeddings', return_value=[None]):
+        with patch('app.services.rag.search.get_query_embedding', return_value=None):
             results = await _semantic_chapter_search(mock_db, uuid4(), 'test')
             assert results == []
 
@@ -328,7 +369,7 @@ class TestSemanticSearch:
         mock_db.add = MagicMock()
         mock_db.execute = AsyncMock(side_effect=DBAPIError('stmt', {}, Exception('DB error')))
 
-        with patch('app.services.rag.search.get_embeddings', return_value=[[0.1] * 2048]):
+        with patch('app.services.rag.search.get_query_embedding', return_value=[0.1] * 2048):
             results = await _semantic_chapter_search(mock_db, uuid4(), 'test')
             assert results == []
 

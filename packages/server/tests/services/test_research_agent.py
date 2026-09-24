@@ -39,8 +39,8 @@ def _no_embeddings(monkeypatch):
     and RRF falls back to keyword order.
     """
     monkeypatch.setattr(
-        "app.services.rag.search.get_embeddings",
-        AsyncMock(return_value=[None]),
+        "app.services.rag.search.get_query_embedding",
+        AsyncMock(return_value=None),
     )
 
 
@@ -87,10 +87,9 @@ class TestCrossBookEmbedding:
             embed = AsyncMock(
                 side_effect=lambda texts, **kw: calls.append(texts) or [[0.1] * 4],
             )
-            # cross_book imports get_embeddings lazily inside the function;
-            # search.py holds a module-level binding — patch both.
+            # cross_book embeds once via the embedding module and passes
+            # query_emb into hybrid_chunk_search — one binding covers both.
             monkeypatch.setattr("app.services.rag.embedding.get_embeddings", embed)
-            monkeypatch.setattr("app.services.rag.search.get_embeddings", embed)
             await cross_book_search(session, uid, "shared query")
         assert len(calls) == 1, f"expected one embedding call, got {len(calls)}"
 
