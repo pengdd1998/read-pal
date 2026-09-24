@@ -101,7 +101,6 @@ async def _create_sample_book(db: AsyncSession, user_id: UUID) -> Book:
             file_type='epub',
             title='The Great Gatsby',
             author='F. Scott Fitzgerald',
-            chapters=list(GATSBY_CHAPTERS),
             raw_chapters=list(GATSBY_CHAPTERS),
             total_pages=len(GATSBY_CHAPTERS),
             metadata_=sample.metadata_,

@@ -18,7 +18,7 @@ async def test_upsert_creates_row():
     async with _TestSession() as db:
         await upsert_book_content(
             db, content_hash='d' * 64, file_size=1, file_type='epub',
-            title='T', author='A', chapters=None, raw_chapters=None,
+            title='T', author='A', raw_chapters=None,
             total_pages=0, meta=None, cover_url=None, created_by=uuid4(),
         )
         await db.commit()
@@ -37,7 +37,7 @@ async def test_upsert_idempotent_first_writer_wins():
         for title in ('First', 'Second'):
             await upsert_book_content(
                 db, content_hash='e' * 64, file_size=1, file_type='epub',
-                title=title, author='A', chapters=None, raw_chapters=None,
+                title=title, author='A', raw_chapters=None,
                 total_pages=0, meta=None, cover_url=None, created_by=uuid4(),
             )
         await db.commit()

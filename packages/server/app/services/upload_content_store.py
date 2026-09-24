@@ -29,7 +29,6 @@ async def upsert_book_content(
     file_type: str,
     title: str,
     author: str,
-    chapters: list | None,
     raw_chapters: list | None,
     total_pages: int,
     meta: dict | None,
@@ -50,7 +49,6 @@ async def upsert_book_content(
             file_type=file_type,
             title=title,
             author=author,
-            chapters=chapters,
             raw_chapters=raw_chapters,
             total_pages=total_pages or 0,
             metadata_=meta or None,
@@ -93,18 +91,18 @@ async def _get_shared_content(db: AsyncSession, content_hash: str) -> BookConten
 
 
 def _chapters_from_shared(shared: BookContent) -> list[dict]:
-    """Chapters from a shared row; rawContent regenerated when absent."""
+    """Chapters from a shared row.
+
+    0033 dropped the slim ``chapters`` column — every row that ever had it
+    also carried ``raw_chapters`` (they were written together), and nothing
+    read the slim copy while raw existed. Rows with no raw payload (never
+    observed, defensive) yield an empty list; the legacy Document fallback
+    in get_book_content covers those books.
+    """
     raw = shared.raw_chapters or []
-    if raw:
-        return [
-            {**ch, 'rawContent': ch.get('rawContent') or ch.get('content', '')}
-            for ch in raw if isinstance(ch, dict)
-        ]
     return [
-        {'id': str(i), 'title': ch.get('title', f'Chapter {i+1}'),
-         'content': ch.get('content', ''),
-         'rawContent': ch.get('content', '')}
-        for i, ch in enumerate(shared.chapters or []) if isinstance(ch, dict)
+        {**ch, 'rawContent': ch.get('rawContent') or ch.get('content', '')}
+        for ch in raw if isinstance(ch, dict)
     ]
 
 

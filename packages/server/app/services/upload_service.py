@@ -134,7 +134,15 @@ async def _resolve_cover_url(book_id: UUID, meta: dict) -> str | None:
     if not decoded:
         return None
     data, ext, mime = decoded
-    return await upload_cover(book_id, data, ext, mime)
+    url = await upload_cover(book_id, data, ext, mime)
+    if url:
+        # The inline base64 copy has served its purpose — keeping it parked
+        # the full cover in books.metadata AND book_contents.metadata on
+        # every upload (~140 kB/row, 99% of the books table's disk) while
+        # every consumer reads cover_url. Only the OSS-unconfigured
+        # self-host fallback keeps the data-uri.
+        meta.pop('cover_data_uri', None)
+    return url
 
 
 async def _persist_book_and_document(
@@ -171,10 +179,18 @@ async def _persist_book_and_document(
         await db.flush()
 
         # Upload the extracted cover to object storage so book.cover_url points
-        # at a renderable public URL. Respects an explicitly-supplied cover_url;
+        # at a renderable public URL. Resolves an explicitly-supplied cover_url;
         # any failure silently falls back to the gradient placeholder.
         if not book.cover_url:
+            had_inline_cover = 'cover_data_uri' in meta
             book.cover_url = await _resolve_cover_url(book.id, meta)
+            if had_inline_cover and 'cover_data_uri' not in meta:
+                # The resolve popped the base64 AFTER the first flush already
+                # serialized it into books.metadata — the attribute's loaded
+                # state IS the same (mutated) dict object, so SQLAlchemy's
+                # equality-based change detection sees no change. Mark it.
+                from sqlalchemy.orm.attributes import flag_modified
+                flag_modified(book, 'metadata_')
 
         document = Document(
             book_id=book.id,
@@ -229,10 +245,6 @@ async def create_book_with_content(
                 file_type=file_type,
                 title=book_title,
                 author=book_author,
-                chapters=[
-                    {k: v for k, v in ch.items() if k != 'rawContent'}
-                    for ch in result.get('chapters', [])
-                ],
                 raw_chapters=result.get('chapters'),
                 total_pages=result.get('total_pages', 0),
                 meta=meta,

@@ -31,7 +31,9 @@ class BookContent(Base):
     author: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Immutable parse payload — the chapters array the reader consumes.
-    chapters: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # (0033 dropped the slim no-rawContent `chapters` column — raw_chapters
+    # is the single payload; nothing ever read the slim copy while raw
+    # existed, and the two were always written together.)
     raw_chapters: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     total_pages: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default='0',
