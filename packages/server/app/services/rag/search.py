@@ -111,6 +111,18 @@ async def _semantic_chapter_search(
 
     try:
         query_sql = _build_search_sql(chapter_clause)
+        # pgvector HNSW traverses GLOBAL nearest neighbors, then applies the
+        # WHERE filter — with 77% of book_chunks being the NULL-content_hash
+        # legacy cohort, the default ef_search=40 candidate window can be
+        # entirely consumed by chunks the filter discards, returning 0 rows
+        # for a book whose true neighbors sit at distance ~0.54 (verified:
+        # index scan [] vs seq scan hits; REINDEX does not fix it). pgvector
+        # 0.8+ iterative scans continue traversal until the filter is
+        # satisfied — the official fix for filtered vector queries.
+        # SET LOCAL scopes to the current transaction; guarded to PG so the
+        # SQLite test face never sees an unsupported statement.
+        if db.bind is not None and db.bind.dialect.name == 'postgresql':
+            await db.execute(text("SET LOCAL hnsw.iterative_scan = 'strict_order'"))
         result = await db.execute(text(query_sql), params)
         rows = result.fetchall()
     except DBAPIError as exc:
