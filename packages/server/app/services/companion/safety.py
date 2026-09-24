@@ -47,6 +47,7 @@ def persist_stream_log(
         # completion event into the trace writer so p50-p99/success-rate/
         # by-label cover companion streaming too.
         from app.services.llm.observability import _trace_writer
+        from app.services.llm.observability._core import _current_http_request_id
         _trace_writer.add({
             'request_id': request_id[:12],
             'model': model,
@@ -57,6 +58,11 @@ def persist_stream_log(
             'ttft_ms': ttft_ms,
             'user_id': str(user_id) if user_id else None,
             'book_id': str(book_id) if book_id else None,
+            # Same contextvar _log_call reads — without it every streaming
+            # span had http_request_id NULL, so the traces UI chain drill
+            # (and P-D's per-span content viewer, which lives in the chain
+            # panel) never opened for the bulk of traffic.
+            'http_request_id': _current_http_request_id(),
         })
     except (ValueError, RuntimeError, ConnectionError) as exc:
         logger.warning('companion.safety.observability_log_failed', error=str(exc)[:200])

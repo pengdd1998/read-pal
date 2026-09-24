@@ -188,4 +188,22 @@ class TestStreamingTraceMirror:
         rec = _trace_writer._buf[0]
         assert rec['label'] == 'companion.stream'
         assert rec['ttft_ms'] == 5432 and rec['latency_ms'] == 12345
+        # P-D follow-up: the direct-writer path must fill http_request_id
+        # from the same contextvar _log_call reads — NULL here made every
+        # streaming span unchainable in the traces UI (and its captured
+        # content unreachable, since the I/O panel lives in the chain).
+        import structlog
+        structlog.contextvars.clear_contextvars()
+        structlog.contextvars.bind_contextvars(request_id='http-abc-123')
+        _trace_writer._buf.clear()
+        with patch('app.services.llm.observability._writer.get_settings') as ms:
+            ms.return_value.llm_log_enabled = True
+            persist_stream_log(
+                request_id='req123456789',
+                model='mimo-v2.5', latency_ms=12345, success=True,
+                ttft_ms=5432, user_id=uuid4(), book_id=uuid4(),
+            )
+        rec2 = _trace_writer._buf[0]
+        assert rec2['http_request_id'] == 'http-abc-123'
+        structlog.contextvars.clear_contextvars()
         _trace_writer._buf.clear()
