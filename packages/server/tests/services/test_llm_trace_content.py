@@ -173,7 +173,11 @@ class TestContentWriter:
         settings.llm_log_enabled = True
         settings.llm_log_retention_days = 90
         settings.llm_trace_content_retention_days = 7
-        _trace_writer._last_prune_monotonic = 0.0  # force the prune pass
+        # Portable across monotonic origins (fresh CI runners have small
+        # monotonic() values — 0.0 would fail the interval check there).
+        _trace_writer._last_prune_monotonic = (
+            time.monotonic() - _trace_writer.PRUNE_CHECK_INTERVAL - 1
+        )
         with patch(
             'app.services.llm.observability._writer.get_settings',
             return_value=settings,
