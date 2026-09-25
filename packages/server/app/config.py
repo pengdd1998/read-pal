@@ -221,6 +221,12 @@ class Settings(BaseSettings):
     rag_chunk_size: int = 500
     rag_chunk_overlap: int = 64
 
+    # Post-stream faithfulness filter (2026-09-26): prompt-level grounding
+    # constraints proved ineffective with glm-4-flash; this checks each
+    # sentence against retrieved context AFTER generation and emits a
+    # user-visible annotation for unsupported claims.
+    faithfulness_check_enabled: bool = True
+
     # Cache TTL (duration strings — parsed to seconds)
     cache_llm_ttl: str = '30m'
     cache_rag_ttl: str = '30m'

@@ -58,7 +58,7 @@ _STREAM_RESERVED_OUTPUT_TOKENS = 800
 _CJK_RE = re.compile(r'[\u4e00-\u9fff]')
 
 
-async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
+async def _stream_via_provider(  # noqa: PLR0915,C901 — single orchestration flow
     db: AsyncSession,
     user_id: UUID,
     book_id: UUID,
@@ -207,12 +207,8 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
         db, user_id, book_id, message, messages,
         collected_parts, actual_request_id, lang=lang,
     )
-    # P-D: single settlement hook for streaming content capture. Runs only
-    # on the success path (cancel/error returned above), where the full
-    # turn is in hand — messages (raw model input incl. system prompt and
-    # context assembly) + collected_parts (raw output, PRE output-filter:
-    # guardrail-blocked text is part of what triage needs to see). Both
-    # channels gate themselves off unless the deployment opted in.
+    # P-D: settlement content capture — success path only, both channels
+    # gate themselves; collected_parts is PRE output-filter (triage value).
     from app.services.llm.observability import capture_llm_content
     capture_llm_content(
         request_id=actual_request_id,
@@ -224,6 +220,20 @@ async def _stream_via_provider(  # noqa: PLR0915 — single orchestration flow
         user_id=str(user_id),
         book_id=str(book_id) if book_id else None,
     )
+    # Post-stream faithfulness check (2026-09-26): flag unsupported
+    # claims with a user-visible annotation. Best-effort.
+    try:
+        from app.services.companion.faithfulness import check_faithfulness, format_annotation
+        full_answer = ''.join(collected_parts)
+        unsupported = await check_faithfulness(full_answer, messages)
+        if unsupported:
+            annotation = format_annotation(unsupported, full_answer)
+            if annotation:
+                yield f'data: {json.dumps({"type": "faithfulness_warning", "content": annotation, "unsupported_count": len(unsupported)})}\n\n'
+                logger.info('companion.faithfulness_flagged', request_id=actual_request_id, unsupported_count=len(unsupported))
+    except Exception:  # noqa: BLE001 — never block the stream on filter failure
+        logger.debug('companion.faithfulness_check_error')
+
     if assistant_db_id is None:
         # Tell the client the streamed response couldn't be saved.
         # Client should keep visible text (user already read it) but
