@@ -44,7 +44,7 @@ def test_no_budget_includes_all_sections_in_canonical_order():
     )
 
     memory_pos = prompt.find('Summary of previous conversation')
-    rag_pos = prompt.find('Relevant passages')
+    rag_pos = prompt.find('retrieved chunk')
     annotations_pos = prompt.find('annotations')
 
     assert memory_pos > 0, 'memory section missing'

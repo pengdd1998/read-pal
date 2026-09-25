@@ -132,7 +132,7 @@ COMPANION_CASES: list[PromptTestCase] = [
     PromptTestCase(
         name='with_rag',
         rag_ctx='Frodo hesitated at the Crack of Doom.',
-        expected_substrings=('Relevant passages',),
+        expected_substrings=('book_passages',),
     ),
     PromptTestCase(
         name='with_memory',

@@ -118,7 +118,7 @@
     "spoiler_block_completed": "\n\n用户已完成本书——可以自由讨论所有情节、角色命运、转折和结局。",
     "spoiler_block_unknown": "\n\n用户刚开启这本书。请避免透露任何情节发展、角色命运、转折或结局——只讨论主题和开篇内容。",
     "annotations_context": "\n\n<annotations>\n用户最近的标注如下：\n{annotations}\n</annotations>",
-    "rag_context": "\n\n<book_passages>\n严格依据：仅陈述以下段落中明确出现的事实。如果段落中没有答案，请直接说不确定——不要编造情节、人物或事件。\n书籍相关段落（不要透露读者当前进度之后的剧透内容）：\n{context}\n</book_passages>",
+    "rag_context": "\n\n<book_passages>\n依据规则（严格遵守）：\n1. 只陈述以下段落中原文出现的事实——不要用你自己对这本书的了解补充任何细节、例子或背景。\n2. 不要引用章节名、页码，也不要把观点归给具体人物，除非段落原文明确这样做。\n3. 不要告诉读者\"你刚读完序章\"或\"还没读到那段\"——你无法从这些段落判断对方的阅读进度。\n4. 如果段落中没有答案，就说：\"我还不确定——目前看到的段落没有涉及这个，可以换个问法或者再往下读读！\"不要猜测或填补空白。\n\n书籍相关段落（不要透露读者当前进度之后的剧透内容）：\n{context}\n</book_passages>",
     "memory_context": "\n\n<memory_summary>\n之前的对话摘要：\n{summary}\n</memory_summary>",
     "chapter_content": "\n\n<chapter_content>\n当前章节内容：\n{content}\n</chapter_content>",
     "nearby_code": "\n\n<nearby_code>\n附近的代码示例：\n{code}\n</nearby_code>",
