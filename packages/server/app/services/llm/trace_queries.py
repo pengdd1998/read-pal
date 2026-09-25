@@ -77,10 +77,17 @@ async def list_llm_traces(
     success: bool | None = None,
     error_type: str | None = None,
     request_prefix: str | None = None,
+    q: str | None = None,
     limit: int = DEFAULT_TRACE_PAGE,
     offset: int = 0,
 ) -> dict[str, Any]:
-    """Filterable newest-first trace rows + total for pagination."""
+    """Filterable newest-first trace rows + total for pagination.
+
+    ``q`` (E1): full-text search over captured prompt/output content —
+    JOIN llm_trace_contents on request_id, ILIKE both text columns. When
+    content capture is disabled, returns an empty set with
+    ``content_search_unavailable: true`` (the UI shows the reason).
+    """
     hours = max(1, min(hours, MAX_TRACE_WINDOW_HOURS))
     limit = max(1, min(limit, MAX_TRACE_PAGE))
     offset = max(0, offset)
@@ -95,6 +102,20 @@ async def list_llm_traces(
         conditions.append(LLMCallTrace.error_type == error_type)
     if request_prefix:
         conditions.append(LLMCallTrace.http_request_id.startswith(request_prefix))
+
+    # E1: content search — JOIN on request_id, ILIKE both text columns
+    content_unavailable = False
+    if q and q.strip():
+        from app.config import get_settings
+        from app.models.llm_trace_content import LLMTraceContent
+        if not get_settings().llm_trace_content_db:
+            return {'total': 0, 'limit': limit, 'offset': offset,
+                    'items': [], 'content_search_unavailable': True}
+        content_match = select(LLMTraceContent.request_id).where(
+            LLMTraceContent.prompt_text.ilike(f'%{q.strip()}%')
+            | LLMTraceContent.output_text.ilike(f'%{q.strip()}%'),
+        ).subquery()
+        conditions.append(LLMCallTrace.request_id.in_(select(content_match.c.request_id)))
 
     total = (
         await session.execute(
@@ -117,6 +138,7 @@ async def list_llm_traces(
         'limit': limit,
         'offset': offset,
         'items': [_span_dict(t) for t in rows],
+        'content_search_unavailable': content_unavailable or None,
     }
 
 

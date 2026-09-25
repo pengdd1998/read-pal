@@ -1,0 +1,253 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+*.lcov
+.nyc_output/
+
+# Production builds
+dist/
+build/
+.next/
+out/
+.turbo/
+
+# Environment variables — ALL .env files except examples
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Debug & build artifacts
+*.tsbuildinfo
+*.d.ts.map
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+*.sqlite-shm
+*.sqlite-wal
+*.sql
+*.dump
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.npm
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity
+.yarn-integrity
+
+# Vercel
+.vercel
+
+# Docker
+docker-compose.override.yml
+
+# Local development
+.local/
+local/
+
+# Secrets and credentials
+*.key
+*.pem
+*.cert
+credentials.json
+credentials.*
+secrets/
+.secrets
+private/
+.env
+
+# Backup files
+*.bak
+*.backup
+*.local.*
+backups/
+
+# Session data
+sessions/
+session/
+*.session
+
+# Personal notes
+notes/
+NOTES.md
+todo.md
+TODO.md
+
+# User uploads (if storing locally)
+uploads/
+user-files/
+
+# Claude Code - configuration and agents
+.claude/
+CLAUDE.local.md
+CLAUDE.md
+setup-github.sh
+skills-lock.json
+auto-compact.sh
+.spec-workflow
+
+# Playwright
+.playwright-mcp/
+playwright-report/
+test-results/
+
+# AWS
+.aws-sam/
+
+# Agent daemon — stays local, not for public repo
+packages/agent-daemon/
+
+# Local review / audit docs with potentially sensitive content
+docs/*review*
+docs/*audit*
+
+# Agent configs and reports — stays local
+.agents/
+
+# Expo generated files
+.expo/
+
+# Next.js generated files
+next-env.d.ts
+
+# Compiled TypeScript output (source is .ts)
+packages/web/src/**/*.js
+packages/web/src/**/*.d.ts
+packages/web/src/**/*.js.map
+packages/shared/src/**/*.js
+packages/shared/src/**/*.d.ts
+packages/shared/src/**/*.js.map
+
+# frontend design context
+.impeccable.md
+
+# Local-only scripts (not source code)
+scripts/
+# Phase 3 harness-engineering scripts are source code (CI-enforced AST checks)
+!packages/server/scripts/
+packages/server/scripts/__pycache__/
+
+# Docs — screenshots, launch materials, and incident archive tracked; other docs are local
+docs/*
+!docs/screenshots/
+!docs/launch/
+!docs/incidents/
+!docs/engineering-upgrade/
+# Acceptance evidence (PM decision 09-18): the single adjudication source
+# and the gate table must be clonable; test-plan bodies stay local (D2).
+!docs/testing/
+docs/testing/*
+!docs/testing/03-scoring-rubric.md
+!docs/testing/materials/
+docs/testing/materials/*
+!docs/testing/materials/execution-record.csv
+
+# Debug screenshots and test artifacts
+.pal-test/
+packages/debug_screenshots/
+chat-opened.png
+chat-response.png
+homepage-check.png
+login-page.png
+
+# Local npm config (commented out - project needs shamefully-hoist for EAS Build)
+# .npmrc
+
+# Root-level debug screenshots (not docs/screenshots/*.png)
+/*.png
+
+# Capacitor native build artifacts
+packages/web/android/app/build/
+packages/web/ios/Pods/
+packages/web/ios/build/
+packages/web/www/
+dark-audit/
+.pytest_cache/
+.impeccable/
+.serena/
+
+# Mimosa security-plugin runtime state (baseline snapshots, ~1000 files per
+# dir — tool output, never source). 2026-09-18: flooded the pending view.
+.mimosa/
+
+# Local agent workspace state (risk-review 09-22: untracked, `git add -A` sweep-in)
+.zcode/
+.video_agent/
+
+# ===== ↑ 以上同步自 .gitignore（「从 .gitignore 同步」只重写以上部分）=====
+.git/
+.hg/
+.svn/
+bower_components/
+jspm_packages/
+__pycache__/
+site-packages/
+venv/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+allure-results/
+allure-report/
+cdk.out/
+*.egg-info/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ 以上为 ZCode 默认排除规则（自定义规则请写在本行下方，不会被同步/恢复改动）-----
+# 自定义规则写在下方（本行提示可删除）

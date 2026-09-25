@@ -272,6 +272,281 @@ observability 条目（"file-only, never DB" → 新口径）、llm-metrics.md
 "对话存储在你的本地数据库" 与生产部署形态（VPS 集中库）不符，一并改
 准。
 
+## P-E 工作台对标补齐（2026-09-25 立项，第二轮 CCR 实机对照）
+
+> 背景判定：P-A/B/C/**P-D** 落地后**结构与内容面已闭合**（三级下钻、
+> 运行时、rollup、告警、原始 I/O）。第二轮实机对照（CCR 侧 555 请求
+> 真实流量踩点）把用户感知的"仍有很大差距"收敛为四类：① 内容**检索**
+> 缺失；② 少量**采集字段缺口**（缓存 token、HTTP 状态码、流式标记）；
+> ③ 概览**维度过滤**与可视化密度（日条带/Token 构成/热力图）；④ 瀑布
+> 时间线等交互细节。P-E 逐项对标。
+
+### CCR 侧新踩点事实（09-25）
+
+- **日志页**：全文筛选框（**含"请求或响应"内容检索**）+ 状态/供应商/
+  模型三重过滤 + 页大小 10/25/50/100 + 刷新；表格列 = 时间 / 状态
+  （HTTP 状态码）/ **流式·非流式标记** / **模型映射 `请求模型 → 实际
+  模型`** / Token 三分（入 / 出 / **缓存**）/ 持续时间；行内展开端点、
+  状态、供应商。
+- **概览**：供应商/模型双下拉**全局过滤**所有卡片；系统状态日条带
+  （逐日 请求/成功率/失败/耗时，异常日着色）；Token 构成（输入/输出/
+  **缓存** 占比 + 堆叠条，实测缓存占 78%）；活跃度热力图（最长连续/
+  日均/周均/总计）；**账户余额卡带配额百分比**（实测 ZCode API 92%）。
+- **供应商页**：卡片管理（能力/配额/模型列表/启停开关）。
+
+### read-pal 差距判定（对照已落地面，含 09-25 对 P-D 实施的在位核验）
+
+| 差距 | 性质 | 归属 |
+| --- | --- | --- |
+| 原始输入输出 | ✅ 已落地（0031 + settlement 单点钩子 + 内容端点 + 前端展开，09-25 逐件核验在位） | — |
+| 内容关键字检索（"筛选请求或响应"） | 未做 | **E1** |
+| 概览 label/provider/model 全局过滤 | API 无参数（`/stats/llm` 仅 hours/guardrail_days）+ UI 无件 | E2 |
+| Token 构成之**缓存维度** | **数据缺口**：traces 只落 `cache_hit` 布尔，无缓存 token 数（全仓无 `prompt_tokens_details`/`cache_read` 采集） | E3 采集 |
+| 日志页 HTTP 状态码 / 流式标记 | 状态码未落库；流式可由调用路径判定（persist_stream_log/settlement 天然知道） | E3 采集 |
+| 模型映射列（请求→实际） | traces 只落实际 model，无请求模型字段 | 后置（链内 fallback 已可辨识） |
+| 系统状态日条带 / 热力图 | 数据已有（日桶 series / rollup），纯 UI；热力图受窗口 clamp 720h 限 30 天 | E2/E4 |
+| 链路瀑布时间线 | 数据已有（created_at+latency_ms+ttft，链内 `created_at.asc()` 有序），纯前端 | E3 |
+| 会话级聚合 / UA 分组 / 余额配额卡 | 无 session 实体、无 client 字段；账务 API 逐家接入 | 维持不做（见 E6） |
+
+### E0 缺陷修复（09-25 生产实测发现，优先于 E1）
+
+生产走查（read.chishenma.top，真实数据）实锤：
+
+1. **兜底链共享 request_id → 内容行冲突 → 成功回复丢失（高优）**。
+   证据：链 `cd0f314e0376` 两 span（glm rate_limit 失败 / mimo 成功）
+   的 per-call `request_id` 相同（`64920c18b981`）——safe_invoke 在
+   primary/fallback 各 attempt 间复用同一 request_id；而
+   `llm_trace_contents` 以 request_id 为主键 → 两 attempt 内容写入互
+   相冲突，生产实测该链仅存一行（model=mimo 但 output_len=0），成功
+   attempt 的真实回复不可见。对照非兜底路径（`714b05ee070b`）输入
+   864 字 + 输出 38 字完整——缺陷仅限兜底路径，但这恰是排障最有价值
+   的路径。修复：0032 迁移将 contents 主键改为自增 id +
+   `(request_id, model)` 复合索引，`get_trace_content` 按
+   (request_id, model) 取行；同时核查 provider_fallback 捕获点的
+   `response.content` 在 mimo 兜底成功时是否为空（行 model 已是 mimo
+   但输出空，存在"捕获到空输出"的第二重可能）。
+2. **30d 窗口 p95 趋势图全空**（GAP A3 生产应验）+ 调用量趋势图 X 轴
+   日期标签重叠（新视觉缺陷）→ 归 E2 一并处理。
+3. **provider "(unset)" 占 51%**（80 次 中 41 次）：流式 span 未落
+   provider（traces 页 model 显示 `/mimo-v2.5`）→ 归 E3 采集增强，
+   settlement 钩子处补 provider 字段。
+4. **未登录 + 有效 ops key 访问总览 → 401 被 api client 全局重定向到
+   /auth**：ops 页文案称"path key 保护"但实际是 登录态+key 双条件；
+   traces 端点仅需 key。归 E5（文案对齐或总览端点改 key-only，后者
+   涉鉴权面变更需单独评审）。
+
+其余走查结论：总览 KPI/失败分布/by_provider/供应商运行时卡真实数据
+渲染正常；traces 列表→链展开→Copy ID→I/O 懒加载全链路可用；P-D 的
+输入捕获（system prompt + 装配上下文）完整清晰；一条 09-24 早期 error
+span 的 http_request_id 为 NULL（c6f0e090 修复前的存量数据，符合预期）。
+
+### E1 内容检索（P-D 收尾；生产捕获已开启）
+
+P-D 已于 09-24 上线且**生产已开 `LLM_TRACE_CONTENT_DB=true`**（7d/
+20000chars，实弹验证流式对话→DB 行→端点→UI 全通）。本期只补检索：
+requests 列表 API 加 `q` 参数（PG `ILIKE` 于
+`llm_trace_contents.prompt_text/output_text`，JOIN traces 过滤；ops
+量级 ≤ 数万行无需 FTS），traces 页搜索框对应 CCR「筛选请求或响应」
+——badcase 按报错文案直接搜调用链。实现注意：api client 会拍平
+FastAPI detail 信封（P-D 教训③），空结果/未开启语义走显式字段不走
+404 detail；`llm_trace_content_db=false` 时 `q` 返回空集 + 提示字段。
+
+### E2 总览对标
+
+- API：`/stats/llm` 加 `label` / `provider` / `model` 过滤参数；
+  rollup 路径同步支持 label/provider（维度在 rollup PK 内）；**model
+  不在 rollup** → model 过滤仅 ≤48h 或 trace 路径生效，响应带
+  `filters_applied` 明示降级。
+- UI：概览顶栏三个下拉全局过滤（CCR 同款）；Token 构成条（缓存段依赖
+  E3 采集，未落地前先上 输入/输出 两段）；**系统状态日条带**（日桶
+  series：逐日 calls/success_rate，异常日着色 + tooltip）；p95 空线处理
+  （rollup 路径全 None 时隐藏 p95 图并标注近似口径，GAP A3）；手动
+  刷新按钮。
+
+### E3 traces 页对标 + 采集增强
+
+- **采集增强**（迁移 0032，全部 nullable 零回填压力）：`http_status
+  INT`（safe_invoke 响应/异常处可得）、`streaming BOOL`（调用路径判
+  定）、`cache_read_tokens INT`（provider usage details：OpenAI 兼容
+  `prompt_tokens_details.cached_tokens` / Anthropic
+  `cache_read_input_tokens`，逐 provider 验证可得性，取不到为 NULL）。
+- UI：页大小切换（25/50/100）、刷新按钮、http_status/streaming 列、
+  **链路瀑布时间线**（行展开面板升级：span 水平条 =
+  (created_at − 链起点)/链时长，ttft 刻度，纯前端计算）。
+
+### E4 活跃度热力图
+
+- 后端：**全局 + rollup 路径**窗口 clamp 放宽至 2160h（90 天，与
+  rollup 保留期对齐；trace 路径仍 720h cap 保护行扫）。
+- UI：GitHub 风格 12–13 周格（日桶 series 按 calls 或 cost 着色）+
+  最长连续 / 日均 / 总计三数字。
+
+### E5 债务顺手清（GAP 复盘遗留）
+
+- 告警四阈值抽纯函数 + 注入样例单测（GAP A2）。
+- traces 页 `request_prefix` placeholder 文案改为 http_request_id
+  （GAP B5）。
+- ops 页顶栏端点健康点（`/api/v1/health` 轮询，CCR 端点条同款）。
+
+### E6 仍不做（决策维持，附升级条件）
+
+- **会话级聚合**：CCR 的 session id 来自其 Agent 宿主；read-pal 无
+  session 实体，合成（user+book+时段）视图对单人 ops 增益低。升级
+  条件：chat 引入 session 实体时再评。
+- **供应商管理 UI / 余额卡**：配置 + API 已够；若要配额百分比，可做
+  智谱单家配额探针（可选，不进本期承诺）。
+- **对话回放**：P-D 单调用 I/O + 链视图已覆盖排障路径，整段重组维持
+  不做。
+- **拖拽自定义仪表盘**：维持不做。
+
+### 分期顺序与验收
+
+**E0（缺陷修复，最先）** → E1 → E2 → E3（采集先行）→ E4/E5 并行。
+验收：E0 = 兜底链两 span 各自可见 I/O 且成功 span 的输出非空；
+E1 = traces 页搜索框可按报错文案命中调用链；E2 = 概览三过滤全
+卡片联动 + 日条带异常日可辨 + 30d 下 p95 图不再空挂；E3 = 瀑布时间线
+渲染 + 新三列有值（缓存 token 按 provider 可得性）+ provider unset
+占比归零；E4 = 90 天热力图；全程纪律同 §7（迁移双跑、en/zh 只增量、
+SQLite+PG 双绿、ops-key header、勿引图表库）。
+
+## P-F 布局与交互优化（2026-09-25，生产走查截图/DOM 证据）
+
+> 定位：P-E 解决"数据与功能"，P-F 解决"看得舒服、点得顺"。单人 ops
+> 工具、桌面优先、零依赖延续（不加组件库）、暗色已适配保持。
+> 每项附走查证据；大部分随 E2/E3 改造顺路做，F1 可独立小 PR。
+
+### F1 联动与状态同步（交互价值最高，可独立小 PR）
+
+- **by_label 行点击 → 跳 traces 并预置 label 过滤**——最高频动线
+  "哪个 label 出问题 → 看它的调用"现在要手动复制 label 再粘到过滤器
+  （证据：by_label 表纯展示无行交互；traces 过滤器独立）。
+- 失败分布 chip 点击 → traces `failed-only + error_type` 预过滤。
+- **过滤器/分页/窗口同步 URL searchParams**：刷新不丢状态、可直接贴
+  链接给协作方（现在的过滤器需点 Apply、无激活态显示、无清除按钮、
+  刷新即丢）。
+
+### F2 traces 阅读体验（排障主战场，随 E3 顺路）
+
+- **链面板就地展开**：现点击行后面板追加在表格之后（DOM 顺序证实），
+  展开结果离点击位置远、需手动滚动——改为行内 accordion 或右侧抽屉
+  并自动滚动到位（CCR 用居中 modal + 遮罩，亦可）。
+- **I/O 内容容器**：长 prompt（实测 800+ 字符）平铺撑页——加
+  max-height 内部滚动 + 输入/输出左右分栏或 tab + 展开态记忆。
+- **状态徽标着色**：OK 绿 / OKFB 蓝 / error 红（error_type 细分色），
+  现为纯文本；与 by_label 表已有的三色成功率风格对齐。
+- **时间列**：`09-25T01:02:07` 无时区标注（CCR 带 GMT+8）——本地时区
+  + 相对时间副行（"3h ago"）+ title 悬浮绝对时间。
+- **Copy 反馈**：Copy ID / copy 点击后按钮瞬时变 ✓（copyImpl seam 已
+  有，补按钮态）。
+- 键盘可达：行展开支持 Enter/Space + `aria-expanded`（现在仅 click）。
+
+### F3 总览图表交互（随 E2 顺路）
+
+- X 轴日期标签稀疏化/旋转（30d 重叠实锤截图）；hover tooltip 逐桶
+  calls/success/tokens/cost（零依赖 SVG title 或轻量 JS tooltip）。
+- 图例精简：卡标题两行全大写（"CALL VOLUME TREND (GREEN ≥95%…RED)"）
+  挪进图内角标，标题缩为一行。
+- KPI 卡环比 delta（vs 上一窗口，可选）；供应商运行时卡 TPM 补 max
+  与百分比上下文（现在只有 "TPM 962" 裸数）。
+
+### F4 反馈与状态
+
+- 窗口/过滤切换加 loading skeleton（现在仅页底一行小字 loading）。
+- traces 刷新按钮 + 30s 自动刷新 toggle（排障时页面常开，E3 已列按钮
+  升级为 toggle）。
+- 空态差异化文案：过滤无结果 vs 窗口内无流量 vs 未开启捕获，三种
+  原因分开说。
+
+### F5 一致性与细节（碎项打包）
+
+- 解锁页文案修正：现文案 "Visit /ops/llm?key=…" 教用户把密钥放 URL
+  （与 P7.2 冲突），且未说明需要登录态——401 会被全局重定向弹到
+  /auth（走查实锤）。改写为"登录后输入 ops key"。
+- traces 页加返回总览的链接/面包屑（现在 unlocked 态无返回入口）。
+- "Trace drill-down" 链接改 locale-aware href（现靠 Next 重定向兜底
+  到 /en/…）。
+- by_label 表列排序（calls/cost/p95）；8 列表格窄屏加横向滚动容器；
+  request_prefix 文案修正（E5 已列，合并到本项执行）。
+
+**验收**：F1 = by_label 行一点直达预过滤的 traces 列表、过滤状态可
+通过 URL 复现；F2 = 展开面板出现在点击位置附近、长内容滚动不撑页、
+徽标三色、时间带时区；F3 = 30d 轴标签不重叠、hover 有数值；F4 = 切
+窗口有 skeleton、刷新可开自动；F5 = 解锁页不再教用户把 key 放 URL。
+全程零新依赖、en/zh 只增量。
+
+## P-G RAG 能力观测可视化（2026-09-25 立项）
+
+> 背景：RAG 能力评估（15 计划 / ASM-01..05）已核实三层观测通道——
+> **检索层**（book_chunks 计数、hybrid_chunk_search 现场重放、命中/
+> 相似度/RRF 序）、**组装层**（P-D 捕获的 system_text 装配结果、
+> TokenBudget 截断率=ASM-03 方法）、**生成层**（SSE tool_status 现场、
+> /logs/llm 的 ttft/finish_reason/fallback 字段）。现状全是脚本与 SQL
+> 手工通道。P-G 把三层搬进 ops UI，评估观测从"跑脚本"变"点开看"。
+
+### 三层 → UI 映射
+
+| 层 | 手工通道现状 | P-G 可视化 |
+| --- | --- | --- |
+| 检索层 | book_chunks SQL 计数 + python 重放脚本 | G2：数据面健康卡（零分块孤儿告警）+ 检索重放工作台（相似度/RRF 序表格） |
+| 组装层 | prompt_text 原文肉眼看 + 手工对比截断 | G1：RAG 透视面板——装配分段占比条（防剧透/RAG 片段/历史/工具/指令）+ 截断率 + RAG 空警示 |
+| 生成层 | DevTools SSE 现场 + /logs/llm 逐字段 | G3：span 面板补 finish_reason / 工具结果段（ttft/tokens/fallback 链面板已有） |
+
+### G1 调用级组装透视（traces 链面板内）
+
+- **G1a 纯前端分段解析（先落地，零采集改动）**：I/O 面板加
+  "结构化 / 原始"切换——按当前模板标记（`[system]/[human]`、`[文档N]`、
+  防剧透块头；标记清单以真实捕获校准）把 prompt_text 切段，渲染装配
+  占比堆叠条 + 各段字符数 + `rag_doc_count`。解析器随 `prompt_version`
+  版本化（span 已带该字段），解析失败回退原始视图不阻塞。
+- **G1b 采集端结构化 `assembly_meta`（聚合看板地基，并入 0032）**：
+  内容捕获时由服务端按同一套标记解析出
+  `assembly_meta JSONB`——`{segments:{spoiler,rag,history,tools,
+  instruction}, rag_doc_count, history_original_len, history_in_prompt_len}`
+  随内容行入库；截断率 `= 1 - in_prompt/original`。价值：ASM-01..05
+  断言从"解析文本"升级为"读字段"，且 G4 聚合可 SQL 化。
+- `rag_doc_count=0` 显示警示"RAG 片段为空（book_chunks=0 或未命中）"
+  ——本轮评估的实际教训（15 本零分块孤儿）产品化为逐调用可见。
+
+### G2 检索层：数据面健康 + 检索重放（新页 `/ops/llm/rag`）
+
+- **G2a 数据面健康卡**：新端点 `GET /api/v1/stats/llm/rag/books`
+  （require_ops_key）——按 book 聚合 book_chunks 计数、content_hash
+  共享范围、最近索引时间；**零分块书置顶告警**（孤儿书 = hit@3 归零
+  根因之一，见 RAG 评估诊断 0.415→0.585 的教训）。
+- **G2b 检索重放工作台**：`POST /api/v1/stats/llm/rag/replay`
+  （require_ops_key，只读）——表单 {book_id, query, top_k,
+  max_chapter_index, content_hash} → 直调 `hybrid_chunk_search`
+  （**不走 LLM**）→ 表格渲染相似度 / RRF 融合序 / chunk 预览。把
+  "现场复现单次检索"的 python 脚本变成一次点击；重放含 1 次 query
+  嵌入调用（成本可忽略，响应带 embedding latency 字段）。
+
+### G3 生成层补齐（小）
+
+- span 面板补 `finish_reason` 展示（字段已落库未展示；`stop` vs 长度
+  截断一眼可辨）与工具结果段标识（G1 分段中的 tools 段）；
+  ttft/tokens/fallback 链面板已覆盖。
+- **明示取舍**：SSE 事中观测（tool_status 帧）保留在 DevTools 层，不
+  进 ops UI——事中通道属产品运行时，事后遥测才是监控模块边界。
+
+### G4 组装健康聚合（依赖 G1b）
+
+- `/ops/llm/rag` 页顶聚合条：窗口内 RAG 片段覆盖率（rag_doc_count>0
+  占比）、平均 RAG 字符占比、历史截断率、防剧透块覆盖率——ASM 断言
+  的看板化；数据源 = assembly_meta 在内容表 7 天保留窗口内的 SQL 聚合。
+
+### 边界
+
+不做 SSE 实时转发进 ops；不做嵌入向量可视化（相似度数值已够排障）；
+分段解析只服务 ops 遥测，不触碰产品提示词装配路径。
+
+### 顺序与验收
+
+**G1a / G2 与 P-E 并行先行（无迁移、纯增量）**；G1b 并入 0032；G4 随
+G1b 落地后。验收：G1a = 任意 companion span 可切结构化视图正确切段、
+RAG 空警示可见；G2 = 零分块书在健康卡置顶、重放表单返回相似度序；
+G1b+G4 = 聚合条数字与逐 span 元数据一致；纪律同 §7（ops-key header、
+en/zh 只增量、SQLite+PG 双绿、零新依赖）。
+
 ## 明确不做（边界）
 
 - 账户余额卡（供应商 API 口径不一）
@@ -288,3 +563,6 @@ observability 条目（"file-only, never DB" → 新口径）、llm-metrics.md
 
 P-A（后端 API）→ P-B（前端消费）→ P-C（rollup 是性能债，最后做）。
 P-B 依赖 P-A 的 API 形状冻结；P-C 独立于两者，可并行。
+P-D 已完成（09-24）；当前执行 **P-E：E0 → E1 → E2 → E3 → E4/E5 并行**；
+P-F 布局与交互随 E2/E3 顺路，F1 可独立先行。**P-G（RAG 观测）与 P-E
+并行：G1a/G2 先行（无迁移），G1b 并入 0032，G4 随后。**

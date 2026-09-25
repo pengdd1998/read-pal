@@ -40,6 +40,7 @@ interface ListData {
   limit: number;
   offset: number;
   items: TraceSpan[];
+  content_search_unavailable?: boolean;
 }
 
 interface ChainData {
@@ -84,6 +85,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
   const [labelFilter, setLabelFilter] = useState(() => searchParams?.get('label') || '');
   const [onlyFailed, setOnlyFailed] = useState(() => Boolean(searchParams?.get('error_type')));
   const [requestPrefix, setRequestPrefix] = useState('');
+  const [contentQuery, setContentQuery] = useState('');
   const [page, setPage] = useState(0);
   const [data, setData] = useState<ListData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -103,6 +105,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
         if (errorType) params.error_type = errorType;
       }
       if (requestPrefix.trim()) params.request_prefix = requestPrefix.trim();
+      if (contentQuery.trim()) params.q = contentQuery.trim();
       const res = await api.get<ListData>('/api/v1/stats/llm/requests', params, {
         headers: { 'X-Ops-Key': opsKey },
       });
@@ -112,7 +115,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
     } finally {
       setLoading(false);
     }
-  }, [hours, labelFilter, onlyFailed, requestPrefix, page, opsKey, searchParams]);
+  }, [hours, labelFilter, onlyFailed, requestPrefix, contentQuery, page, opsKey, searchParams]);
 
   useEffect(() => {
     load();
@@ -220,6 +223,13 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
           placeholder={t('f_request')}
           className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm w-44 font-mono"
         />
+        <input
+          value={contentQuery}
+          onChange={(e) => { setContentQuery(e.target.value); setPage(0); }}
+          placeholder={t('f_content_search')}
+          data-testid="content-search"
+          className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm w-56"
+        />
         <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
           <input type="checkbox" checked={onlyFailed} onChange={(e) => { setOnlyFailed(e.target.checked); setPage(0); }} />
           {t('f_failed')}
@@ -227,6 +237,9 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
         <button type="button" onClick={load} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-sm">
           {t('f_apply')}
         </button>
+        {data?.content_search_unavailable && (
+          <span className="text-xs text-amber-600" data-testid="content-search-off">{t('content_search_off')}</span>
+        )}
         <span className="text-xs text-gray-400 ml-auto">{t('total_rows', { count: total })}</span>
       </div>
 

@@ -111,13 +111,16 @@ def _grouped_counts(
     }
 
 
-async def compute_llm_metrics(
+async def compute_llm_metrics(  # noqa: C901,PLR0915 — metric aggregation is one cohesive pipeline
     *,
     hours: int = 24,
     session: AsyncSession | None = None,
     user_id: str | None = None,
     force_global: bool = False,
     guardrail_days: int = 1,
+    filter_label: str | None = None,
+    filter_provider: str | None = None,
+    filter_model: str | None = None,
 ) -> dict[str, Any]:
     """Aggregate the five minimal indicators over the last ``hours``.
 
@@ -193,6 +196,13 @@ async def compute_llm_metrics(
         ).where(LLMCallTrace.created_at >= since)
         if not global_scope:
             q = q.where(LLMCallTrace.user_id == user_id)
+        # E2: global filters (ops dashboard drill-through)
+        if filter_label:
+            q = q.where(LLMCallTrace.label == filter_label)
+        if filter_provider:
+            q = q.where(LLMCallTrace.provider == filter_provider)
+        if filter_model:
+            q = q.where(LLMCallTrace.model == filter_model)
         return q.order_by(LLMCallTrace.created_at.desc()).limit(MAX_METRICS_ROWS)
 
     if session is not None:

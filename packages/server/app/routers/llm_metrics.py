@@ -36,6 +36,9 @@ router = APIRouter(
 async def get_llm_metrics(
     hours: int = Query(24, ge=1, le=MAX_METRICS_WINDOW_HOURS),
     guardrail_days: int = Query(1, ge=1, le=30),
+    label: str | None = Query(None, max_length=100),
+    provider: str | None = Query(None, max_length=32),
+    model: str | None = Query(None, max_length=50),
     x_ops_key: str | None = Header(None, alias='X-Ops-Key'),  # P7.2 — never in the URL (access logs)
     _current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -55,6 +58,9 @@ async def get_llm_metrics(
         user_id=None if ops_ok else str(_current_user['id']),
         force_global=ops_ok,
         guardrail_days=guardrail_days,
+        filter_label=label,
+        filter_provider=provider,
+        filter_model=model,
     )
     return GenericResponse(success=True, data=data)
 
@@ -66,13 +72,14 @@ async def list_llm_trace_rows(
     success: bool | None = Query(None),
     error_type: str | None = Query(None, max_length=32),
     request_prefix: str | None = Query(None, max_length=50, description='http_request_id prefix search'),
+    q: str | None = Query(None, max_length=200, description='E1: search in captured prompt/output text'),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
 ) -> GenericResponse:
     """Row-level trace list (ops-only): newest-first, filterable, paginated.
     ``user`` fields are salted-free 8-hex digests — correlation without
-    exposing ids."""
+    exposing ids. ``q`` searches llm_trace_contents text (E1)."""
     data = await list_llm_traces(
         db,
         hours=hours,
@@ -80,6 +87,7 @@ async def list_llm_trace_rows(
         success=success,
         error_type=error_type,
         request_prefix=request_prefix,
+        q=q,
         limit=limit,
         offset=offset,
     )

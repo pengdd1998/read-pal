@@ -2381,6 +2381,17 @@
     "content_empty_cache": "缓存命中——无真实调用内容",
     "content_empty_failed": "失败调用——未捕获内容",
     "content_empty_expired": "未捕获或已过保留期",
-    "content_disabled_banner": "内容捕获未开启：设置 LLM_TRACE_CONTENT_DB=true 并重建后端后生效"
+    "content_disabled_banner": "内容捕获未开启：设置 LLM_TRACE_CONTENT_DB=true 并重建后端后生效",
+    "f_content_search": "搜索请求或响应内容",
+    "content_search_off": "内容搜索不可用（未开启 LLM_TRACE_CONTENT_DB）",
+    "filter_label": "按 label",
+    "filter_provider": "按供应商",
+    "filter_model": "按模型",
+    "filter_all": "全部",
+    "refresh": "刷新",
+    "token_composition": "Token 构成",
+    "tokens_in": "输入",
+    "tokens_out": "输出",
+    "day_strip": "系统状态日条带"
   }
 }

@@ -2381,6 +2381,17 @@
     "content_empty_cache": "cache-served — no live call content",
     "content_empty_failed": "failed call — content not captured",
     "content_empty_expired": "not captured or past retention",
-    "content_disabled_banner": "Content capture is off — set LLM_TRACE_CONTENT_DB=true and redeploy to enable"
+    "content_disabled_banner": "Content capture is off — set LLM_TRACE_CONTENT_DB=true and redeploy to enable",
+    "f_content_search": "Search prompt or response text",
+    "content_search_off": "Content search unavailable (LLM_TRACE_CONTENT_DB not enabled)",
+    "filter_label": "By label",
+    "filter_provider": "By provider",
+    "filter_model": "By model",
+    "filter_all": "All",
+    "refresh": "Refresh",
+    "token_composition": "Token composition",
+    "tokens_in": "Input",
+    "tokens_out": "Output",
+    "day_strip": "Daily system status"
   }
 }

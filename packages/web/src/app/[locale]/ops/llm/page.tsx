@@ -41,6 +41,9 @@ export default function OpsLlmPage() {
   const [key, setKey] = useState('');
   const [authed, setAuthed] = useState(false);
   const [hours, setHours] = useState(720);
+  const [fLabel, setFLabel] = useState('');
+  const [fProvider, setFProvider] = useState('');
+  const [fModel, setFModel] = useState('');
   const [data, setData] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +52,7 @@ export default function OpsLlmPage() {
     // secret in browser history and nginx access logs (page navigation).
     const saved = sessionStorage.getItem('ops-key');
     if (saved) setKey(saved);
-  }, []);
+  }, [, fLabel, fProvider, fModel]);
 
   const load = useCallback(async (h: number, k: string) => {
     if (!k) return;
@@ -59,7 +62,7 @@ export default function OpsLlmPage() {
       // line, so a query key would be persisted server-side on every call.
       const res = await api.get<MetricsData>(
         '/api/v1/stats/llm',
-        { hours: h },
+        { hours: h, ...(fLabel && { label: fLabel }), ...(fProvider && { provider: fProvider }), ...(fModel && { model: fModel }) },
         { headers: { 'X-Ops-Key': k } },
       );
       if (res.success && res.data) {
@@ -78,7 +81,7 @@ export default function OpsLlmPage() {
 
   useEffect(() => {
     if (key) load(hours, key);
-  }, [key, hours, load]);
+  }, [key, hours, load, fLabel, fProvider, fModel]);
 
   if (!key || (!authed && !loading && key)) {
     return (
@@ -117,6 +120,23 @@ export default function OpsLlmPage() {
           <a href="/ops/llm/traces" className="px-3.5 py-1.5 rounded-lg text-sm font-medium bg-surface-1 text-gray-600 dark:text-gray-300 hover:border-primary-400 border border-transparent hover:border">
             🔍 {t('traces_link')}
           </a>
+          <select value={fLabel} onChange={(e) => setFLabel(e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm" aria-label={t('filter_label')}>
+            <option value="">{t('filter_label')}: {t('filter_all')}</option>
+            {(data?.by_label ?? []).map((r) => <option key={r.label} value={r.label}>{r.label}</option>)}
+          </select>
+          <select value={fProvider} onChange={(e) => setFProvider(e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm" aria-label={t('filter_provider')}>
+            <option value="">{t('filter_provider')}: {t('filter_all')}</option>
+            {Object.keys(data?.by_provider ?? {}).map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select value={fModel} onChange={(e) => setFModel(e.target.value)}
+            className="px-2.5 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm" aria-label={t('filter_model')}>
+            <option value="">{t('filter_model')}: {t('filter_all')}</option>
+            {Object.keys(data?.by_model ?? {}).map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <button type="button" onClick={() => load(hours, key)}
+            className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-sm">{t('refresh')}</button>
           <div className="flex gap-1.5">
             {[24, 168, 720].map((h) => (
               <button
