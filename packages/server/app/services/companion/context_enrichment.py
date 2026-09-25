@@ -11,9 +11,13 @@ from app.services.companion.query_classifier import refine_rag_query
 logger = structlog.get_logger('read-pal.companion')
 
 # RAG fetch parameters keyed by query classification
+# 2026-09-25: chunk_size 2000→500 means each chunk carries less info —
+# top_k 5→7 compensates (7×500 ≈ 3×2000 in total context), max_chars
+# 5000→8000 lets the extra chunks through (Phase 2 of the quad-metric
+# optimization; ablation-verified against the 2000/256 baseline).
 RAG_PARAMS: dict[str, dict[str, int]] = {
-    'content': {'top_k': 5, 'max_chars': 5000},
-    'general': {'top_k': 2, 'max_chars': 1500},
+    'content': {'top_k': 7, 'max_chars': 8000},
+    'general': {'top_k': 3, 'max_chars': 2000},
 }
 
 # Summary regeneration rides INLINE before the companion answer can be

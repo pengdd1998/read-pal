@@ -92,6 +92,9 @@ services:
       # = disabled (zero-dependency P1 chapter aggregation stays).
       RERANK_API_KEY: ${RERANK_API_KEY:-}
       RERANK_MODEL: ${RERANK_MODEL:-BAAI/bge-reranker-v2-m3}
+      # RAG chunking granularity (2026-09-25: 500 = 3.9x focus vs 2000)
+      RAG_CHUNK_SIZE: ${RAG_CHUNK_SIZE:-500}
+      RAG_CHUNK_OVERLAP: ${RAG_CHUNK_OVERLAP:-64}
       # SMTP Configuration (optional)
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}

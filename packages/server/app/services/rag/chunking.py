@@ -26,7 +26,18 @@ def _split_long_paragraph(paragraph: str, chunk_size: int) -> list[str]:
     return sub_chunks
 
 
-def _chunk_text(text: str, chunk_size: int = 2000, overlap: int = 256) -> list[str]:
+def _chunk_text(text: str, chunk_size: int | None = None, overlap: int | None = None) -> list[str]:
+    """Split text into paragraph-aware chunks for RAG retrieval.
+
+    ``chunk_size``/``overlap`` default to the configured values
+    (``RAG_CHUNK_SIZE`` / ``RAG_CHUNK_OVERLAP`` env) — callers that
+    pass explicit values (tests, rebuild scripts) override.
+    """
+    if chunk_size is None or overlap is None:
+        from app.config import get_settings
+        _settings = get_settings()
+        chunk_size = chunk_size or _settings.rag_chunk_size
+        overlap = overlap if overlap is not None else _settings.rag_chunk_overlap
     """Split text into paragraph-aware chunks for RAG retrieval.
 
     Strategy:

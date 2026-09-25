@@ -118,7 +118,7 @@
     "spoiler_block_completed": "\n\nThe user has finished this book — feel free to discuss all plot points, character arcs, twists, and the ending openly.",
     "spoiler_block_unknown": "\n\nThe user is at an early stage of this book. Avoid revealing any plot developments, character arcs, twists, or outcomes — focus on themes and opening material only.",
     "annotations_context": "\n\n<annotations>\n{annotations}\n</annotations>",
-    "rag_context": "\n\n<book_passages>\nRelevant passages from the book (use these to support your discussion, but do NOT reveal spoilers from beyond the reader's current position):\n{context}\n</book_passages>",
+    "rag_context": "\n\n<book_passages>\nSTRICT GROUNDING: Only state facts present in these passages. If the passages don't contain the answer, say you're not sure — do NOT fabricate plot details, character names, or events.\nRelevant passages from the book (do NOT reveal spoilers from beyond the reader's current position):\n{context}\n</book_passages>",
     "memory_context": "\n\n<memory_summary>\nSummary of previous conversation context:\n{summary}\n</memory_summary>",
     "chapter_content": "\n\n<chapter_content>\nCurrent chapter content:\n{content}\n</chapter_content>",
     "nearby_code": "\n\n<nearby_code>\nNearby code examples:\n{code}\n</nearby_code>",

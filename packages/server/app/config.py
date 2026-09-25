@@ -214,6 +214,13 @@ class Settings(BaseSettings):
     rerank_api_key: str | None = None
     rerank_model: str = 'BAAI/bge-reranker-v2-m3'
 
+    # RAG chunking granularity (2026-09-25 optimization from chunk-size
+    # experiment): 500 chars = 3.9× semantic focus vs the old 2000 —
+    # gold sentences occupy ~8% of each chunk instead of 2%, directly
+    # improving Context Precision and paraphrase matching.
+    rag_chunk_size: int = 500
+    rag_chunk_overlap: int = 64
+
     # Cache TTL (duration strings — parsed to seconds)
     cache_llm_ttl: str = '30m'
     cache_rag_ttl: str = '30m'
