@@ -14,7 +14,7 @@ router = APIRouter(
 )
 
 
-@router.get('/rag/books', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
+@router.get('/books', response_model=GenericResponse)
 async def rag_book_health(
     db: AsyncSession = Depends(get_db),
 ) -> GenericResponse:
@@ -24,7 +24,7 @@ async def rag_book_health(
     return GenericResponse(success=True, data=data)
 
 
-@router.post('/rag/replay', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
+@router.post('/replay', response_model=GenericResponse)
 async def rag_replay(
     body: dict,
     db: AsyncSession = Depends(get_db),
@@ -47,7 +47,7 @@ async def rag_replay(
     return GenericResponse(success=True, data=data)
 
 
-@router.post('/rag/trace', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
+@router.post('/trace', response_model=GenericResponse)
 async def rag_trace(
     body: dict,
     db: AsyncSession = Depends(get_db),
