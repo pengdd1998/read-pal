@@ -65,6 +65,9 @@ def _span_dict(t: LLMCallTrace) -> dict[str, Any]:
         },
         'estimated_cost_usd': t.estimated_cost_usd,
         'user': short_uid(t.user_id),
+        'http_status': t.http_status,
+        'streaming': t.streaming,
+        'cache_read_tokens': t.cache_read_tokens,
         'book_id': t.book_id,
     }
 

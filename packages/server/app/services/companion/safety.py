@@ -67,6 +67,7 @@ def persist_stream_log(
             # E0.3: without this, 51% of streaming traces had provider
             # "(unset)" — the traces UI showed no provider attribution.
             'provider': provider,
+            'streaming': True,
         })
     except (ValueError, RuntimeError, ConnectionError) as exc:
         logger.warning('companion.safety.observability_log_failed', error=str(exc)[:200])

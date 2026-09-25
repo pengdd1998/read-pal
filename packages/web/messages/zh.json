@@ -2392,6 +2392,20 @@
     "token_composition": "Token 构成",
     "tokens_in": "输入",
     "tokens_out": "输出",
-    "day_strip": "系统状态日条带"
+    "day_strip": "系统状态日条带",
+    "t_status_col": "状态",
+    "t_streaming": "流式",
+    "t_http": "HTTP",
+    "page_size": "每页",
+    "auto_refresh": "自动刷新",
+    "waterfall": "瀑布时间线",
+    "chain_start": "链起点",
+    "relative_now": "刚刚",
+    "relative_min": "{n}分钟前",
+    "relative_hour": "{n}小时前",
+    "relative_day": "{n}天前",
+    "status_ok": "OK",
+    "status_okfb": "OK·FB",
+    "status_error": "错误"
   }
 }

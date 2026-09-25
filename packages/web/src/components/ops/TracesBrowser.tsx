@@ -33,6 +33,10 @@ interface TraceSpan {
   tokens: { input: number; output: number; total: number };
   estimated_cost_usd: number;
   user: string | null;
+  http_status?: number | null;
+  streaming?: boolean | null;
+  cache_read_tokens?: number | null;
+  finish_reason?: string | null;
 }
 
 interface ListData {
@@ -87,6 +91,8 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
   const [requestPrefix, setRequestPrefix] = useState('');
   const [contentQuery, setContentQuery] = useState('');
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const [data, setData] = useState<ListData | null>(null);
   const [loading, setLoading] = useState(false);
   const [chain, setChain] = useState<ChainData | null>(null);
@@ -97,7 +103,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
     setLoading(true);
     setChain(null);
     try {
-      const params: Record<string, string | number | boolean> = { hours, limit: PAGE_SIZE, offset: page * PAGE_SIZE };
+      const params: Record<string, string | number | boolean> = { hours, limit: pageSize, offset: page * pageSize };
       if (labelFilter.trim()) params.label = labelFilter.trim();
       const errorType = searchParams?.get('error_type');
       if (onlyFailed) {
@@ -120,6 +126,13 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
   useEffect(() => {
     load();
   }, [load]);
+
+  // F4: auto-refresh for live troubleshooting
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+  }, [autoRefresh, load]);
 
   const openChain = useCallback(async (httpRequestId: string) => {
     if (!httpRequestId) return;
@@ -196,7 +209,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
   }, [opsKey, spanContent]);
 
   const total = data?.total ?? 0;
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const pages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
     <div className="space-y-4">
@@ -237,6 +250,17 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
         <button type="button" onClick={load} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-sm">
           {t('f_apply')}
         </button>
+        <button type="button" onClick={load} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-sm">
+          ↻
+        </button>
+        <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+          <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
+          {t('auto_refresh')}
+        </label>
+        <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
+          className="px-2 py-1 rounded border border-surface-3 bg-surface-1 text-xs" aria-label={t('page_size')}>
+          {[25, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
         {data?.content_search_unavailable && (
           <span className="text-xs text-amber-600" data-testid="content-search-off">{t('content_search_off')}</span>
         )}
@@ -252,6 +276,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
               <th className="px-3 py-2.5">model</th>
               <th className="px-3 py-2.5">{t('t_latency')}</th>
               <th className="px-3 py-2.5">{t('t_status')}</th>
+              <th className="px-3 py-2.5">{t('t_http')}</th>
               <th className="px-3 py-2.5">request_id</th>
             </tr>
           </thead>
@@ -267,18 +292,23 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
                 <td className="px-3 py-2.5 text-xs text-gray-500">{row.provider}/{row.model}</td>
                 <td className="px-3 py-2.5 tabular-nums">{(row.latency_ms / 1000).toFixed(1)}s</td>
                 <td className="px-3 py-2.5">
-                  {row.success ? (
-                    <span className="text-green-600 dark:text-green-400">OK</span>
-                  ) : (
-                    <span className="text-red-600 dark:text-red-400">{row.error_type || 'error'}</span>
-                  )}
-                  {row.fallback_used && <span className="ml-1 text-[10px] text-amber-600">FB</span>}
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    row.success
+                      ? row.fallback_used
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40'
+                        : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800/40'
+                      : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/40'
+                  }`}>
+                    {row.success ? (row.fallback_used ? t('status_okfb') : t('status_ok')) : (row.error_type || t('status_error'))}
+                  </span>
+                  {row.streaming && <span className="ml-1 text-[9px] text-violet-500" title={t('t_streaming')}>⚡</span>}
                 </td>
+                <td className="px-3 py-2.5 text-xs text-gray-400 tabular-nums">{row.http_status ?? '—'}</td>
                 <td className="px-3 py-2.5 font-mono text-xs text-gray-500">{row.http_request_id || '—'}</td>
               </tr>
             ))}
             {(!data || data.items.length === 0) && !loading && (
-              <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-400">{t('empty')}</td></tr>
+              <tr><td colSpan={7} className="px-3 py-8 text-center text-gray-400">{t('empty')}</td></tr>
             )}
           </tbody>
         </table>
@@ -290,7 +320,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
             ←
           </button>
           <span className="text-xs text-gray-500">{page + 1} / {pages}</span>
-          <button type="button" disabled={(page + 1) * PAGE_SIZE >= total} onClick={() => setPage(page + 1)} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 disabled:opacity-40">
+          <button type="button" disabled={(page + 1) * pageSize >= total} onClick={() => setPage(page + 1)} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 disabled:opacity-40">
             →
           </button>
         </div>
@@ -319,6 +349,41 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
                   {chain.has_fallback ? ` · ${t('chain_fallback')}` : ''}
                 </span>
               </div>
+              {/* F2: waterfall timeline — span bars offset from chain start */}
+              {chain.spans.length > 1 && (() => {
+                const starts = chain.spans.map((sp) => new Date(sp.ts).getTime());
+                const chainStart = Math.min(...starts);
+                const chainEnd = Math.max(...chain.spans.map((sp, i) => starts[i] + sp.latency_ms));
+                const totalMs = Math.max(chainEnd - chainStart, 1);
+                return (
+                  <div className="mb-3 rounded-lg border border-surface-3 p-3" data-testid="waterfall">
+                    <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-2">{t('waterfall')}</div>
+                    {chain.spans.map((sp, i) => {
+                      const offset = ((starts[i] - chainStart) / totalMs) * 100;
+                      const width = (sp.latency_ms / totalMs) * 100;
+                      return (
+                        <div key={sp.id} className="flex items-center gap-2 mb-1">
+                          <span className="text-[10px] text-gray-500 w-16 truncate">{sp.label}</span>
+                          <div className="flex-1 h-4 bg-surface-1 rounded relative overflow-hidden">
+                            <div
+                              className={`absolute h-full rounded ${sp.success ? 'bg-green-400/70' : 'bg-red-400/70'}`}
+                              style={{ left: `${offset}%`, width: `${Math.max(width, 1)}%` }}
+                            />
+                            {sp.ttft_ms != null && (
+                              <div
+                                className="absolute top-0 bottom-0 w-px bg-amber-500"
+                                style={{ left: `${offset + (sp.ttft_ms / totalMs) * 100}%` }}
+                                title={`TTFT ${(sp.ttft_ms / 1000).toFixed(1)}s`}
+                              />
+                            )}
+                          </div>
+                          <span className="text-[10px] text-gray-400 tabular-nums w-12">{(sp.latency_ms / 1000).toFixed(1)}s</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
               <ol className="space-y-1.5">
                 {chain.spans.map((s) => {
                   const cs = spanContent[s.id];

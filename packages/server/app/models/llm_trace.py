@@ -60,6 +60,10 @@ class LLMCallTrace(Base):
     # upgrade follow-up): HTTP request-log id bound by request_log middleware,
     # correlates LLM traces to HTTP access logs.
     http_request_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # E3 (migration 0035): workbench parity collection enhancement.
+    http_status: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    streaming: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    cache_read_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Added in migration 0029 (engineering-upgrade follow-up): per-user /
     # per-book attribution. Previously user_id/book_id only reached stdout
     # logs, so badcase triage couldn't query "all LLM calls for this user".

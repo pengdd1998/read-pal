@@ -2392,6 +2392,20 @@
     "token_composition": "Token composition",
     "tokens_in": "Input",
     "tokens_out": "Output",
-    "day_strip": "Daily system status"
+    "day_strip": "Daily system status",
+    "t_status_col": "Status",
+    "t_streaming": "Stream",
+    "t_http": "HTTP",
+    "page_size": "Per page",
+    "auto_refresh": "Auto refresh",
+    "waterfall": "Waterfall timeline",
+    "chain_start": "Chain start",
+    "relative_now": "just now",
+    "relative_min": "{n}m ago",
+    "relative_hour": "{n}h ago",
+    "relative_day": "{n}d ago",
+    "status_ok": "OK",
+    "status_okfb": "OK·FB",
+    "status_error": "Error"
   }
 }
