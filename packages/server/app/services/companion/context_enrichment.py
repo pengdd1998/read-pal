@@ -41,8 +41,13 @@ async def fetch_rag(
         return ''
     try:
         from app.services.rag import get_book_context
+        from app.services.rag.query_expansion import expand_rag_query
 
         rag_query = refine_rag_query(message, history_texts)
+        # P0-2: expand vague queries into retrieval keywords — the user's
+        # phrasing ("夜晚孤独感") rarely matches the book's prose vocabulary;
+        # keyword expansion bridges the gap. Falls back to raw query.
+        rag_query = await expand_rag_query(rag_query)
         params = RAG_PARAMS.get(classification, RAG_PARAMS['general'])
         return await get_book_context(
             db, user_id, book_id, rag_query,

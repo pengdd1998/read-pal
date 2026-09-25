@@ -81,12 +81,18 @@ def chapter_coverage_merge(
 async def rerank_chunks(
     query: str, chunks: list[dict[str, Any]],
 ) -> list[dict[str, Any]] | None:
-    """P2 cross-encoder rerank over the chapter-boosted candidates.
+    """P2 cross-encoder rerank with hybrid scoring (P1-1, 2026-09-25).
+
+    Blends rather than replaces: ``final = 0.6 × embedding_sim +
+    0.4 × rerank_score`` (both normalized to [0,1]). Pure replacement
+    (the original P2) promoted single best passages at the cost of
+    coverage diversity — hit@5 dropped in multi-anchor A/B. The blend
+    keeps the reranker's precision gain while preserving the semantic
+    ordering's diversity.
 
     Returns None when disabled or on any failure — the caller then keeps
     the P1 ordering (graceful degradation, same contract as the embedding
-    fallbacks). Reorders by relevance only; payload similarity values are
-    preserved for the negative-sample metric.
+    fallbacks).
     """
     from app.services.rag.rerank import CANDIDATE_CAP, rerank_passages
 
@@ -96,5 +102,17 @@ async def rerank_chunks(
     scores = await rerank_passages(query, [c.get('content') or '' for c in candidates])
     if scores is None:
         return None
-    order = sorted(range(len(candidates)), key=lambda i: scores[i], reverse=True)
+
+    # Normalize both signals to [0,1] then blend
+    sim_values = [c.get('similarity') or 0.0 for c in candidates]
+    sim_max = max(sim_values) if sim_values else 1.0
+    sim_max = max(sim_max, 1e-9)
+    rnk_max = max(scores) if scores else 1.0
+    rnk_max = max(abs(rnk_max), 1e-9)
+
+    final_scores = [
+        0.6 * (sim_values[i] / sim_max) + 0.4 * (scores[i] / rnk_max)
+        for i in range(len(candidates))
+    ]
+    order = sorted(range(len(candidates)), key=lambda i: final_scores[i], reverse=True)
     return [candidates[i] for i in order]
