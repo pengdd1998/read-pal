@@ -146,39 +146,3 @@ async def get_llm_trace_content(
             },
         )
     return GenericResponse(success=True, data=data)
-
-# ---------------------------------------------------------------------------
-# G2: RAG observability (P-G)
-# ---------------------------------------------------------------------------
-
-@router.get('/rag/books', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
-async def rag_book_health(
-    db: AsyncSession = Depends(get_db),
-) -> GenericResponse:
-    """G2a: per-book chunk health — zero-chunk books surface first."""
-    from app.services.llm.rag_queries import rag_book_health
-    data = await rag_book_health(db)
-    return GenericResponse(success=True, data=data)
-
-
-@router.post('/rag/replay', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
-async def rag_replay(
-    body: dict,
-    db: AsyncSession = Depends(get_db),
-) -> GenericResponse:
-    """G2b: replay a single hybrid_chunk_search call (no LLM)."""
-    from app.services.llm.rag_queries import rag_replay_search
-
-    query = body.get('query', '')
-    if not query:
-        raise HTTPException(status_code=422, detail={'code': 'QUERY_REQUIRED', 'message': 'query is required'})
-
-    data = await rag_replay_search(
-        db,
-        book_id=body.get('book_id', ''),
-        query=query,
-        top_k=min(int(body.get('top_k', 5)), 20),
-        max_chapter_index=body.get('max_chapter_index'),
-        content_hash=body.get('content_hash'),
-    )
-    return GenericResponse(success=True, data=data)

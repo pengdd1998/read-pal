@@ -369,6 +369,37 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
                 >
                   {copied === chain.http_request_id ? t('copied') : t('copy_id')}
                 </button>
+                {(() => {
+                  // Extract the last [human] message from the first span's
+                  // content to pre-fill the RAG replay query
+                  const humanSpan = chain.spans.find((sp) => sp.label === 'companion.stream');
+                  return humanSpan ? (
+                    <a
+                      href={`/ops/llm/rag?replay_query=${encodeURIComponent('')}`}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        // Fetch content to get the user's query
+                        try {
+                          const mq = humanSpan.model ? `?model=${encodeURIComponent(humanSpan.model)}` : '';
+                          const cr = await authFetch(
+                            `/api/v1/stats/llm/requests/${humanSpan.request_id}/content${mq}`,
+                            { headers: { 'X-Ops-Key': opsKey } },
+                          );
+                          if (cr.ok) {
+                            const cb = await cr.json();
+                            const prompt = cb?.data?.prompt_text || '';
+                            const humans = prompt.split('[human]').filter(Boolean);
+                            const lastHuman = humans[humans.length - 1]?.trim().slice(0, 200) || '';
+                            window.location.href = `/ops/llm/rag?replay_query=${encodeURIComponent(lastHuman)}&book_id=`;
+                          }
+                        } catch { /* fallback: no query extraction */ }
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-xs text-amber-700 dark:text-amber-300 hover:border-amber-400 cursor-pointer"
+                    >
+                      📊 {t('rag_replay_in')}
+                    </a>
+                  ) : null;
+                })()}
                 <span className="text-xs text-gray-500">
                   {t('chain_summary', {
                     spans: chain.span_count,

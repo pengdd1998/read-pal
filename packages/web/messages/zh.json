@@ -2428,6 +2428,27 @@
     "assembly_instruction": "指令",
     "assembly_chars": "字符",
     "assembly_rag_count": "RAG 文档数",
-    "assembly_rag_empty": "⚠️ RAG 片段为空（book_chunks=0 或未命中）"
+    "assembly_rag_empty": "⚠️ RAG 片段为空（book_chunks=0 或未命中）",
+    "trace_title": "全链路追踪",
+    "trace_btn": "全链路追踪",
+    "stage_embedding": "查询嵌入",
+    "stage_semantic": "语义检索",
+    "stage_keyword": "关键词检索",
+    "stage_rrf": "RRF 融合",
+    "stage_coverage": "章覆盖合并",
+    "stage_context": "上下文装配",
+    "stage_prompt": "LLM Prompt 预览",
+    "trace_sql": "SQL",
+    "trace_params": "参数",
+    "trace_tokens": "分词",
+    "trace_results": "结果",
+    "trace_latency": "延迟",
+    "trace_dims": "维度",
+    "trace_rows": "行数",
+    "trace_total": "总延迟",
+    "trace_succeeded": "成功",
+    "trace_failed": "失败",
+    "trace_cached": "缓存命中",
+    "rag_replay_in": "在 RAG 页重放"
   }
 }

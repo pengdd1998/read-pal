@@ -2428,6 +2428,27 @@
     "assembly_instruction": "Instruction",
     "assembly_chars": "chars",
     "assembly_rag_count": "RAG docs",
-    "assembly_rag_empty": "⚠️ RAG passages empty (book_chunks=0 or no match)"
+    "assembly_rag_empty": "⚠️ RAG passages empty (book_chunks=0 or no match)",
+    "trace_title": "Full-chain trace",
+    "trace_btn": "Full trace",
+    "stage_embedding": "Query embedding",
+    "stage_semantic": "Semantic search",
+    "stage_keyword": "Keyword search",
+    "stage_rrf": "RRF fusion",
+    "stage_coverage": "Chapter coverage",
+    "stage_context": "Context assembly",
+    "stage_prompt": "LLM prompt preview",
+    "trace_sql": "SQL",
+    "trace_params": "Params",
+    "trace_tokens": "Tokens",
+    "trace_results": "Results",
+    "trace_latency": "Latency",
+    "trace_dims": "Dims",
+    "trace_rows": "Rows",
+    "trace_total": "Total latency",
+    "trace_succeeded": "succeeded",
+    "trace_failed": "failed",
+    "trace_cached": "cached",
+    "rag_replay_in": "Replay in RAG page"
   }
 }
