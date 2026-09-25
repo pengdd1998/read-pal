@@ -2349,7 +2349,7 @@
     "t_ttft": "p95 TTFT",
     "t_cost": "Cost",
     "f_label": "Filter by label",
-    "f_request": "request_id prefix",
+    "f_request": "http_request_id prefix",
     "f_failed": "Failed only",
     "f_apply": "Apply",
     "window": "Window",

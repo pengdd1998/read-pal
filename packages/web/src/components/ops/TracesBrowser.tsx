@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api/client';
 import { authFetch } from '@/lib/auth-fetch';
@@ -77,9 +78,11 @@ const PAGE_SIZE = 25;
 
 export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImpl }: { opsKey: string; copyImpl?: (text: string) => Promise<void> }) {
   const t = useTranslations('opsLlm');
+  const searchParams = useSearchParams() as ReturnType<typeof useSearchParams> | null;
   const [hours, setHours] = useState(24);
-  const [labelFilter, setLabelFilter] = useState('');
-  const [onlyFailed, setOnlyFailed] = useState(false);
+  // F1: URL pre-fill from by_label/error-chip drill-through
+  const [labelFilter, setLabelFilter] = useState(() => searchParams?.get('label') || '');
+  const [onlyFailed, setOnlyFailed] = useState(() => Boolean(searchParams?.get('error_type')));
   const [requestPrefix, setRequestPrefix] = useState('');
   const [page, setPage] = useState(0);
   const [data, setData] = useState<ListData | null>(null);
@@ -94,7 +97,11 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
     try {
       const params: Record<string, string | number | boolean> = { hours, limit: PAGE_SIZE, offset: page * PAGE_SIZE };
       if (labelFilter.trim()) params.label = labelFilter.trim();
-      if (onlyFailed) params.success = false;
+      const errorType = searchParams?.get('error_type');
+      if (onlyFailed) {
+        params.success = false;
+        if (errorType) params.error_type = errorType;
+      }
       if (requestPrefix.trim()) params.request_prefix = requestPrefix.trim();
       const res = await api.get<ListData>('/api/v1/stats/llm/requests', params, {
         headers: { 'X-Ops-Key': opsKey },
@@ -105,7 +112,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
     } finally {
       setLoading(false);
     }
-  }, [hours, labelFilter, onlyFailed, requestPrefix, page, opsKey]);
+  }, [hours, labelFilter, onlyFailed, requestPrefix, page, opsKey, searchParams]);
 
   useEffect(() => {
     load();

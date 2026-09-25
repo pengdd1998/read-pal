@@ -2349,7 +2349,7 @@
     "t_ttft": "p95 TTFT",
     "t_cost": "成本",
     "f_label": "按 label 过滤",
-    "f_request": "request_id 前缀",
+    "f_request": "http_request_id 前缀",
     "f_failed": "仅看失败",
     "f_apply": "应用",
     "window": "时间窗",

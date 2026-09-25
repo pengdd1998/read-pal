@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api/client';
 import { ProvidersCard } from '@/components/ops/ProvidersCard';
 import { SeriesChart, type SeriesPoint } from '@/components/ops/SeriesChart';
@@ -36,6 +37,7 @@ const Card = ({ label, value, sub }: { label: string; value: string; sub?: strin
 
 export default function OpsLlmPage() {
   const t = useTranslations('opsLlm');
+  const router = useRouter();
   const [key, setKey] = useState('');
   const [authed, setAuthed] = useState(false);
   const [hours, setHours] = useState(720);
@@ -166,7 +168,7 @@ export default function OpsLlmPage() {
           ) : (
             <div className="flex flex-wrap gap-2">
               {errors.map(([name, count]) => (
-                <span key={name} className="px-2.5 py-1 rounded-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 text-xs text-red-700 dark:text-red-300">
+                <span key={name} onClick={() => router.push(`/ops/llm/traces?error_type=${encodeURIComponent(name)}`)} className="px-2.5 py-1 rounded-full bg-red-50 cursor-pointer hover:border-red-400 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 text-xs text-red-700 dark:text-red-300">
                   {name} · {count}
                 </span>
               ))}
@@ -205,7 +207,7 @@ export default function OpsLlmPage() {
           </thead>
           <tbody>
             {(data?.by_label ?? []).map((row) => (
-              <tr key={row.label} className="border-b border-surface-3/50 last:border-0">
+              <tr key={row.label} onClick={() => router.push(`/ops/llm/traces?label=${encodeURIComponent(row.label)}`)} className="border-b border-surface-3/50 last:border-0 cursor-pointer hover:bg-surface-1">
                 <td className="px-4 py-3 font-medium">{row.label}</td>
                 <td className="px-4 py-3">{row.calls}</td>
                 <td className="px-4 py-3">

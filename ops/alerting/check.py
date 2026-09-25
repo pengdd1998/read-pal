@@ -23,7 +23,11 @@ import ssl
 import subprocess
 import sys
 import time
+from pathlib import Path
 import urllib.request
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "packages/server"))
+from app.ops_alert_thresholds import check_cost_doubling, check_label_success_drop, check_ratelimit_jump  # noqa: E402
 
 # No IP/host defaults: a missing env must fail loudly, not silently
 # check some default target (empty-env silent-OK trap).
@@ -159,12 +163,7 @@ def _rollup_threshold_signals() -> list[tuple[str, str, bool, str]]:
             " FROM llm_metrics_rollup WHERE hour > now() - interval '14 days'"
         )
         recent, prior = (float(x) for x in row.split('|'))
-        if prior >= 1.0 and recent >= 2 * prior:
-            signals.append(('llm_cost_doubling', 'P2', False,
-                            f'${recent} last 7d vs ${prior} prior (≥2×)'))
-        else:
-            signals.append(('llm_cost_doubling', 'P2', True,
-                            f'${recent} vs ${prior} (7d)'))
+        signals.append(check_cost_doubling(recent, prior))
 
         # -- rate_limit share: 24h vs prior 7d baseline
         row = _psql(
@@ -182,12 +181,7 @@ def _rollup_threshold_signals() -> list[tuple[str, str, bool, str]]:
         c24, rl24, c7, rl7 = (int(float(x)) for x in row.split('|'))
         share24 = rl24 / c24 if c24 else 0.0
         share7 = rl7 / c7 if c7 else 0.0
-        if c24 >= 30 and share24 - share7 > 0.20:
-            signals.append(('llm_ratelimit_jump', 'P2', False,
-                            f'rate_limit share {share24:.0%} (24h) vs {share7:.0%} baseline (+{share24 - share7:.0%})'))
-        else:
-            signals.append(('llm_ratelimit_jump', 'P2', True,
-                            f'{share24:.0%} (24h) vs {share7:.0%} (7d base)'))
+        signals.append(check_ratelimit_jump(c24, rl24, c7, rl7))
 
         # -- per-label success drop: 24h vs prior 7d, ≥30 calls
         rows = _psql(
@@ -200,18 +194,13 @@ def _rollup_threshold_signals() -> list[tuple[str, str, bool, str]]:
             " GROUP BY label HAVING sum(case when hour >"
             " now() - interval '1 day' then calls end) >= 30"
         )
-        drops = []
+        label_stats = []
         for line in rows.splitlines():
             parts = line.split('|')
-            if len(parts) != 5:
-                continue
-            label, c24, s24, c7, s7 = parts
-            r24 = int(s24) / int(c24) if int(c24) else 1.0
-            r7 = int(s7) / int(c7) if int(c7) else 1.0
-            if int(c7) >= 30 and r24 < r7 - 0.05:
-                drops.append(f'{label} {r24:.0%} vs {r7:.0%}')
-        signals.append(('llm_label_success_drop', 'P2', not drops,
-                        '; '.join(drops) if drops else 'all labels within −5pp'))
+            if len(parts) == 5:
+                label, c24, s24, c7, s7 = parts
+                label_stats.append((label, int(c24), int(s24), int(c7), int(s7)))
+        signals.append(check_label_success_drop(label_stats))
 
         return signals
     except Exception as exc:  # noqa: BLE001 — degrade, never kill the run
