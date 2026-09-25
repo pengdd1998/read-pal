@@ -2418,6 +2418,16 @@
     "rag_latency": "延迟",
     "rag_no_results": "无结果",
     "finish_reason": "结束原因",
-    "rag_link": "RAG 观测"
+    "rag_link": "RAG 观测",
+    "assembly_view": "结构化",
+    "assembly_raw": "原始",
+    "assembly_spoiler": "防剧透",
+    "assembly_rag": "RAG 片段",
+    "assembly_history": "历史",
+    "assembly_tools": "工具",
+    "assembly_instruction": "指令",
+    "assembly_chars": "字符",
+    "assembly_rag_count": "RAG 文档数",
+    "assembly_rag_empty": "⚠️ RAG 片段为空（book_chunks=0 或未命中）"
   }
 }

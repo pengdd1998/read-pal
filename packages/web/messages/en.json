@@ -2418,6 +2418,16 @@
     "rag_latency": "Latency",
     "rag_no_results": "No results",
     "finish_reason": "Finish reason",
-    "rag_link": "RAG observability"
+    "rag_link": "RAG observability",
+    "assembly_view": "Structured",
+    "assembly_raw": "Raw",
+    "assembly_spoiler": "Spoiler guard",
+    "assembly_rag": "RAG passages",
+    "assembly_history": "History",
+    "assembly_tools": "Tools",
+    "assembly_instruction": "Instruction",
+    "assembly_chars": "chars",
+    "assembly_rag_count": "RAG docs",
+    "assembly_rag_empty": "⚠️ RAG passages empty (book_chunks=0 or no match)"
   }
 }

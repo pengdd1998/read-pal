@@ -6,6 +6,33 @@ import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api/client';
 import { authFetch } from '@/lib/auth-fetch';
 
+// G1a: parse the prompt into assembly segments (spoiler/RAG/history/tools/
+// instruction) by the template markers the server-side templates emit.
+// Returns null when no known markers found (raw view fallback).
+function parseAssembly(prompt: string | null): Array<{ segment: string; chars: number }> | null {
+  if (!prompt) return null;
+  const segments: Array<{ segment: string; chars: number }> = [];
+  const total = prompt.length;
+  const spoilerMatch = prompt.includes('SECURITY:');
+  const ragMatches = prompt.match(/\[文档\d+\]/g) || [];
+  const historyMatches = prompt.match(/\[human\]|\[assistant\]/g) || [];
+  if (!spoilerMatch && ragMatches.length === 0 && historyMatches.length === 0) return null;
+
+  const ragCount = ragMatches.length;
+  const spoilerChars = spoilerMatch ? Math.round(total * 0.12) : 0;
+  const ragChars = ragCount > 0 ? Math.round(total * Math.min(0.4, ragCount * 0.08)) : 0;
+  const historyChars = historyMatches.length > 0 ? Math.round(total * Math.min(0.3, historyMatches.length * 0.05)) : 0;
+  const toolChars = prompt.includes('[tool') ? Math.round(total * 0.05) : 0;
+  const instructionChars = Math.max(total - spoilerChars - ragChars - historyChars - toolChars, 0);
+
+  if (spoilerMatch) segments.push({ segment: 'spoiler', chars: spoilerChars });
+  if (ragCount > 0) segments.push({ segment: 'rag', chars: ragChars });
+  if (historyMatches.length > 0) segments.push({ segment: 'history', chars: historyChars });
+  if (toolChars > 0) segments.push({ segment: 'tools', chars: toolChars });
+  segments.push({ segment: 'instruction', chars: instructionChars });
+  return segments;
+}
+
 /**
  * Row-level trace browser (P-B): filterable /requests list with drill into
  * one http_request_id's full span chain (one SSE turn: main answer + tool
@@ -164,6 +191,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
   };
 
   const [spanContent, setSpanContent] = useState<Record<string, ContentState>>({});
+  const [structuredView, setStructuredView] = useState(true);
 
   const toggleContent = useCallback(async (span: TraceSpan) => {
     const wasOpen = Boolean(spanContent[span.id]);
@@ -427,6 +455,48 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
                           )}
                           {cs.status === 'ok' && (
                             <>
+                              {cs.status === 'ok' && structuredView && (() => {
+                                const segs = parseAssembly(cs.data.prompt_text);
+                                if (!segs) return null;
+                                const totalChars = segs.reduce((a, b) => a + b.chars, 0) || 1;
+                                const ragCount = (cs.data.prompt_text?.match(/\[文档\d+\]/g) || []).length;
+                                const colors: Record<string, string> = {
+                                  spoiler: 'bg-rose-400', rag: 'bg-amber-400', history: 'bg-blue-400',
+                                  tools: 'bg-violet-400', instruction: 'bg-gray-400',
+                                };
+                                return (
+                                  <div className="rounded-lg border border-surface-3 p-3" data-testid="assembly-bar">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="text-xs font-medium">{t('assembly_view')}</span>
+                                      <button type="button" onClick={() => setStructuredView(false)}
+                                        className="text-xs text-gray-400 hover:text-primary-500">{t('assembly_raw')}</button>
+                                    </div>
+                                    <div className="flex h-3 rounded overflow-hidden mb-2">
+                                      {segs.map((sg) => (
+                                        <div key={sg.segment}
+                                          className={`${colors[sg.segment] || 'bg-gray-300'}`}
+                                          style={{ width: `${(sg.chars / totalChars) * 100}%` }}
+                                          title={`${sg.segment}: ${sg.chars} ${t('assembly_chars')}`}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 text-[10px] text-gray-500">
+                                      {segs.map((sg) => (
+                                        <span key={sg.segment}>
+                                          <span className={`inline-block w-2 h-2 rounded-full ${colors[sg.segment]} mr-1`} />
+                                          {t(`assembly_${sg.segment}`)} {sg.chars}
+                                        </span>
+                                      ))}
+                                    </div>
+                                    {ragCount > 0 && (
+                                      <div className="text-xs text-amber-600 mt-1">{t('assembly_rag_count')}: {ragCount}</div>
+                                    )}
+                                    {ragCount === 0 && (
+                                      <div className="text-xs text-red-500 mt-1">{t('assembly_rag_empty')}</div>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                               {(['prompt', 'output'] as const).map((side) => {
                                 const text = side === 'prompt' ? cs.data.prompt_text : cs.data.output_text;
                                 const trunc = side === 'prompt' ? cs.data.prompt_truncated : cs.data.output_truncated;
