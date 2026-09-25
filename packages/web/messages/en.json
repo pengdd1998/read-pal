@@ -2326,8 +2326,8 @@
   },
   "opsLlm": {
     "title": "LLM Ops Monitor",
-    "locked_title": "Ops key required",
-    "locked_desc": "This page is protected by a path key. Visit /ops/llm?key=… or enter it here.",
+    "locked_title": "Sign-in + ops key required",
+    "locked_desc": "Sign in to your read-pal account first, then enter the ops key to unlock.",
     "key_placeholder": "Ops key",
     "unlock": "Unlock",
     "w_1h": "1h",

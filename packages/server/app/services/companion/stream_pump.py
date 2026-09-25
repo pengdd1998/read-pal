@@ -37,6 +37,7 @@ async def _stream_with_llm(
     cancelled: asyncio.Event | None = None,
     request: Any = None,
     seq_state: list[int] | None = None,
+    provider_name: str | None = None,
 ) -> AsyncGenerator[str, None]:
     """Stream from an LLM model with chunk buffering and logging.
 
@@ -117,7 +118,7 @@ async def _stream_with_llm(
     persist_stream_log(
         request_id=request_id, model=model_used, latency_ms=latency_ms,
         success=True, user_id=user_id, book_id=book_id,
-        ttft_ms=ttft_ms,
+        ttft_ms=ttft_ms, provider=provider_name,
     )
 
 

@@ -2326,8 +2326,8 @@
   },
   "opsLlm": {
     "title": "LLM 运维监控",
-    "locked_title": "需要运维密钥",
-    "locked_desc": "此页面受路径密钥保护。请通过 /ops/llm?key=… 访问，或在此输入密钥。",
+    "locked_title": "需要登录与运维密钥",
+    "locked_desc": "请先登录 read-pal 账号，再输入运维密钥解锁此页面。",
     "key_placeholder": "运维密钥",
     "unlock": "解锁",
     "w_1h": "1小时",

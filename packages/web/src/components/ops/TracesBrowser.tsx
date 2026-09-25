@@ -161,8 +161,11 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
       // Raw fetch (not the api client): the 404 reason lives in FastAPI's
       // `detail` envelope, which the client's error mapping flattens away.
       try {
+        // 0034: fallback chains share the request_id across attempts —
+        // the span's model disambiguates which attempt's I/O to fetch.
+        const modelQ = span.model ? `?model=${encodeURIComponent(span.model)}` : '';
         const res = await authFetch(
-          `/api/v1/stats/llm/requests/${span.request_id}/content`,
+          `/api/v1/stats/llm/requests/${span.request_id}/content${modelQ}`,
           { headers: { 'X-Ops-Key': opsKey } },
         );
         if (res.ok) {

@@ -18,6 +18,7 @@ def persist_stream_log(
     user_id: UUID | None = None,
     book_id: UUID | None = None,
     ttft_ms: int | None = None,
+    provider: str | None = None,
 ) -> None:
     """Persist streaming LLM call to database (fire-and-forget).
 
@@ -63,6 +64,9 @@ def persist_stream_log(
             # (and P-D's per-span content viewer, which lives in the chain
             # panel) never opened for the bulk of traffic.
             'http_request_id': _current_http_request_id(),
+            # E0.3: without this, 51% of streaming traces had provider
+            # "(unset)" — the traces UI showed no provider attribution.
+            'provider': provider,
         })
     except (ValueError, RuntimeError, ConnectionError) as exc:
         logger.warning('companion.safety.observability_log_failed', error=str(exc)[:200])

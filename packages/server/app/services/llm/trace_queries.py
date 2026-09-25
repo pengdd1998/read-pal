@@ -160,7 +160,7 @@ async def get_trace_chain(
 
 
 async def get_trace_content(
-    db: AsyncSession, request_id: str,
+    db: AsyncSession, request_id: str, model: str | None = None,
 ) -> dict[str, Any] | None:
     """P-D: one captured raw prompt/output row, ops-facing shape.
 
@@ -168,12 +168,22 @@ async def get_trace_content(
     the time, cache-served call, failed call — or past retention). The
     caller distinguishes "feature disabled" from "row missing" via
     settings itself; ``user_id`` never leaves this layer raw.
+
+    ``model`` disambiguates fallback chains (0034): safe_invoke reuses
+    the request_id across attempts — the span carries the model, so the
+    caller passes it to fetch the matching attempt's I/O. Without it,
+    the earliest row wins (backward compat).
     """
     from app.models.llm_trace_content import LLMTraceContent
 
-    row = (await db.execute(
-        select(LLMTraceContent).where(LLMTraceContent.request_id == request_id),
-    )).scalar_one_or_none()
+    stmt = select(LLMTraceContent).where(
+        LLMTraceContent.request_id == request_id,
+    )
+    if model:
+        stmt = stmt.where(LLMTraceContent.model == model)
+    else:
+        stmt = stmt.order_by(LLMTraceContent.created_at.asc())
+    row = (await db.execute(stmt.limit(1))).scalar_one_or_none()
     if row is None:
         return None
     return {

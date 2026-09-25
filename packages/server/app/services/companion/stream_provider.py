@@ -67,7 +67,7 @@ async def _handle_stream_failure(
     persist_stream_log(
         request_id=request_id, model=model_used, latency_ms=latency_ms,
         success=False, error_message=str(exc)[:500],
-        user_id=user_id, book_id=book_id,
+        user_id=user_id, book_id=book_id, provider=provider_name,
     )
 
 
@@ -138,6 +138,7 @@ async def _stream_from_provider(
             llm, messages, collected_parts, request_id,
             start_time, model_used, user_id, book_id,
             cancelled=cancelled, request=request, seq_state=seq_state,
+            provider_name=provider_name,
         ):
             yield chunk
     except Exception as exc:

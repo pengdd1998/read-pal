@@ -6,12 +6,13 @@ deployment explicitly opts in (``LLM_TRACE_CONTENT_DB``). Default off,
 short retention (``llm_trace_content_retention_days``), ops-key-only read
 path — see the privacy boundary note in ops/observability/monitoring-upgrade-plan.md.
 
-PK note: ``request_id`` is the same 12-hex per-call id the span exposes
-(uuid4().hex[:12]). It is NOT unique in llm_call_traces and 12 hex chars
-are not collision-proof at scale, so writers must use ON CONFLICT DO
-NOTHING — a PK hit silently drops the duplicate (defensive; see D3).
+PK is a UUID (0034): safe_invoke reuses the same request_id across
+primary/fallback attempts — the old request_id-only PK silently dropped
+the second attempt's content. A (request_id, model) composite index
+disambiguates; the read API filters by model when the span carries it.
 """
 
+import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Index, String, Text, text
@@ -25,9 +26,18 @@ class LLMTraceContent(Base):
     __table_args__ = (
         Index('ix_llm_trace_contents_created', 'created_at'),
         Index('ix_llm_trace_contents_http_request_id', 'http_request_id'),
+        Index('ix_llm_trace_contents_request_model', 'request_id', 'model'),
     )
 
-    request_id: Mapped[str] = mapped_column(String(12), primary_key=True)
+    # String(36) not PG_UUID: SQLite (test face) can't round-trip
+    # PG_UUID sentinel values on DELETE — same pattern as llm_trace's
+    # user_id/book_id columns.
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: uuid.uuid4().hex,
+    )
+    request_id: Mapped[str] = mapped_column(String(12), nullable=False)
     http_request_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
     label: Mapped[str] = mapped_column(String(100), nullable=False)
     model: Mapped[str] = mapped_column(String(50), nullable=False)

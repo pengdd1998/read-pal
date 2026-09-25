@@ -154,31 +154,21 @@ class _TraceWriter:
             from app.db import async_session
             from app.models.llm_trace_content import LLMTraceContent
 
-            # Dedupe within the batch first (dialect-independent, covers the
-            # capture-hook-fires-twice case deterministically); the ON
-            # CONFLICT clause below only needs to cover cross-flush and
-            # cross-worker races.
-            by_id: dict[str, dict[str, Any]] = {}
+            # Dedupe on (request_id, model) within the batch — fallback
+            # chains share the request_id but carry different models
+            # (0034). UUID PKs make cross-flush collisions practically
+            # impossible, so no ON CONFLICT clause is needed.
+            by_key: dict[tuple[str, str], dict[str, Any]] = {}
             for row in batch:
-                by_id.setdefault(row['request_id'], row)
-            values = list(by_id.values())
+                key = (row['request_id'], row.get('model', ''))
+                by_key.setdefault(key, row)
+            values = list(by_key.values())
 
             async with db_error_guard(
                 'observability.content_flush', batch_size=len(values),
             ):
                 async with async_session() as session:
-                    dialect = session.bind.dialect.name if session.bind else 'postgresql'
-                    if dialect == 'postgresql':
-                        from sqlalchemy.dialects.postgresql import insert as pg_insert
-                        stmt = pg_insert(LLMTraceContent).values(values).on_conflict_do_nothing(
-                            index_elements=['request_id'],
-                        )
-                    else:
-                        from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-                        stmt = sqlite_insert(LLMTraceContent).values(values).on_conflict_do_nothing(
-                            index_elements=['request_id'],
-                        )
-                    await session.execute(stmt)
+                    session.add_all([LLMTraceContent(**v) for v in values])
                     await session.commit()
             logger.debug('Content flush: %d rows written', len(values))
             return len(values)

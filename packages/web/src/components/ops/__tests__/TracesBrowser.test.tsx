@@ -201,7 +201,7 @@ describe('TracesBrowser content panel (P-D)', () => {
 
     await waitFor(() => expect(screen.getByTestId('content-panel-span-2')).toBeTruthy());
     const [url, init] = authFetchMock.mock.calls[0];
-    expect(url).toBe('/api/v1/stats/llm/requests/req0001/content');
+    expect(url).toBe('/api/v1/stats/llm/requests/req0001/content?model=mimo-v2.5'); // 0034: model disambiguates fallback chains
     expect(init.headers['X-Ops-Key']).toBe('test-ops-key');
     expect(screen.getByText(/be helpful/)).toBeTruthy();
     expect(screen.getByText(/the answer/)).toBeTruthy();

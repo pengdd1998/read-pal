@@ -125,31 +125,44 @@ class TestCaptureFanout:
 
 
 class TestContentWriter:
-    async def test_flush_inserts_and_duplicate_dropped(self):
+    async def test_flush_inserts_and_fallback_chain_coexists(self):
+        """0034: same request_id, different models → both rows persist."""
         from app.services.llm.observability import _trace_writer
-        row = {
-            'request_id': 'dup000000001', 'http_request_id': 'http-1',
-            'label': 'l', 'model': 'm', 'prompt_version': None,
-            'prompt_text': 'p', 'output_text': 'o',
+        primary = {
+            'request_id': 'chain00000001', 'http_request_id': 'http-1',
+            'label': 'l', 'model': 'glm-4.7-flash', 'prompt_version': None,
+            'prompt_text': 'p', 'output_text': None,  # failed: no output
+            'prompt_truncated': False, 'output_truncated': False,
+            'user_id': None, 'book_id': None,
+        }
+        fallback = {
+            'request_id': 'chain00000001', 'http_request_id': 'http-1',
+            'label': 'l', 'model': 'mimo-v2.5', 'prompt_version': None,
+            'prompt_text': 'p', 'output_text': 'actual reply',
             'prompt_truncated': False, 'output_truncated': False,
             'user_id': None, 'book_id': None,
         }
         with (
             patch('app.services.llm.observability._writer.get_settings',
                   return_value=_settings(content_db=True)),
-            # flush_contents imports the sessionmaker inline — redirect the
-            # module attribute so the write lands in the hermetic DB.
             patch('app.db.async_session', _TestSession),
         ):
-            _trace_writer.add_content(row)
-            _trace_writer.add_content(dict(row))  # same PK — must not raise
+            _trace_writer.add_content(primary)
+            _trace_writer.add_content(fallback)
+            _trace_writer.add_content(dict(fallback))  # exact dup — deduped
             written = await _trace_writer.flush_contents()
-        assert written == 1  # in-batch dedupe keeps one
+        assert written == 2  # two distinct (request_id, model) pairs
         async with _TestSession() as session:
+            from sqlalchemy import select
             rows = (await session.execute(
-                __import__('sqlalchemy').select(LLMTraceContent),
+                select(LLMTraceContent),
             )).scalars().all()
-            assert len(rows) == 1  # …but only one row survives the conflict
+            assert len(rows) == 2
+            models = {r.model for r in rows}
+            assert models == {'glm-4.7-flash', 'mimo-v2.5'}
+            # The successful fallback's output survives
+            fb = next(r for r in rows if r.model == 'mimo-v2.5')
+            assert fb.output_text == 'actual reply'
 
     async def test_prune_deletes_expired_content_rows(self):
         from app.services.llm.observability import _trace_writer

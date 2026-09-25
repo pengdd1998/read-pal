@@ -106,6 +106,7 @@ async def get_llm_trace_chain(
 @router.get('/requests/{request_id}/content', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
 async def get_llm_trace_content(
     request_id: str,
+    model: str | None = Query(None, max_length=50),
     db: AsyncSession = Depends(get_db),
 ) -> GenericResponse:
     """P-D: captured raw prompt/output for one call (ops-only).
@@ -126,7 +127,7 @@ async def get_llm_trace_content(
                 'message': 'Content capture is off (LLM_TRACE_CONTENT_DB).',
             },
         )
-    data = await get_trace_content(db, request_id)
+    data = await get_trace_content(db, request_id, model=model)
     if data is None:
         raise HTTPException(
             status_code=404,
