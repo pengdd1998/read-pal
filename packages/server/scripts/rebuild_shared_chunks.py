@@ -113,7 +113,7 @@ async def main() -> None:
         # title/content which is all chunking needs).
         contents = {
             h: (await session.execute(text(
-                "SELECT chapters FROM book_contents WHERE content_hash = :h"),
+                "SELECT raw_chapters FROM book_contents WHERE content_hash = :h"),
                 {'h': h})).scalar()
             for h in hashes
         }
