@@ -270,7 +270,7 @@ from app.routers import (  # noqa: E402
     account, agent, annotations, auth, book_clubs, books,
     challenges, collections, discovery, export, flashcards, friend,
     interventions, knowledge, llm_metrics, llm_providers, logs,
-    notifications, password_reset, reading_book, reading_sessions,
+    notifications, password_reset, rag_metrics, reading_book, reading_sessions,
     recommendations, settings as settings_router, share, stats, study_mode,
     synthesis, upload, webhooks,
 )
@@ -284,7 +284,7 @@ for r in [
     notifications.router, share.router, webhooks.router, upload.router,
     stats.router, discovery.router, challenges.router,
     recommendations.router, interventions.router, study_mode.router,
-    llm_providers.router, llm_metrics.router,
+    llm_providers.router, llm_metrics.router, rag_metrics.router,
 ]:
     app.include_router(r)
 
