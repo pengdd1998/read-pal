@@ -398,6 +398,9 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
                           {s.success ? 'OK' : s.error_type || 'error'}
                         </span>
                         {s.fallback_used && <span className="text-amber-600">fallback</span>}
+                    {s.finish_reason && s.finish_reason !== 'stop' && (
+                      <span className="text-violet-500 text-[10px]" title={t('finish_reason')}>{s.finish_reason}</span>
+                    )}
                         {s.cache_hit && <span className="text-gray-400">cache</span>}
                         <button
                           type="button"

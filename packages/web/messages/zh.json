@@ -2406,6 +2406,18 @@
     "relative_day": "{n}天前",
     "status_ok": "OK",
     "status_okfb": "OK·FB",
-    "status_error": "错误"
+    "status_error": "错误",
+    "rag_health": "RAG 数据面",
+    "rag_replay": "检索重放",
+    "rag_zero_chunk": "零分块",
+    "rag_book": "书",
+    "rag_chunks": "分块数",
+    "rag_query": "查询",
+    "rag_top_k": "top_k",
+    "rag_replay_btn": "重放",
+    "rag_latency": "延迟",
+    "rag_no_results": "无结果",
+    "finish_reason": "结束原因",
+    "rag_link": "RAG 观测"
   }
 }

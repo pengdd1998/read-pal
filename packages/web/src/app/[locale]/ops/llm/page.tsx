@@ -120,6 +120,9 @@ export default function OpsLlmPage() {
           <a href="/ops/llm/traces" className="px-3.5 py-1.5 rounded-lg text-sm font-medium bg-surface-1 text-gray-600 dark:text-gray-300 hover:border-primary-400 border border-transparent hover:border">
             🔍 {t('traces_link')}
           </a>
+          <a href="/ops/llm/rag" className="px-3.5 py-1.5 rounded-lg text-sm font-medium bg-surface-1 text-gray-600 dark:text-gray-300 hover:border-primary-400 border border-transparent hover:border">
+            📊 {t('rag_link')}
+          </a>
           <select value={fLabel} onChange={(e) => setFLabel(e.target.value)}
             className="px-2.5 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm" aria-label={t('filter_label')}>
             <option value="">{t('filter_label')}: {t('filter_all')}</option>

@@ -33,7 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.llm_trace import LLMCallTrace
 
-MAX_METRICS_WINDOW_HOURS = 720  # 30 days hard cap — protects the row scan
+MAX_METRICS_WINDOW_HOURS = 2160  # 90 days — matches rollup retention (E4)
 MAX_LABEL_BREAKDOWN = 10
 # Series resolution switch: hourly buckets while the window is short enough
 # to stay readable, daily beyond (a 720h hourly series would be 720 points).

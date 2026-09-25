@@ -2406,6 +2406,18 @@
     "relative_day": "{n}d ago",
     "status_ok": "OK",
     "status_okfb": "OK·FB",
-    "status_error": "Error"
+    "status_error": "Error",
+    "rag_health": "RAG data health",
+    "rag_replay": "Retrieval replay",
+    "rag_zero_chunk": "zero-chunk",
+    "rag_book": "Book",
+    "rag_chunks": "Chunks",
+    "rag_query": "Query",
+    "rag_top_k": "top_k",
+    "rag_replay_btn": "Replay",
+    "rag_latency": "Latency",
+    "rag_no_results": "No results",
+    "finish_reason": "Finish reason",
+    "rag_link": "RAG observability"
   }
 }
