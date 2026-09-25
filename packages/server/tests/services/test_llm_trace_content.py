@@ -128,15 +128,17 @@ class TestContentWriter:
     async def test_flush_inserts_and_fallback_chain_coexists(self):
         """0034: same request_id, different models → both rows persist."""
         from app.services.llm.observability import _trace_writer
+        # request_id must be ≤12 chars (String(12) column) — PostgreSQL
+        # rejects longer values; SQLite silently truncates.
         primary = {
-            'request_id': 'chain00000001', 'http_request_id': 'http-1',
+            'request_id': 'chn000000001', 'http_request_id': 'http-1',
             'label': 'l', 'model': 'glm-4.7-flash', 'prompt_version': None,
             'prompt_text': 'p', 'output_text': None,  # failed: no output
             'prompt_truncated': False, 'output_truncated': False,
             'user_id': None, 'book_id': None,
         }
         fallback = {
-            'request_id': 'chain00000001', 'http_request_id': 'http-1',
+            'request_id': 'chn000000001', 'http_request_id': 'http-1',
             'label': 'l', 'model': 'mimo-v2.5', 'prompt_version': None,
             'prompt_text': 'p', 'output_text': 'actual reply',
             'prompt_truncated': False, 'output_truncated': False,
