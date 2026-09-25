@@ -93,9 +93,10 @@ async def rag_full_trace(  # noqa: PLR0915 — 7-stage trace pipeline is inheren
     from sqlalchemy import or_, text as sa_text
 
     from app.models.book_chunk import BookChunk
-    from app.services.rag._constants import _tokenize_with_bigrams, _escape_like
+    from app.services.rag._constants import _tokenize_with_bigrams
     from app.services.rag.embedding import get_query_embedding
     from app.services.rag.rank import chapter_coverage_merge
+    from app.services.rag.search import _escape_like
     from app.services.rag.search import (
         _build_embedding_literal,
         _build_search_params,
