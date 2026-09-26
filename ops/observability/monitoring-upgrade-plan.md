@@ -883,6 +883,121 @@ closed/open 摘要 + 内容捕获开关状态（`capture_disabled` 时提示）�
 
 J0（阻塞，立即）→ J1/J2（小）→ J3（本期核心增量）→ J4/J5。
 
+### P-J 执行状态（09-26 二次复核）+ P-K 增补
+
+**J0/J1/J2 已实施并实测通过**（5cc0fac5 / f73a487c）：sessions 页
+入库 + `.gitignore` 否定规则；**健康条常驻顶栏**（🛰️ read-pal ops ·
+● API 正常 · ● glm · ● mimo + 🔒 锁定按钮）；独立 title
+「read-pal · ops」与 icon.svg。J3/J4/J5 未动。
+
+**P-K 增补（第三轮 CCR 对照；关键差异：CCR 是本机 127.0.0.1 服务，
+read-pal 控制台在公网域 /ops 下——威胁模型不同）**：
+
+**K1 = J3 供应商管理页**（本期核心；后端前提已备：POST/PUT/reload
+三 mutation 全部已挂 `ops_key_or_current_user` + account_limiter，
+`llm_providers.py:71-101`）
+
+- 页面 `/ops/llm/providers`（运行时组升级为页）：
+  - 列表 = 现有 GET 快照（circuit/TPM/RPM/延迟/模型/priority/
+    enabled）；
+  - 操作：新增/编辑/启停/删除（二次确认）/「重载配置」→
+    `POST /reload`；
+  - **api_key 只写不回显**（表单掩码至尾 4 位；GET 快照本就不含
+    key）；
+  - **审计**：每次 mutation 打 `ops.provider_mutated` structlog 事件
+    （name/字段摘要/ops-key-or-user 标识）——控制台从只读升级为操作
+    面后的最小审计线；
+  - reload 失败时原样展示配置校验错误（JSON 错误定位）。
+- 验收：UI 改一个 provider 的 baseUrl/启停 → 热重载生效（下一次
+  调用走新配置）+ 审计事件可查。
+
+**K2 = J4 URL 状态同步**：概览（label/provider/model/hours）、
+sessions（hours）、RAG（book/query）同步 searchParams。
+
+**K3 控制台暴露面加固**
+
+- ops 鉴权失败计数进 metrics（独立 counter 或 error_breakdown 加
+  `ops_auth_fail`）+ check.py 告警阈值（如 ≥50/h）——公网暴力尝试
+  从不可见变为可观测；
+- ops key 轮换接入既有 A3 轮换 runbook（解锁页 403 即轮换信号）；
+- 可选决策项：nginx 对 `/ops` 路径加 IP allowlist 或基础认证双因子。
+
+**K4 小项**：概览自动刷新 toggle（对齐 traces）；`w_1h` 冗余 i18n
+key 清理；控制台空态文案复核。
+
+**顺序（更新）**：~~J0/J1/J2~~（已完成）→ **K1** → K2/K4 → K3。
+
+## P-L 交互操作优化（2026-09-26 交互专项走查，对照 CCR 交互形态）
+
+**P-L 执行状态（2026-09-26 交互审计后实施，全项 ✅）**：
+- **L1 ✅**：interceptors 的 handleExpiredSession 前置控制台分支——`/ops`
+  路径或请求带 X-Ops-Key 时，401 只清 sessionStorage 的 ops-key 并广播
+  `ops-key-changed`（页内锁定态），**永不**清 token/跳产品登录页；四页
+  （概览/traces/sessions/rag）+ 健康条监听该事件即时反映锁定/解锁。
+- **L2 ✅**：copy 增加 execCommand 回退（headless/加固浏览器拒 async
+  clipboard API 时仍闪 ✓）——实测 NotAllowedError → 回退 →「已复制」。
+- **L3 ✅**：SeriesChart 悬浮即时 tooltip（原生 title 需长驻留）。
+- **L4 ✅**：traces/sessions 行 tabIndex=0 + role=button + aria-expanded
+  + Enter/Space 展开（focus-visible 轮廓）。
+- **L5 ✅**：lib/ops-format.ts formatTraceTime——本地时区 MM-DD HH:mm +
+  相对时间副行（now/m/h/d）+ title 全文带 GMT 偏移；traces/sessions 两表。
+- **L6 ✅**：时间列 whitespace-nowrap、model 列 max-w-40 truncate + title。
+- **L7 ✅**：链面板改**行内展开**（点击行正下方 tr 插入，scrollIntoView
+  就近滚动），替换底部追加挂载；再次点击/Enter 折叠。
+- **实现教训（同 J2 闭包家族第二次）**：openChain 的 useCallback deps
+  只有 [opsKey]，闭包里 selectedHttpId 永远是首渲染的 null——二次点击
+  重新打开而非折叠；用 ref 镜像 state 判等修复。jsdom 无 scrollIntoView
+  须可选调用（`?.scrollIntoView?.`）。
+
+> 走查方法：浏览器交互探针逐项实测（行展开位置/自动滚动/aria 属性/
+> 复制反馈/内容滚动/移动端 390px 视口）。结论：链面板自动滚动、瀑布
+> 时间线、G1a 组装透视（结构化切换+装配占比条+RAG 空警示）、失败
+> span 空态、健康条移动端压缩、390px 纵向堆叠布局——全部达标。
+> 以下为实测未达项。
+
+### L1 控制台 401 语义（交互阻塞项）
+
+`api/interceptors.ts:128-149` `handleExpiredSession` 对**任何** 401
+（重试耗尽后）执行 清存储 + `window.location.href=/auth`——不区分请求
+是否带 ops key。实测后果：控制台使用中一次瞬态 401（热更新窗口）即
+**ops-key 丢失 + 整个控制台被炸回产品登录页**。修：api client 增加
+控制台模式感知——当前 path 在 `/ops` 下（或请求带 X-Ops-Key）时，401
+不走 handleExpiredSession，改为派发 `ops-key-changed` 事件触发页内
+锁定态（J2 的 storage helper 已有 broadcast 机制）；且
+`handleExpiredSession` 的清除逻辑不得波及 `ops-key` 存储。
+
+### L2 复制反馈缺失
+
+「复制 ID」点击后按钮无任何状态变化（实测前后文本一致）——加瞬时
+✓/已复制 态 1.2s 回退，经 copyImpl seam 统一（所有 copy 按钮）。
+
+### L3 图表 hover tooltip
+
+概览趋势/柱状图无数值悬浮（CCR 图表/日条带 hover 显示逐桶数值）——
+零依赖实现：SVG `<title>` 或轻量浮层，柱/点 hover 显示
+calls/success/tokens/cost。
+
+### L4 键盘可达性
+
+表格行不可聚焦（无 tabindex）、无 aria-expanded、Enter 不能展开——
+补 tabindex=0 + Enter/Space 展开 + aria-expanded + 焦点样式。
+
+### L5 时间显示人性化
+
+traces 时间列为原始 ISO（`09-25T18:14:33`，无时区）——改为本地时区
+`MM-DD HH:mm:ss` 主显示 + 相对时间副行 + title 绝对时间（CCR 带
+GMT+8）。
+
+### L6 移动端表格打磨
+
+390px 下时间列换行、model 列截断（整体可用）——列优先级（隐藏低价值
+列）或卡片化，时间列 `whitespace-nowrap`。
+
+### 顺序
+
+L1（交互阻塞）→ L2/L5（高频感知）→ L3/L4 → L6/L7（打磨）。
+全部纯前端，可与 K 系列并行。
+
 ## 明确不做（边界）
 
 - 账户余额卡（供应商 API 口径不一）

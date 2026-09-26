@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 
 /**
  * Sparse-series bar chart over metrics buckets (P-B, monitoring upgrade).
@@ -54,13 +54,25 @@ export const SeriesChart = React.memo(function SeriesChart({
   const values = points.map((p) => (metric === 'p95_latency_ms' ? p.p95_latency_ms ?? 0 : p[metric]));
   const max = Math.max(...values, 1);
   const width = Math.max(points.length * (BAR_MAX + GAP), 200);
+  // L3 (P-L): instant hover readout — the native <title> tooltip needs a
+  // long hover dwell; ops triage wants the bucket value on first contact.
+  const [hovered, setHovered] = useState<{ x: number; text: string } | null>(null);
   // H1: sample labels so ~12 max regardless of bucket count — the 30d daily
   // view previously rendered either a label per bucket (overlap, old build)
   // or none at all (the <=24 gate). First/last always labeled.
   const labelStep = Math.max(1, Math.ceil(points.length / 12));
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto relative">
+      {hovered && (
+        <div
+          className="absolute z-10 px-2 py-1 rounded-md bg-gray-900 text-white text-[11px] whitespace-nowrap pointer-events-none"
+          style={{ left: Math.min(hovered.x, width - 120), top: 4 }}
+          data-testid="chart-tooltip"
+        >
+          {hovered.text}
+        </div>
+      )}
       <svg
         width={width}
         height={HEIGHT + 26}
@@ -83,6 +95,11 @@ export const SeriesChart = React.memo(function SeriesChart({
                 rx={3}
                 fill={metric === 'calls' ? bandColor(p.success_rate) : '#6366f1'}
                 opacity={0.85}
+                onMouseEnter={() => setHovered({
+                  x: x + BAR_MAX / 2,
+                  text: `${p.bucket}: ${formatValue(v)} · ${(p.success_rate * 100).toFixed(0)}%`,
+                })}
+                onMouseLeave={() => setHovered(null)}
               >
                 <title>{`${p.bucket}: ${formatValue(v)} (${(p.success_rate * 100).toFixed(0)}%)`}</title>
               </rect>

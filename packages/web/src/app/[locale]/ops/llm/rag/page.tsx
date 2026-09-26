@@ -175,6 +175,10 @@ export default function RagPage() {
     const rb = searchParams?.get('book_id');
     if (rq) setQuery(rq);
     if (rb) setBookId(rb);
+    // L1: re-read on broadcast (401 console mode / lock button)
+    const onKey = () => setOpsKey(readOpsKey() || '');
+    window.addEventListener('ops-key-changed', onKey);
+    return () => window.removeEventListener('ops-key-changed', onKey);
   }, [searchParams]);
 
   const loadBooks = useCallback(async () => {

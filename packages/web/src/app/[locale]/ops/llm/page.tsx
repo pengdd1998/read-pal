@@ -93,6 +93,21 @@ export default function OpsLlmPage() {
     if (key) load(hours, key);
   }, [key, hours, load, fLabel, fProvider, fModel]);
 
+  // L1: a 401 in console mode broadcasts ops-key-changed — reflect the
+  // lock in-page instead of ever leaving the console.
+  useEffect(() => {
+    const onKey = () => {
+      const k = readOpsKey();
+      setKey(k || '');
+      if (!k) {
+        setAuthed(false);
+        setData(null);
+      }
+    };
+    window.addEventListener('ops-key-changed', onKey);
+    return () => window.removeEventListener('ops-key-changed', onKey);
+  }, []);
+
   if (!key || (!authed && !loading && key)) {
     return (
       <div className="py-16 max-w-md mx-auto text-center">

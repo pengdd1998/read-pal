@@ -16,6 +16,9 @@ export default function OpsLlmSessionsPage() {
 
   useEffect(() => {
     setOpsKey(readOpsKey());
+    const onKey = () => setOpsKey(readOpsKey());
+    window.addEventListener('ops-key-changed', onKey);
+    return () => window.removeEventListener('ops-key-changed', onKey);
   }, []);
 
   return (
