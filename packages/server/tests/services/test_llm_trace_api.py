@@ -244,6 +244,30 @@ class TestTraceRouter:
         assert 'series' in data and 'by_provider' in data and 'fallback' in data
         assert data['total_calls'] == 0, 'user scope must not see other rows'
 
+    @pytest.mark.asyncio
+    async def test_quota_endpoint_requires_ops_key(self, client, ops_env):
+        reg = await register_user(client)
+        resp = await client.get(
+            '/api/v1/stats/llm/quota',
+            headers=auth_headers(reg['token']),
+        )
+        assert resp.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_quota_endpoint_with_key_returns_shape(self, client, ops_env):
+        reg = await register_user(client)
+        resp = await client.get(
+            '/api/v1/stats/llm/quota',
+            headers={**auth_headers(reg['token']), 'X-Ops-Key': OPS_KEY},
+        )
+        assert resp.status_code == 200
+        data = resp.json()['data']
+        assert set(data['today']) == {'calls', 'tokens', 'cost_usd'}
+        assert set(data['yesterday']) == {'calls', 'tokens', 'cost_usd'}
+        assert isinstance(data['top_users_today'], list)
+        assert 'cost_budget_usd' in data and 'budget_used_ratio' in data
+
+
 
 # ---------------------------------------------------------------------------
 # metrics P-A additions
@@ -363,8 +387,6 @@ class TestCircuitTransitionHistory:
         import asyncio
         asyncio.run(cycle())
         assert len(recent_transitions()) == 50, 'deque(maxlen=50) must bound history'
-
-
 class TestOpsKeyValid:
     def test_unset_key_disables_ops_surface(self, monkeypatch):
         monkeypatch.delenv('OPS_KEY', raising=False)

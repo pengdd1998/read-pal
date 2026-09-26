@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api/client';
 import { ProvidersCard } from '@/components/ops/ProvidersCard';
+import { QuotaCard } from '@/components/ops/QuotaCard';
 import { SeriesChart, type SeriesPoint } from '@/components/ops/SeriesChart';
 
 interface MetricsData {
@@ -217,7 +218,7 @@ export default function OpsLlmPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-surface-0 rounded-2xl border border-surface-3 p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">{t('errors_title')}</h2>
           {errors.length === 0 ? (
@@ -244,6 +245,7 @@ export default function OpsLlmPage() {
             </div>
           )}
         </div>
+        <QuotaCard opsKey={key} />
         <div id="providers" className="scroll-mt-24">
           <ProvidersCard />
         </div>

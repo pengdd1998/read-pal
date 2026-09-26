@@ -642,6 +642,15 @@ H1+H3+H6（一个前端 PR）→ H5a 配额卡 → H5b 会话页 → H4（0036�
 
 ### H5 供应商配额卡 + 会话级合成视图（**09-25 用户拍板：两项都做**）
 
+**H5a 实施修订（2026-09-26）**：智谱余额 API 三条候选路径（
+`/api/paas/v4/account/balance` 等）已在 VPS 用真实 key 实测全部 404——
+公开余额接口不存在，原设计证伪。改为**平台用量卡**（自有数据）：
+`GET /api/v1/stats/llm/quota`（require_ops_key）返回 今日/昨日平台聚合
+（traces，排除 cache_hit）+ 今日 Top 消费者（8-hex 摘要）+ 可选软预算
+`llm_ops_daily_cost_budget_usd`（0=隐藏进度条，纯信息不强制）。前端
+QuotaCard 挂概览页第三栏，60s 轮询。CCR"余额卡"槽位由真实数据替代，
+后续若智谱开放余额 API 再切探针源。
+
 **H5a 供应商配额卡（对齐 CCR 余额卡）**
 
 - 数据源：智谱开放平台余额 API
@@ -690,7 +699,7 @@ H1+H3+H6（一个前端 PR）→ H5a 配额卡 → H5b 会话页 → H4（0036�
 - **H6 ✅**：by_label 四列排序；首载 skeleton；traces 空态三分化
   （过滤无结果 vs 窗口无流量）；RAG 重放链接 locale-aware（window.location
   → i18n router.push，顺带带 book_id 预填）。
-- 待做：H5a 配额卡 → H5b 会话页 → H4（0036）。
+- H5a ✅（平台用量卡转向，见 H5a 修订）。待做：H5b 会话页 → H4（0036）。
 
 ### H9 ops 导航重构（仿 CCR 分组侧边栏）
 

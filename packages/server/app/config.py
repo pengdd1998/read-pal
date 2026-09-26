@@ -249,6 +249,11 @@ class Settings(BaseSettings):
     # using actual usage from response_metadata.
     llm_daily_token_budget: int = 0
 
+    # H5a (P-H): soft platform-wide cost budget for the ops quota card
+    # (USD, calendar day UTC). Informational only — never enforced. 0
+    # hides the progress bar on /ops/llm.
+    llm_ops_daily_cost_budget_usd: float = 0.0
+
     # B2: gate TPM (tokens-per-minute) enforcement at the provider level.
     # ProviderConfig.max_tpm caps are tracked always (so dashboards see the
     # number); only when this flag is True do we filter at-cap providers out

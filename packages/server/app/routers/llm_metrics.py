@@ -146,3 +146,14 @@ async def get_llm_trace_content(
             },
         )
     return GenericResponse(success=True, data=data)
+
+
+@router.get('/quota', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
+async def get_platform_quota(db: AsyncSession = Depends(get_db)) -> GenericResponse:
+    """H5a: platform usage snapshot — today/yesterday aggregates, top
+    consumers (8-hex digests), optional soft cost budget. No balance-API
+    dependency (Zhipu candidates live-verified 404, 2026-09-26)."""
+    from app.services.llm.quota_queries import platform_quota_snapshot
+
+    data = await platform_quota_snapshot(db)
+    return GenericResponse(success=True, data=data)
