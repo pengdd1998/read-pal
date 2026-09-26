@@ -804,6 +804,72 @@ finish_reason / B5、F5 文案。24h 窗口下 p95 图与 by_model/by_client
   污染——delenv 不挡 pydantic 的 .env 文件加载，改 monkeypatch 钉
   settings 字段）。浏览器回归 8/8 + 登录态产品页全导航在位。
 
+## P-J 独立控制台第二阶段（2026-09-26 走查 feat/ops-standalone 后立项）
+
+> 走查方式：worktree 起服务（后端 8000 / 前端 **3001**——3000 被占、
+> CORS 白名单含 3001）+ 无登录态 key-only 浏览器全走查。P-I 主体
+> 实证通过：独立壳渲染（无产品头）、key-only 解锁、概览/调用链/RAG
+> 三页全可用。发现 1 个阻塞级缺陷 + 若干 CCR 对照增量。
+
+### J0 缺陷（阻塞级）：sessions 页从未入库——`.gitignore` 误伤
+
+- **现象**：控制台导航「🧵 会话」→ **404**；生产
+  `read.chishenma.top/zh/ops/llm/sessions` 同样 **404**。
+- **根因**：`.gitignore:116` 的 `sessions/` 规则（本意：会话数据目录）
+  按目录名任意深度匹配，**误伤**
+  `app/[locale]/ops/llm/sessions/page.tsx`——H5b 的页面文件从未被
+  git 跟踪。main 工作区有此未跟踪文件所以本地 3100 能用；git 构建
+  的 CI/生产/其他 worktree 全都没有该页。`SessionsBrowser.tsx` 组件
+  本体已跟踪（在 components/ops 下，不触发规则），测试因此全绿——
+  **测试覆盖不到 gitignore 陷阱**。与 R1（credentials.py 被挡库外）
+  同族，第二次踩中。
+- **修复（已在 worktree 工作区演示通过，3001 → 200）**：
+  `git add -f packages/web/src/app/\[locale\]/ops/llm/sessions/page.tsx`
+  + `.gitignore` 精确否定
+  `!packages/web/src/app/[locale]/ops/llm/sessions/`。
+  **main 树同病灶**（该文件在 main 同样未跟踪）——合并前 main 若先
+  部署，生产导航死链仍在；两树都要落。
+- **防线建议**：CI 加一条守护——`git ls-files | 核对 OpsNav 链接目标
+  路由文件存在`，或对 `app/**/page.tsx` 的 gitignore 命中做告警。
+
+### J1 常驻健康条（CCR 端点栏对应物）
+
+standalone layout 顶栏加：后端 `/api/v1/health` 状态点 + providers
+closed/open 摘要 + 内容捕获开关状态（`capture_disabled` 时提示），
+30s 轮询、失败变红。CCR 顶栏「端点 · 运行中」的等价物——控制台
+打开即知系统活着。
+
+### J2 key 会话管理
+
+- 解锁表单加「在此浏览器记住」checkbox（**localStorage opt-in** +
+  控制台内「锁定」按钮一键清除）——消除每开新标签页重输 key 的摩擦；
+  权衡（XSS 持久化面）写进 UI 说明，单人部署可接受。
+- 独立 favicon + tab 标题（「read-pal 运维控制台」），与产品 tab 区分。
+
+### J3 供应商管理页（重启"不做"决策——独立控制台改变了前提）
+
+`/ops/llm/providers`：消费现有 `POST/PUT/reload /llm-providers` 端点
+——列表/启停/优先级/模型列表/热重载，变更需二次确认 + 打 structlog
+审计事件。CCR「供应商」页的对应物；控制台由此从只读观测升级为
+运维操作面。原"不做"理由（配置文件够用）在控制台成为日常入口后
+不再成立。
+
+### J4 URL 状态同步补全
+
+概览过滤/窗口、会话页窗口同步 searchParams（traces 已有）——控制台
+视图可收藏/分享，刷新不丢状态。
+
+### J5 部署与回归注意
+
+- `(main)` 迁移动了 100+ 文件（URL 零变化、e2e 8/8），合并部署后
+  照例生产可见性走查，**必含 sessions 页**（本轮盲区即由此漏过）。
+- dev 端口约定固化：worktree 本地验证用 3000/3001（CORS 白名单内），
+  3100/3101 不在名单——写进 worktree README 或 .env.example 注释。
+
+### 顺序
+
+J0（阻塞，立即）→ J1/J2（小）→ J3（本期核心增量）→ J4/J5。
+
 ## 明确不做（边界）
 
 - 账户余额卡（供应商 API 口径不一）
