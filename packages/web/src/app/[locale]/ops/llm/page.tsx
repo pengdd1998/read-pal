@@ -6,6 +6,7 @@ import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api/client';
 import { ProvidersCard } from '@/components/ops/ProvidersCard';
 import { QuotaCard } from '@/components/ops/QuotaCard';
+import { ActivityHeatmap } from '@/components/ops/ActivityHeatmap';
 import { SeriesChart, type SeriesPoint } from '@/components/ops/SeriesChart';
 
 interface MetricsData {
@@ -163,9 +164,10 @@ export default function OpsLlmPage() {
             <option value="">{t('filter_provider')}: {t('filter_all')}</option>
             {Object.keys(data?.by_provider ?? {}).map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
-          <select value={fModel} onChange={(e) => setFModel(e.target.value)}
-            className="px-2.5 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm" aria-label={t('filter_model')}>
-            <option value="">{t('filter_model')}: {t('filter_all')}</option>
+          <select value={fModel} onChange={(e) => setFModel(e.target.value)} disabled={hours > 48}
+            title={hours > 48 ? t('filter_model_rollup_note') : undefined}
+            className="px-2.5 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm disabled:opacity-50" aria-label={t('filter_model')}>
+            <option value="">{t('filter_model')}: {hours > 48 ? t('filter_model_rollup_short') : t('filter_all')}</option>
             {Object.keys(data?.by_model ?? {}).map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
           <button type="button" onClick={() => load(hours, key)}
@@ -175,7 +177,7 @@ export default function OpsLlmPage() {
               <button
                 key={h}
                 type="button"
-                onClick={() => setHours(h)}
+                onClick={() => { setHours(h); if (h > 48) setFModel(''); }}
                 className={`px-3.5 py-1.5 rounded-lg text-sm font-medium ${
                   hours === h ? 'bg-amber-600 text-white' : 'bg-surface-1 text-gray-600 dark:text-gray-300'
                 }`}
@@ -262,6 +264,10 @@ export default function OpsLlmPage() {
         <div id="providers" className="scroll-mt-24">
           <ProvidersCard />
         </div>
+      </div>
+
+      <div className="mb-6">
+        <ActivityHeatmap opsKey={key} />
       </div>
 
       <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">{t('by_label')}</h2>

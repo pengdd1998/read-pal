@@ -30,6 +30,18 @@ function bandColor(successRate: number): string {
   return '#ef4444';
 }
 
+/**
+ * Short axis label per bucket granularity (H1 residual, 09-26 walkthrough):
+ * hourly buckets (`2026-09-25T03:00`) label as `03:00`, daily buckets
+ * (`2026-09-25`) as `09-25`. The old `slice(5)` left 11-char strings that
+ * crowded into each other even after ceil(n/12) sampling. Full value stays
+ * in the bar's title tooltip.
+ */
+function bucketLabel(bucket: string): string {
+  const t = bucket.indexOf('T');
+  return t > 0 ? bucket.slice(t + 1, t + 6) : bucket.slice(5);
+}
+
 export const SeriesChart = React.memo(function SeriesChart({
   points,
   metric,
@@ -76,7 +88,7 @@ export const SeriesChart = React.memo(function SeriesChart({
               </rect>
               {showLabel && (
                 <text x={x + BAR_MAX / 2} y={HEIGHT + 16} textAnchor="middle" className="fill-gray-400" fontSize={9}>
-                  {p.bucket.length > 10 ? p.bucket.slice(5) : p.bucket}
+                  {bucketLabel(p.bucket)}
                 </text>
               )}
             </g>

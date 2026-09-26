@@ -28,8 +28,11 @@ describe('SeriesChart x-axis sampling (H1)', () => {
     // step = ceil(30/12) = 3 → i%3==0 gives 10 + always-labeled last (i=29)
     expect(labels.length).toBeLessThanOrEqual(12);
     expect(labels.length).toBeGreaterThanOrEqual(10);
-    // last bucket is always labeled (10-char ISO dates stay unsliced)
+    // last bucket is always labeled — daily buckets format as MM-DD (H1 residual)
     const texts = [...labels].map((l) => l.textContent);
-    expect(texts).toContain('2026-09-30');
+    expect(texts).toContain('09-30');
+    // hourly buckets format as HH:MM
+    const hourly = render(<SeriesChart points={[{ bucket: '2026-09-26T03:00', calls: 5, success_rate: 1, p95_latency_ms: 100, cost_usd: 0.1 }]} metric="calls" formatValue={(v) => `${v}`} />);
+    expect(hourly.container.querySelector('text')?.textContent).toBe('03:00');
   });
 });
