@@ -116,6 +116,11 @@ backups/
 sessions/
 session/
 *.session
+# J0 (P-J): the ops console's sessions ROUTE was swallowed by the rule
+# above — app/[locale]/ops/llm/sessions/page.tsx never entered git (2nd
+# gitignore-swallows-a-file incident after R1's credentials.py). Bracket
+# escape: [locale] is a character class in gitignore syntax.
+!packages/web/src/app/\[locale\]/ops/llm/sessions/
 
 # Personal notes
 notes/
