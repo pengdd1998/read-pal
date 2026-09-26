@@ -23,6 +23,7 @@ interface NavItem {
 const MONITOR_ITEMS: NavItem[] = [
   { href: '/ops/llm', icon: '🛰️', key: 'nav_overview', exact: true },
   { href: '/ops/llm/traces', icon: '🔍', key: 'nav_traces' },
+  { href: '/ops/llm/sessions', icon: '🧵', key: 'nav_sessions' },
   { href: '/ops/llm/rag', icon: '📊', key: 'nav_rag' },
 ];
 const RUNTIME_ITEMS: NavItem[] = [

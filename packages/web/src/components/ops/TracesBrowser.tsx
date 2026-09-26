@@ -117,7 +117,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
   // F1: URL pre-fill from by_label/error-chip drill-through
   const [labelFilter, setLabelFilter] = useState(() => searchParams?.get('label') || '');
   const [onlyFailed, setOnlyFailed] = useState(() => Boolean(searchParams?.get('error_type')));
-  const [requestPrefix, setRequestPrefix] = useState('');
+  const [requestPrefix, setRequestPrefix] = useState(() => searchParams?.get('request_prefix') || '');
   const [contentQuery, setContentQuery] = useState('');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);

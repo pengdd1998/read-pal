@@ -157,3 +157,16 @@ async def get_platform_quota(db: AsyncSession = Depends(get_db)) -> GenericRespo
 
     data = await platform_quota_snapshot(db)
     return GenericResponse(success=True, data=data)
+
+
+@router.get('/sessions', response_model=GenericResponse, dependencies=[Depends(require_ops_key)])
+async def list_llm_sessions(
+    hours: int = Query(24, ge=1, le=168),
+    db: AsyncSession = Depends(get_db),
+) -> GenericResponse:
+    """H5b: synthetic session threads — http_request_id chains grouped by
+    (user, book, 30-min activity gap). Users are 8-hex digests."""
+    from app.services.llm.session_queries import list_synthetic_sessions
+
+    data = await list_synthetic_sessions(db, hours)
+    return GenericResponse(success=True, data=data)

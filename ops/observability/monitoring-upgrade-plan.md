@@ -699,7 +699,13 @@ QuotaCard 挂概览页第三栏，60s 轮询。CCR"余额卡"槽位由真实数�
 - **H6 ✅**：by_label 四列排序；首载 skeleton；traces 空态三分化
   （过滤无结果 vs 窗口无流量）；RAG 重放链接 locale-aware（window.location
   → i18n router.push，顺带带 book_id 预填）。
-- H5a ✅（平台用量卡转向，见 H5a 修订）。待做：H5b 会话页 → H4（0036）。
+- H5a ✅（平台用量卡转向，见 H5a 修订）。
+- H5b ✅：`/api/v1/stats/llm/sessions`（ops-key，链聚合 FILTER 计数 +
+  Python 侧 (user, book, 30min gap) 线程化，≤168h，Top100；单测钉
+  分组语义：换用户/换书/>30min 间隔开新会话、NULL http_request_id
+  排除、tool label 计数、窗口 clamp）；`/ops/llm/sessions` 页（行展开
+  链 chips → traces 深链 `request_prefix` 预填，TracesBrowser 补了该
+  参数的 URL 预填）；导航加 🧵 会话项。待做：H4（0036）。
 
 ### H9 ops 导航重构（仿 CCR 分组侧边栏）
 
