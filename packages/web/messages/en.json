@@ -2440,6 +2440,7 @@
     "sessions_chains": "Chains",
     "sessions_tools": "Tools",
     "sessions_errors": "Errors",
+    "by_client": "Client mix",
     "nav_aria": "Ops navigation",
     "nav_back": "Back to app",
     "nav_group_monitor": "Monitoring",

@@ -2450,6 +2450,7 @@
     "sessions_chains": "调用链",
     "sessions_tools": "工具",
     "sessions_errors": "错误",
+    "by_client": "客户端分布",
     "assembly_view": "结构化",
     "assembly_raw": "原始",
     "assembly_spoiler": "防剧透",

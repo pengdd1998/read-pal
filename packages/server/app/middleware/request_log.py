@@ -40,6 +40,27 @@ _SKIP_PATHS = frozenset({
 })
 
 
+def detect_client(scope: Scope) -> str:
+    """H4 (P-H): classify the calling surface from request headers.
+
+    ops — X-Ops-Key present (observability workbench traffic);
+    mobile — Capacitor / read-pal mobile UA;
+    web — everything else (browsers, curl, scripts).
+    """
+    has_ops_key = False
+    user_agent = ''
+    for name, value in scope.get('headers') or []:
+        if name == b'x-ops-key':
+            has_ops_key = True
+        elif name == b'user-agent':
+            user_agent = value.decode('utf-8', errors='replace').lower()
+    if has_ops_key:
+        return 'ops'
+    if 'capacitor' in user_agent or 'readpal' in user_agent or 'read-pal' in user_agent:
+        return 'mobile'
+    return 'web'
+
+
 class RequestLogMiddleware:
     """Pure ASGI middleware that logs every HTTP request."""
 
@@ -62,7 +83,7 @@ class RequestLogMiddleware:
         path = scope.get('path', '')
         method = scope.get('method', 'GET')
 
-        bind_request_context(request_id=request_id, path=path, method=method)
+        bind_request_context(request_id=request_id, path=path, method=method, client=detect_client(scope))
 
         start = time.monotonic()
         status_code = 500

@@ -193,6 +193,7 @@ async def compute_llm_metrics(  # noqa: C901,PLR0915 — metric aggregation is o
             LLMCallTrace.fallback_used,
             LLMCallTrace.ttft_ms,
             LLMCallTrace.prompt_version,
+            LLMCallTrace.client,
         ).where(LLMCallTrace.created_at >= since)
         if not global_scope:
             q = q.where(LLMCallTrace.user_id == user_id)
@@ -300,6 +301,10 @@ async def compute_llm_metrics(  # noqa: C901,PLR0915 — metric aggregation is o
         'series': _series(rows, hours),
         'by_provider': _grouped_counts(rows, 'provider'),
         'by_model': _grouped_counts(rows, 'model'),
+        # H4: client attribution (web/mobile/ops). Trace path only — like
+        # by_model, the rollup table has no client dimension, so >48h
+        # global windows return an empty mapping.
+        'by_client': _grouped_counts(rows, 'client'),
         'fallback': {
             'used': sum(1 for r in rows if r.fallback_used),
             'total': total,

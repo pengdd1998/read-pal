@@ -705,7 +705,15 @@ QuotaCard 挂概览页第三栏，60s 轮询。CCR"余额卡"槽位由真实数�
   分组语义：换用户/换书/>30min 间隔开新会话、NULL http_request_id
   排除、tool label 计数、窗口 clamp）；`/ops/llm/sessions` 页（行展开
   链 chips → traces 深链 `request_prefix` 预填，TracesBrowser 补了该
-  参数的 URL 预填）；导航加 🧵 会话项。待做：H4（0036）。
+  参数的 URL 预填）；导航加 🧵 会话项。
+- H4 ✅：0036 迁移（llm_call_traces.client，nullable）+ request_log
+  中间件 detect_client（X-Ops-Key→ops / Capacitor·readpal UA→mobile /
+  其余 web，绑入 structlog contextvars 同 http_request_id 通道）+
+  `_core._log_call` 与 companion 流式 settlement 两写库点带 client +
+  metrics by_client（trace 路径；rollup 无此维同 by_model）+ 概览
+  客户端分布 chips。**P-H 全项收口。**
+  注意：dev 隧道共库，本地 alembic 验证已把 0036 作用到共享库（纯
+  增量可空列，幂等；部署 upgrade 将跳过）。
 
 ### H9 ops 导航重构（仿 CCR 分组侧边栏）
 

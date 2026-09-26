@@ -24,6 +24,7 @@ interface MetricsData {
   }>;
   series: SeriesPoint[];
   by_provider: Record<string, { calls: number; success_rate: number; p95_latency_ms: number | null }>;
+  by_client?: Record<string, { calls: number; success_rate: number; p95_latency_ms: number | null }>;
   by_model: Record<string, { calls: number; success_rate: number; p95_latency_ms: number | null }>;
   fallback: { used: number; total: number };
 }
@@ -239,6 +240,18 @@ export default function OpsLlmPage() {
                 {Object.entries(data.by_provider).map(([name, p]) => (
                   <span key={name} className="px-2.5 py-1 rounded-full bg-surface-1 border border-surface-3 text-xs">
                     {name}: {p.calls} · {(p.success_rate * 100).toFixed(0)}%
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {data && Object.keys(data.by_client ?? {}).length > 0 && (
+            <div className="mt-3 pt-3 border-t border-surface-3" data-testid="by-client">
+              <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-1.5">{t('by_client')}</div>
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(data.by_client!).map(([name, c]) => (
+                  <span key={name} className="px-2.5 py-1 rounded-full bg-surface-1 border border-surface-3 text-xs">
+                    {name}: {c.calls} · {(c.success_rate * 100).toFixed(0)}%
                   </span>
                 ))}
               </div>

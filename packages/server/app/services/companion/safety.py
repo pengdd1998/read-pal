@@ -48,7 +48,7 @@ def persist_stream_log(
         # completion event into the trace writer so p50-p99/success-rate/
         # by-label cover companion streaming too.
         from app.services.llm.observability import _trace_writer
-        from app.services.llm.observability._core import _current_http_request_id
+        from app.services.llm.observability._core import _current_client, _current_http_request_id
         _trace_writer.add({
             'request_id': request_id[:12],
             'model': model,
@@ -64,6 +64,7 @@ def persist_stream_log(
             # (and P-D's per-span content viewer, which lives in the chain
             # panel) never opened for the bulk of traffic.
             'http_request_id': _current_http_request_id(),
+            'client': _current_client(),
             # E0.3: without this, 51% of streaming traces had provider
             # "(unset)" — the traces UI showed no provider attribution.
             'provider': provider,

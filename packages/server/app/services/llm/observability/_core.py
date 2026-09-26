@@ -43,6 +43,17 @@ def _current_http_request_id() -> str | None:
         return None
 
 
+def _current_client() -> str | None:
+    """H4 (P-H): client surface (web / mobile / ops) for the same reason —
+    request_log middleware classifies from headers and binds it into the
+    contextvars; nullable for non-HTTP contexts."""
+    try:
+        value = structlog.contextvars.get_contextvars().get('client')
+        return str(value) if value else None
+    except Exception:  # noqa: BLE001 — best-effort
+        return None
+
+
 def _build_trace_dict(
     *,
     request_id: str,
@@ -65,6 +76,7 @@ def _build_trace_dict(
     user_id: str | None = None,
     book_id: str | None = None,
     http_request_id: str | None = None,
+    client: str | None = None,
 ) -> dict[str, Any]:
     """Build the shared trace dict used for both logging and DB persistence.
 
@@ -105,6 +117,7 @@ def _build_trace_dict(
         'user_id': user_id,
         'book_id': book_id,
         'http_request_id': http_request_id,
+        'client': client,
     }
 
 

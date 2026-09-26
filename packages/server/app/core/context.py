@@ -12,6 +12,7 @@ def bind_request_context(
     method: str = '',
     user_id: str | None = None,
     book_id: str | None = None,
+    client: str | None = None,
 ) -> None:
     structlog.contextvars.bind_contextvars(
         request_id=request_id,
@@ -19,6 +20,7 @@ def bind_request_context(
         method=method,
         **({'user_id': user_id} if user_id else {}),
         **({'book_id': book_id} if book_id else {}),
+        **({'client': client} if client else {}),
     )
 
 
