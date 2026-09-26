@@ -38,8 +38,25 @@ async def rag_book_health(db: AsyncSession) -> dict[str, Any]:
         })
 
     items.sort(key=lambda x: (x['chunks'] == 0, -x['chunks']))
-    zero_count = sum(1 for x in items if x['chunks'] == 0)
-    return {'books': items[:100], 'zero_chunk_books': zero_count}
+
+    # H3.1 (P-H): the same book shared across accounts (identical
+    # content_hash) used to render one row per copy — 20+ rows for what is
+    # 4 distinct books. Collapse to one row per distinct content; every
+    # copy of a hash shares the same chunk count (the count scope already
+    # matches on content_hash), so the first copy is a valid representative.
+    groups: dict[str, dict[str, Any]] = {}
+    for it in items:
+        key = it['content_hash'] or f"book:{it['book_id']}"
+        g = groups.get(key)
+        if g is None:
+            groups[key] = {**it, 'copies': 1}
+        else:
+            g['copies'] += 1
+
+    grouped = list(groups.values())
+    grouped.sort(key=lambda x: (x['chunks'] == 0, -x['chunks']))
+    zero_count = sum(1 for x in grouped if x['chunks'] == 0)
+    return {'books': grouped[:100], 'zero_chunk_books': zero_count}
 
 
 async def rag_replay_search(

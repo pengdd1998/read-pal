@@ -409,6 +409,41 @@ E1 = traces 页搜索框可按报错文案命中调用链；E2 = 概览三过滤
 占比归零；E4 = 90 天热力图；全程纪律同 §7（迁移双跑、en/zh 只增量、
 SQLite+PG 双绿、ops-key header、勿引图表库）。
 
+### 09-25 三次走查（生产）状态与增补
+
+**已落地确认**：E2 概览三维过滤（By label / provider / model）+
+Refresh 按钮；G2a RAG 数据健康卡；**G2b 超计划落地为 7 阶段全链路
+检索追踪**——Query embedding（1024 维向量预览）→ Semantic search
+（SQL+参数全透明：distance_threshold=0.7 / limit=50 / content_hash）
+→ Keyword search → RRF fusion → Chapter coverage → Context assembly
+→ LLM prompt preview，逐阶段延迟、可展开。原计划只写了 hybrid 重放，
+实现超出预期。
+
+**仍未落地**：E0（兜底链内容丢失）、E1 内容检索、p95 空图与轴标签
+重叠、G1a 结构化透视（traces I/O 面板实测无切换控件）、瀑布时间线、
+热力图。
+
+**E7 RAG 页三项修订（三次走查实锤）**：
+
+1. **健康卡重复行**——同书跨账号共享 content_hash 被平铺 20+ 行
+   （实测只有 4 本 distinct：Moby Dick ×5、紅樓夢 ×12 两种 chunk 数、
+   Pride and Prejudice ×6）：按 content_hash/书名分组聚合，副本数
+   注明"n 个副本"；
+2. **重放工作台可发现性**——必须先点击健康表的书籍行才能解锁
+   Full trace，无任何提示、无选中态视觉反馈（实测探了 5 步才找到）：
+   未选书时按钮旁显示引导文案"← 先在上方选择一本书"，或改为下拉
+   选书，选中行高亮；
+3. **零命中诊断提示**——实测 黛玉葬花 在紅樓夢上 semantic+keyword
+   双通道 0 命中，界面只显示 Rows: 0：应给可能原因提示
+   （distance_threshold 过严 / 分词 / 选错副本 book_id），SQL 参数
+   已透明是对的，但要给一句人话解读。
+
+**E8 client 维度采集与分析卡（对齐 CCR 客户端分析，方案增补）**：
+`llm_call_traces` 加 `client` 列（请求中间件从 User-Agent / API client
+头判定 web / mobile / ops），聚合卡按 client 拆分调用量/成功率/成本；
+0032 一并加列。这是 CCR「客户端分析」在 read-pal 的对应物，此前 E3
+的采集清单漏了它。
+
 ## P-F 布局与交互优化（2026-09-25，生产走查截图/DOM 证据）
 
 > 定位：P-E 解决"数据与功能"，P-F 解决"看得舒服、点得顺"。单人 ops
@@ -475,6 +510,10 @@ SQLite+PG 双绿、ops-key header、勿引图表库）。
 全程零新依赖、en/zh 只增量。
 
 ## P-G RAG 能力观测可视化（2026-09-25 立项）
+
+> **09-25 三次走查状态**：G2a/G2b 已落地（G2b 实现为 7 阶段全链路
+> 追踪，超计划）；G1a/G1b/G4 未落地；RAG 页三处 UX 缺陷 → 已并入
+> P-E E7 修订。
 
 > 背景：RAG 能力评估（15 计划 / ASM-01..05）已核实三层观测通道——
 > **检索层**（book_chunks 计数、hybrid_chunk_search 现场重放、命中/
@@ -547,6 +586,135 @@ RAG 空警示可见；G2 = 零分块书在健康卡置顶、重放表单返回�
 G1b+G4 = 聚合条数字与逐 span 元数据一致；纪律同 §7（ops-key header、
 en/zh 只增量、SQLite+PG 双绿、零新依赖）。
 
+## P-H 收尾对标（2026-09-25 四次走查后；P-E/F/G 主体已落地）
+
+> 背景：P-E/F/G 已由并行会话全部实施（6 PR：E0 0034 修复兜底链内容
+> 丢失、E1 内容检索、E2 过滤、E3 0035 三列+瀑布时间线、E4 热力图窗口、
+> G1a/G2、告警阈值单测、F1 联动跳转）。本节只收两 residual：
+> **"已实施但生产不可见"的复核项** 与 **最后一轮走查新实锤**。
+
+### H1 概览图表修缮（今天截图仍坏，F3 残项升格）
+
+30d 默认窗口下 **p95 趋势图仍整版空挂**（rollup 路径 p95=None）、
+**X 轴日期标签仍重叠成一团**（"26-09-0226-09-04…"）。这两项在 E2/F3
+里写过但 PR3/PR4 未覆盖到。修：p95 全空时切换为 avg_latency 替代线
+（rollup 需补存 avg——或先隐藏并标注"近似口径不含 p95"）；轴标签
+按桶数抽样显示。
+
+### H2 G1a 组装透视生产不可见复核（高优——已实施≠可用）
+
+PR6（98dd1b71）声称 G1a 组装透视面板已实施，但四次走查在
+companion.stream span 的 I/O 面板上**未见任何结构化切换/装配占比条/
+rag_doc_count**（mimo OK span 实测）。排查顺序：部署是否含 98dd1b71 →
+面板触发条件（是否仅特定 label/解析成功才渲染）→ 是否回归。
+**教训固化：每个"已实施"项必须有一次生产可见性走查才算闭环**（本
+轮 E2/G2 同日走查即可见，G1a 不可见即异常）。
+
+### H3 E7 RAG 页三项修订（PR5 之后写入，未实施，今天全部复现实锤）
+
+1. 健康卡同书跨账号 content_hash 平铺重复行（20+ 行实为 4 本）→
+   按 content_hash/书名分组 + 副本数标注；
+2. 重放工作台必须先点健康表行选书才解锁 Full trace，无提示无选中
+   反馈 → 引导文案/下拉选书/选中高亮；
+3. 零命中无诊断提示（黛玉葬花双通道 Rows: 0）→ 给一句可能原因解读
+   （阈值/分词/副本选错）。
+
+### H4 E8 client 维度（0036 + 聚合卡）
+
+`llm_call_traces.client`（中间件从 UA/API client 头判定
+web/mobile/ops）+ 概览客户端分析卡——CCR「客户端分析」对应物，
+上轮增补后未进 0034/0035，需独立 0036。
+
+### H5 决策项
+
+~~交用户裁决~~ → **09-25 用户拍板：两项都做**，实施设计见上节 H5a/H5b
+（配额卡 + 会话合成视图）；原"决策项"小节已转为实施项。
+
+### H6 残项核实清单
+
+F4 空态三分化/skeleton、F5 locale-aware href 与 by_label 排序是否
+已随 PR3/PR4 顺带落地——一次性走查核对，未落的并进 H1 同 PR。
+
+### 顺序
+
+H9 导航 layout（纯前端，最先）→ H2（复核，可能是 1 行修复）→
+H1+H3+H6（一个前端 PR）→ H5a 配额卡 → H5b 会话页 → H4（0036）。
+
+### H5 供应商配额卡 + 会话级合成视图（**09-25 用户拍板：两项都做**）
+
+**H5a 供应商配额卡（对齐 CCR 余额卡）**
+
+- 数据源：智谱开放平台余额 API
+  `GET https://open.bigmodel.cn/api/paas/v4/account/balance`
+  （与聊天 API 同鉴权，返回 `totalBalance / billableAmount`；**实施时
+  以官方文档最终核对**，v3 路径已逐步下线）。探针失败优雅降级为
+  "—"，绝不阻塞供应商运行时卡。
+- 实现：settings 加可选配额探针配置（URL 模板，**复用现有 provider
+  api_key，不新增密钥面**）；ops 端点
+  `GET /api/v1/stats/llm/providers/quota`（require_ops_key，服务端
+  调用 + 5 min 缓存，手动刷新透传）；前端供应商运行时卡扩展配额条
+  （余额/可计费 + CCR 同款百分比），30s 轮询读缓存不打上游。
+
+**H5b 会话级合成视图（CCR 会话列表的 read-pal 对应物）**
+
+- 分组语义：窗口内把 `http_request_id` 链按
+  **(user_id, book_id, 30min 活跃间隔)** 合成 thread——零 schema 变更、
+  纯查询层（Python 侧分组，同 metrics.py 模式；窗口行数有界）。
+- 端点：`GET /api/v1/stats/llm/sessions?hours≤168`（require_ops_key；
+  user 恒 8-hex 脱敏）。
+- 会话行字段（CCR 对齐）：开始 / 最近活跃 / 时长 / user / 书 / chains
+  数 / calls 数 / 工具调用数（label 分类）/ 错误数 / fallback 数 /
+  缓存率 / tokens / 成本 / 模型·供应商集合。
+- 前端：新页 `/ops/llm/sessions`——列表 → 行展开该会话的链列表 →
+  深链 traces（http_request_id 预填，复用 F1 的 searchParams 联动）。
+- 边界：30min 阈值固定（后续可参数化）；分组语义弱于真 session 实体，
+  若产品未来引入 session 表再升级。
+
+### P-H 执行状态（2026-09-26 本地实施批 1）
+
+- **H9 ✅**：`ops/layout.tsx` + `OpsNav`（桌面可折叠侧栏 / <md 横向 tab、
+  locale-aware Link、返回产品、providers 锚点）；概览页两个 ad-hoc 链接
+  移除；traces 锁定提示改 locale Link。Playwright 实测：`/zh/ops/llm*`
+  href 带前缀、双断点激活态正确、单容器无重复。
+- **H2 ✅（复核结论：非回归）**：生产真实 prompt（companion.stream，
+  7038 字）同时含 `SECURITY:`×1 与 `[human]/[assistant]`×10 ——
+  parseAssembly 词表命中，assembly-bar 在当前代码端到端渲染正常
+  （Playwright + 生产 API 实证：分段图例/rag_doc_count/RAG 空警示全在）。
+  此前"不可见"判定为走查时序与 span 选择（失败 span 的空态本就无面板）。
+  教训维持：已实施项须生产可见性走查闭环。
+- **H1 ✅**：SeriesChart 轴标签按 `ceil(n/12)` 抽样（末桶恒显）；rollup
+  路径 p95 全空时图位换注解卡（`p95_approx_note`）。
+- **H3 ✅**：健康卡按 content_hash 分组 + `copies` 副本数（后端
+  rag_queries.py，2 单测）；未选书提示（`select-book-hint`）；零命中
+  诊断提示（`zero-hit-hint`）。
+- **H6 ✅**：by_label 四列排序；首载 skeleton；traces 空态三分化
+  （过滤无结果 vs 窗口无流量）；RAG 重放链接 locale-aware（window.location
+  → i18n router.push，顺带带 book_id 预填）。
+- 待做：H5a 配额卡 → H5b 会话页 → H4（0036）。
+
+### H9 ops 导航重构（仿 CCR 分组侧边栏）
+
+- 现状：ops 各页靠页内 ad-hoc 互链（概览页两个链接、traces 无返回、
+  locale href 靠重定向兜底）——页面多了以后导航不可持续。
+- 设计：新增 `app/[locale]/ops/layout.tsx`，ops 作用域 **CCR 式可折叠
+  侧边栏**（≤720px 折为顶部横向 tab）：
+
+  ```
+  监控
+    🛰️ 概览          /ops/llm
+    🔍 调用链         /ops/llm/traces
+    🧵 会话          /ops/llm/sessions   (H5b)
+    📊 RAG 观测      /ops/llm/rag
+  运行时
+    🔌 供应商/配额    概览锚点 (H5a)
+  ```
+
+  `usePathname` 激活态；侧栏顶部"← 返回产品"链接；替换概览页现有
+  两个 ad-hoc 链接；图标沿用 emoji 风格零依赖；解锁态不变（ops-key
+  sessionStorage 全 ops 共享）。
+- **收编 F5 残项**：locale-aware href、返回链接由本项一并解决。
+- i18n en/zh 只增量（导航组 key）；不引图标库。
+
 ## 明确不做（边界）
 
 - 账户余额卡（供应商 API 口径不一）
@@ -563,6 +731,6 @@ en/zh 只增量、SQLite+PG 双绿、零新依赖）。
 
 P-A（后端 API）→ P-B（前端消费）→ P-C（rollup 是性能债，最后做）。
 P-B 依赖 P-A 的 API 形状冻结；P-C 独立于两者，可并行。
-P-D 已完成（09-24）；当前执行 **P-E：E0 → E1 → E2 → E3 → E4/E5 并行**；
-P-F 布局与交互随 E2/E3 顺路，F1 可独立先行。**P-G（RAG 观测）与 P-E
-并行：G1a/G2 先行（无迁移），G1b 并入 0032，G4 随后。**
+P-D 已完成（09-24）；P-E/F/G 主体已完成（09-25 六 PR）。当前执行
+**P-H：H9 导航 layout（纯前端可最先）→ H2 复核 → H1+H3+H6 同 PR →
+H5a/H5b → H4（0036）**。

@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api/client';
 import { authFetch } from '@/lib/auth-fetch';
 
@@ -64,6 +65,7 @@ interface TraceSpan {
   streaming?: boolean | null;
   cache_read_tokens?: number | null;
   finish_reason?: string | null;
+  book_id?: string | null;
 }
 
 interface ListData {
@@ -125,6 +127,7 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
   const [chain, setChain] = useState<ChainData | null>(null);
   const [chainLoading, setChainLoading] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const router = useRouter();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -335,9 +338,16 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
                 <td className="px-3 py-2.5 font-mono text-xs text-gray-500">{row.http_request_id || '—'}</td>
               </tr>
             ))}
-            {(!data || data.items.length === 0) && !loading && (
-              <tr><td colSpan={7} className="px-3 py-8 text-center text-gray-400">{t('empty')}</td></tr>
-            )}
+            {(!data || data.items.length === 0) && !loading && (() => {
+              // F4: three different empties — filtered-out vs no traffic in
+              // window vs capture off — used to collapse into one string.
+              const filtersOn = !!(labelFilter.trim() || requestPrefix.trim() || contentQuery.trim() || onlyFailed);
+              return (
+                <tr><td colSpan={7} className="px-3 py-8 text-center text-gray-400" data-testid="traces-empty">
+                  {filtersOn ? t('empty_filtered') : t('empty')}
+                </td></tr>
+              );
+            })()}
           </tbody>
         </table>
       </div>
@@ -374,30 +384,33 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
                   // content to pre-fill the RAG replay query
                   const humanSpan = chain.spans.find((sp) => sp.label === 'companion.stream');
                   return humanSpan ? (
-                    <a
-                      href={`/ops/llm/rag?replay_query=${encodeURIComponent('')}`}
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        // Fetch content to get the user's query
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        // Fetch content to get the user's query, then hop to
+                        // the RAG replay workbench. router (i18n) keeps the
+                        // locale prefix — window.location would drop /zh.
                         try {
                           const mq = humanSpan.model ? `?model=${encodeURIComponent(humanSpan.model)}` : '';
                           const cr = await authFetch(
                             `/api/v1/stats/llm/requests/${humanSpan.request_id}/content${mq}`,
                             { headers: { 'X-Ops-Key': opsKey } },
                           );
+                          let lastHuman = '';
                           if (cr.ok) {
                             const cb = await cr.json();
                             const prompt = cb?.data?.prompt_text || '';
                             const humans = prompt.split('[human]').filter(Boolean);
-                            const lastHuman = humans[humans.length - 1]?.trim().slice(0, 200) || '';
-                            window.location.href = `/ops/llm/rag?replay_query=${encodeURIComponent(lastHuman)}&book_id=`;
+                            lastHuman = humans[humans.length - 1]?.trim().slice(0, 200) || '';
                           }
+                          const bookId = humanSpan.book_id;
+                          router.push(`/ops/llm/rag?replay_query=${encodeURIComponent(lastHuman)}${bookId ? `&book_id=${encodeURIComponent(bookId)}` : ''}`);
                         } catch { /* fallback: no query extraction */ }
                       }}
                       className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 text-xs text-amber-700 dark:text-amber-300 hover:border-amber-400 cursor-pointer"
                     >
                       📊 {t('rag_replay_in')}
-                    </a>
+                    </button>
                   ) : null;
                 })()}
                 <span className="text-xs text-gray-500">

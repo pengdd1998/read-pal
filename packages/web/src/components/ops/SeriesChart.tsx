@@ -42,6 +42,10 @@ export const SeriesChart = React.memo(function SeriesChart({
   const values = points.map((p) => (metric === 'p95_latency_ms' ? p.p95_latency_ms ?? 0 : p[metric]));
   const max = Math.max(...values, 1);
   const width = Math.max(points.length * (BAR_MAX + GAP), 200);
+  // H1: sample labels so ~12 max regardless of bucket count — the 30d daily
+  // view previously rendered either a label per bucket (overlap, old build)
+  // or none at all (the <=24 gate). First/last always labeled.
+  const labelStep = Math.max(1, Math.ceil(points.length / 12));
 
   return (
     <div className="overflow-x-auto">
@@ -56,6 +60,7 @@ export const SeriesChart = React.memo(function SeriesChart({
           const v = metric === 'p95_latency_ms' ? p.p95_latency_ms ?? 0 : p[metric];
           const h = Math.round((v / max) * (HEIGHT - 12)) || (v > 0 ? 2 : 0);
           const x = i * (BAR_MAX + GAP);
+          const showLabel = i % labelStep === 0 || i === points.length - 1;
           return (
             <g key={p.bucket}>
               <rect
@@ -69,7 +74,7 @@ export const SeriesChart = React.memo(function SeriesChart({
               >
                 <title>{`${p.bucket}: ${formatValue(v)} (${(p.success_rate * 100).toFixed(0)}%)`}</title>
               </rect>
-              {points.length <= 24 && (
+              {showLabel && (
                 <text x={x + BAR_MAX / 2} y={HEIGHT + 16} textAnchor="middle" className="fill-gray-400" fontSize={9}>
                   {p.bucket.length > 10 ? p.bucket.slice(5) : p.bucket}
                 </text>

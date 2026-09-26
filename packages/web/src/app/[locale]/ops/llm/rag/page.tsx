@@ -8,8 +8,10 @@ import { authFetch } from '@/lib/auth-fetch';
 interface BookHealth {
   book_id: string;
   title: string;
+  content_hash?: string | null;
   chunks: number;
   status: string;
+  copies?: number;
 }
 
 interface TraceStage {
@@ -210,7 +212,7 @@ export default function RagPage() {
 
   if (!opsKey) {
     return (
-      <div className="container-content px-4 py-16 max-w-md mx-auto text-center">
+      <div className="py-16 max-w-md mx-auto text-center">
         <div className="text-4xl mb-4">🔐</div>
         <input type="password" value={opsKey} onChange={(e) => setOpsKey(e.target.value)}
           placeholder={t('key_placeholder')} className="w-full px-4 py-2.5 rounded-xl border border-surface-3 bg-surface-1" />
@@ -219,7 +221,7 @@ export default function RagPage() {
   }
 
   return (
-    <div className="container-content px-4 sm:px-6 py-8 space-y-6">
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold">📊 {t('rag_health')}</h1>
 
       {zeroCount > 0 && (
@@ -242,7 +244,14 @@ export default function RagPage() {
               <tr key={b.book_id}
                 onClick={() => setBookId(b.book_id)}
                 className={`border-b border-surface-3/50 last:border-0 cursor-pointer hover:bg-surface-1 ${bookId === b.book_id ? 'bg-amber-50/50' : ''} ${b.chunks === 0 ? 'text-red-600' : ''}`}>
-                <td className="px-4 py-2 font-medium truncate max-w-64">{b.title}</td>
+                <td className="px-4 py-2 font-medium truncate max-w-64">
+                  {b.title}
+                  {(b.copies ?? 1) > 1 && (
+                    <span className="ml-1.5 px-1.5 py-0.5 rounded bg-surface-2 text-[10px] text-gray-500" title={b.content_hash || ''}>
+                      {t('rag_copies', { count: b.copies ?? 1 })}
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-2 tabular-nums">{b.chunks}</td>
                 <td className="px-4 py-2 text-xs">{b.chunks === 0 ? '⚠️ zero' : '✓'}</td>
               </tr>
@@ -266,10 +275,18 @@ export default function RagPage() {
             className="px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium disabled:opacity-40">
             {loading ? '…' : t('trace_btn')}
           </button>
+          {!bookId && (
+            <span className="text-xs text-amber-600" data-testid="select-book-hint">← {t('rag_select_book_hint')}</span>
+          )}
         </div>
 
         {trace && (
           <div className="space-y-3" data-testid="trace-result">
+            {trace.final_results.length === 0 && (
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 rounded-lg p-3 text-xs text-amber-700 dark:text-amber-300" data-testid="zero-hit-hint">
+                💡 {t('rag_zero_hit_hint')}
+              </div>
+            )}
             <div className="flex items-center gap-4 text-xs text-gray-400">
               <span>{t('trace_total')}: <strong className="text-gray-700 dark:text-gray-200">{trace.total_latency_ms}ms</strong></span>
               <span>{trace.stages.length} stages</span>

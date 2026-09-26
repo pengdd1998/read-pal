@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api/client';
 import { ProvidersCard } from '@/components/ops/ProvidersCard';
 import { SeriesChart, type SeriesPoint } from '@/components/ops/SeriesChart';
@@ -46,6 +46,9 @@ export default function OpsLlmPage() {
   const [fModel, setFModel] = useState('');
   const [data, setData] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(false);
+  // H6/F5 residual: by_label column sort (calls/success/p95/cost).
+  const [sortKey, setSortKey] = useState<'calls' | 'success_rate' | 'p95_latency_ms' | 'cost_usd'>('calls');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     // Key lives in sessionStorage only — a ?key= URL would persist the
@@ -85,7 +88,7 @@ export default function OpsLlmPage() {
 
   if (!key || (!authed && !loading && key)) {
     return (
-      <div className="container-content px-4 py-16 max-w-md mx-auto text-center">
+      <div className="py-16 max-w-md mx-auto text-center">
         <div className="text-4xl mb-4">🔐</div>
         <h1 className="text-xl font-bold mb-4">{t('locked_title')}</h1>
         <p className="text-sm text-gray-500 mb-6">{t('locked_desc')}</p>
@@ -111,18 +114,43 @@ export default function OpsLlmPage() {
 
   const lat = data?.latency_ms;
   const errors = Object.entries(data?.error_breakdown ?? {}).sort((a, b) => b[1] - a[1]);
+  // H1: the rollup path (>48h windows) carries no per-bucket p95 — every
+  // bar would be zero. Detect that and swap the chart for a note instead
+  // of an empty grid (GAP A3 / H1).
+  const p95AllNull = (data?.series ?? []).length > 0 && data!.series.every((p) => p.p95_latency_ms == null);
+  const sortedLabels = [...(data?.by_label ?? [])].sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    const av = a[sortKey];
+    const bv = b[sortKey];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return (av - bv) * dir;
+  });
+  const toggleSort = (k: typeof sortKey) => {
+    if (sortKey === k) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortKey(k); setSortDir('desc'); }
+  };
+
+  // H6/F4: first-load skeleton instead of a bare bottom-line "loading".
+  if (loading && !data) {
+    return (
+      <div className="space-y-4" data-testid="overview-skeleton">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          {[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-24 rounded-2xl bg-surface-1 animate-pulse" />)}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {[0, 1].map((i) => <div key={i} className="h-44 rounded-2xl bg-surface-1 animate-pulse" />)}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container-content px-4 sm:px-6 py-8">
+    <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold">🛰️ {t('title')}</h1>
-        <div className="flex gap-1.5 items-center">
-          <a href="/ops/llm/traces" className="px-3.5 py-1.5 rounded-lg text-sm font-medium bg-surface-1 text-gray-600 dark:text-gray-300 hover:border-primary-400 border border-transparent hover:border">
-            🔍 {t('traces_link')}
-          </a>
-          <a href="/ops/llm/rag" className="px-3.5 py-1.5 rounded-lg text-sm font-medium bg-surface-1 text-gray-600 dark:text-gray-300 hover:border-primary-400 border border-transparent hover:border">
-            📊 {t('rag_link')}
-          </a>
+        <div className="flex gap-1.5 items-center flex-wrap">
           <select value={fLabel} onChange={(e) => setFLabel(e.target.value)}
             className="px-2.5 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm" aria-label={t('filter_label')}>
             <option value="">{t('filter_label')}: {t('filter_all')}</option>
@@ -179,7 +207,13 @@ export default function OpsLlmPage() {
         </div>
         <div className="bg-surface-0 rounded-2xl border border-surface-3 p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">{t('series_p95')}</h2>
-          <SeriesChart points={data?.series ?? []} metric="p95_latency_ms" formatValue={(v) => `${(v / 1000).toFixed(1)}s`} />
+          {p95AllNull ? (
+            <div className="h-[120px] flex items-center justify-center text-xs text-gray-400 text-center px-6" data-testid="p95-approx-note">
+              {t('p95_approx_note')}
+            </div>
+          ) : (
+            <SeriesChart points={data?.series ?? []} metric="p95_latency_ms" formatValue={(v) => `${(v / 1000).toFixed(1)}s`} />
+          )}
         </div>
       </div>
 
@@ -210,26 +244,34 @@ export default function OpsLlmPage() {
             </div>
           )}
         </div>
-        <ProvidersCard />
+        <div id="providers" className="scroll-mt-24">
+          <ProvidersCard />
+        </div>
       </div>
 
       <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">{t('by_label')}</h2>
-      <div className="bg-surface-0 rounded-2xl border border-surface-3 overflow-hidden">
+      <div className="bg-surface-0 rounded-2xl border border-surface-3 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-surface-3 text-left text-xs text-gray-500">
               <th className="px-4 py-3">{t('label')}</th>
-              <th className="px-4 py-3">{t('t_calls')}</th>
-              <th className="px-4 py-3">{t('t_success')}</th>
-              <th className="px-4 py-3">p95</th>
+              <th className="px-4 py-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300" onClick={() => toggleSort('calls')}>
+                {t('t_calls')} {sortKey === 'calls' && (sortDir === 'asc' ? '↑' : '↓')}
+              </th>
+              <th className="px-4 py-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300" onClick={() => toggleSort('success_rate')}>
+                {t('t_success')} {sortKey === 'success_rate' && (sortDir === 'asc' ? '↑' : '↓')}
+              </th>
+              <th className="px-4 py-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300" onClick={() => toggleSort('p95_latency_ms')}>p95 {sortKey === 'p95_latency_ms' && (sortDir === 'asc' ? '↑' : '↓')}</th>
               <th className="px-4 py-3">{t('t_ttft')}</th>
               <th className="px-4 py-3">{t('t_tokens')}</th>
-              <th className="px-4 py-3">{t('t_cost')}</th>
+              <th className="px-4 py-3 cursor-pointer select-none hover:text-gray-700 dark:hover:text-gray-300" onClick={() => toggleSort('cost_usd')}>
+                {t('t_cost')} {sortKey === 'cost_usd' && (sortDir === 'asc' ? '↑' : '↓')}
+              </th>
               <th className="px-4 py-3">ver</th>
             </tr>
           </thead>
           <tbody>
-            {(data?.by_label ?? []).map((row) => (
+            {sortedLabels.map((row) => (
               <tr key={row.label} onClick={() => router.push(`/ops/llm/traces?label=${encodeURIComponent(row.label)}`)} className="border-b border-surface-3/50 last:border-0 cursor-pointer hover:bg-surface-1">
                 <td className="px-4 py-3 font-medium">{row.label}</td>
                 <td className="px-4 py-3">{row.calls}</td>

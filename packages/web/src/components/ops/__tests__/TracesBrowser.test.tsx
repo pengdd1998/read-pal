@@ -18,6 +18,12 @@ vi.mock('@/lib/auth-fetch', () => ({
   authFetch: (...args: unknown[]) => authFetchMock(...args),
 }));
 
+const pushMock = vi.fn();
+vi.mock('@/i18n/navigation', () => ({
+  useRouter: () => ({ push: pushMock }),
+  Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
+}));
+
 import messages from '../../../../messages/zh.json';
 import { TracesBrowser } from '../TracesBrowser';
 
