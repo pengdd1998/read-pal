@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { SessionsBrowser } from '@/components/ops/SessionsBrowser';
+import { readOpsKey } from '@/lib/ops-key';
 
 /**
  * Synthetic sessions page (H5b): same unlock convention as the traces
@@ -14,7 +15,7 @@ export default function OpsLlmSessionsPage() {
   const [opsKey, setOpsKey] = useState<string | null>(null);
 
   useEffect(() => {
-    setOpsKey(sessionStorage.getItem('ops-key'));
+    setOpsKey(readOpsKey());
   }, []);
 
   return (

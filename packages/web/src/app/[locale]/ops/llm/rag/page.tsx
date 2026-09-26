@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { authFetch } from '@/lib/auth-fetch';
+import { readOpsKey } from '@/lib/ops-key';
 
 interface BookHealth {
   book_id: string;
@@ -167,7 +168,7 @@ export default function RagPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem('ops-key');
+    const saved = readOpsKey();
     if (saved) setOpsKey(saved);
     // URL pre-fill from traces drill-through
     const rq = searchParams?.get('replay_query');

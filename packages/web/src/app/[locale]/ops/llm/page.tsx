@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api/client';
+import { readOpsKey, writeOpsKey } from '@/lib/ops-key';
 import { ProvidersCard } from '@/components/ops/ProvidersCard';
 import { QuotaCard } from '@/components/ops/QuotaCard';
 import { ActivityHeatmap } from '@/components/ops/ActivityHeatmap';
@@ -42,6 +43,7 @@ export default function OpsLlmPage() {
   const t = useTranslations('opsLlm');
   const router = useRouter();
   const [key, setKey] = useState('');
+  const [remember, setRemember] = useState(false);
   const [authed, setAuthed] = useState(false);
   const [hours, setHours] = useState(720);
   const [fLabel, setFLabel] = useState('');
@@ -54,10 +56,12 @@ export default function OpsLlmPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
-    // Key lives in sessionStorage only — a ?key= URL would persist the
-    // secret in browser history and nginx access logs (page navigation).
-    const saved = sessionStorage.getItem('ops-key');
+    // Key lives in storage only — a ?key= URL would persist the secret in
+    // browser history and nginx access logs (page navigation). J2: the
+    // remembered (localStorage) copy is an explicit per-browser opt-in.
+    const saved = readOpsKey();
     if (saved) setKey(saved);
+    setRemember(!!(typeof window !== 'undefined' && localStorage.getItem('ops-key-remembered')));
   }, [, fLabel, fProvider, fModel]);
 
   const load = useCallback(async (h: number, k: string) => {
@@ -74,7 +78,7 @@ export default function OpsLlmPage() {
       if (res.success && res.data) {
         setData(res.data);
         setAuthed(true);
-        sessionStorage.setItem('ops-key', k);
+        writeOpsKey(k, remember);
       } else {
         setAuthed(false);
       }
@@ -83,7 +87,7 @@ export default function OpsLlmPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [remember]); // remember rides the closure into writeOpsKey (J2)
 
   useEffect(() => {
     if (key) load(hours, key);
@@ -111,6 +115,10 @@ export default function OpsLlmPage() {
             {t('unlock')}
           </button>
         </div>
+        <label className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+          {t('remember_key')}
+        </label>
       </div>
     );
   }

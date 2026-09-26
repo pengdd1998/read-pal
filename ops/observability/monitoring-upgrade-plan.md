@@ -806,6 +806,19 @@ finish_reason / B5、F5 文案。24h 窗口下 p95 图与 by_model/by_client
 
 ## P-J 独立控制台第二阶段（2026-09-26 走查 feat/ops-standalone 后立项）
 
+**P-J 执行状态（2026-09-26 第二批）**：J0 ✅（gitignore 否定行 + sessions
+页入库，worktree 5cc0fac5 + main c484c927 双树同修；`[locale]` 在
+gitignore 语法中是字符类须 `\[locale\]` 转义）；J1 ✅（OpsHealthStrip
+常驻条：/api/v1/health 健康点 + providers 熔断摘要 + 锁定按钮，30s 轮询
++ ops-key-changed/storage 事件即时刷新）；J2 ✅（共享 lib/ops-key.ts：
+sessionStorage 默认 + 「记住」checkbox 显式 opt-in localStorage + 锁定
+双清；ops 布局独立 title「read-pal · ops」+ 专属 icon.svg）。浏览器 6/6
+（含新标签免输自动解锁、锁定回锁定态）。**实现陷阱**：load useCallback
+空依赖闭包吃掉 remember 状态（stale closure → 永远 false）；填密码本身
+触发 key-state effect 自动解锁（存量行为），记住 checkbox 须先行勾选。
+待做：J3 供应商管理页（决策已重开）/ J4 URL 状态同步补全 / J5 部署回归
+清单。
+
 > 走查方式：worktree 起服务（后端 8000 / 前端 **3001**——3000 被占、
 > CORS 白名单含 3001）+ 无登录态 key-only 浏览器全走查。P-I 主体
 > 实证通过：独立壳渲染（无产品头）、key-only 解锁、概览/调用链/RAG
