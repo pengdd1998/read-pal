@@ -781,6 +781,29 @@ finish_reason / B5、F5 文案。24h 窗口下 p95 图与 by_model/by_client
 运维备注：本地 `packages/server/.env` 已追加
 `LLM_TRACE_CONTENT_DB=true` 等三行（验证需要，与生产对齐，建议保留）。
 
+## P-I 监控独立于产品框架（2026-09-26 立项并实施，worktree feat/ops-standalone）
+
+> 评估结论先行：监控对产品框架的硬耦合只有总览接口的登录态要求，
+> 其余皆为可剥离包装层。推荐路线 = 同应用路由组剥离 + 关键端点
+> key-only 化，约 1 天。已在 worktree 实施：
+
+- **鉴权面变更（评审记录）**：新共享依赖 `ops_key_or_current_user`
+  （ops_auth.py）——有效 X-Ops-Key → 平台 scope、无需用户会话；无
+  key 时回落 Bearer 用户 scope（R2 用户态隔离不变）。接入
+  `/stats/llm`（原 get_current_user 硬依赖）与 `/llm-providers` 三端
+  点（ProvidersCard 依赖）。单因子 ops key（30+ 字符、header 传输、
+  P7.2 纪律）可看平台全局指标——单人部署可接受。
+- **前端路由组**：产品页全部收进 `[locale]/(main)/`（挂
+  AuthProvider/Analytics/SW/NetworkStatus/AppShell，URL 零变化）；
+  `/ops` 留组外——无产品顶栏、无用户上下文、纯 ops-key。E0.4 遗留
+  （未登录+有效 key 被 401 全局重定向 /auth）随之消除。
+- ProvidersCard 补 `opsKey` prop（控制台会话无登录态时带头）。
+- 测试：5 个新鉴权单测（key-only 200/无凭证 401/坏 key 401/用户态
+  隔离不变/llm-providers key-only）+ 1 个存量测试 hermeticity 修复
+  （capture_disabled 测试被本地 .env 的 LLM_TRACE_CONTENT_DB=true
+  污染——delenv 不挡 pydantic 的 .env 文件加载，改 monkeypatch 钉
+  settings 字段）。浏览器回归 8/8 + 登录态产品页全导航在位。
+
 ## 明确不做（边界）
 
 - 账户余额卡（供应商 API 口径不一）

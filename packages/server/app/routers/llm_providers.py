@@ -20,7 +20,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ValidationError
 
 from app.config import ProviderConfig, get_settings, reload_settings
-from app.middleware.auth import get_current_user
+from app.middleware.auth import get_current_user  # noqa: F401 — kept for reference
+from app.middleware.ops_auth import ops_key_or_current_user
 from app.middleware.rate_limiter import account_limiter
 from app.schemas.common import GenericResponse
 from app.services.llm.registry import get_registry
@@ -67,7 +68,7 @@ class ProviderListBody(BaseModel):
 
 @router.get('', response_model=GenericResponse)
 async def list_providers(
-    _current_user: dict = Depends(get_current_user),
+    _current_user: dict | None = Depends(ops_key_or_current_user),
 ) -> GenericResponse:
     """List configured LLM providers with live circuit/RPM state."""
     registry = get_registry()
@@ -82,7 +83,7 @@ async def list_providers(
 
 @router.post('/reload', response_model=GenericResponse)
 async def reload_providers(
-    _current_user: dict = Depends(get_current_user),
+    _current_user: dict | None = Depends(ops_key_or_current_user),
 ) -> GenericResponse:
     """Re-read settings from env and hot-reload the registry if changed."""
     reload_settings()
@@ -97,7 +98,7 @@ async def reload_providers(
 @router.put('', response_model=GenericResponse)
 async def put_providers(
     body: ProviderListBody,
-    _current_user: dict = Depends(get_current_user),
+    _current_user: dict | None = Depends(ops_key_or_current_user),
 ) -> GenericResponse:
     """Replace the live provider set (in-memory hot swap).
 

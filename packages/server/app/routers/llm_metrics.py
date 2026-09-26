@@ -14,8 +14,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
-from app.middleware.auth import get_current_user
-from app.middleware.ops_auth import ops_key_valid, require_ops_key
+from app.middleware.ops_auth import ops_key_or_current_user, ops_key_valid, require_ops_key
 from app.middleware.rate_limiter import account_limiter
 from app.schemas.common import GenericResponse
 from app.services.llm.metrics import MAX_METRICS_WINDOW_HOURS, compute_llm_metrics
@@ -40,7 +39,9 @@ async def get_llm_metrics(
     provider: str | None = Query(None, max_length=32),
     model: str | None = Query(None, max_length=50),
     x_ops_key: str | None = Header(None, alias='X-Ops-Key'),  # P7.2 — never in the URL (access logs)
-    _current_user: dict = Depends(get_current_user),
+    # P-H standalone: valid ops key → platform scope without a user
+    # session (the ops console no longer lives behind a product login).
+    _current_user: dict | None = Depends(ops_key_or_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> GenericResponse:
     """Success rate, p50/p95/p99 latency, token cost, error breakdown,

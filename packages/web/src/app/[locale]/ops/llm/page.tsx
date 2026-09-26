@@ -262,7 +262,7 @@ export default function OpsLlmPage() {
         </div>
         <QuotaCard opsKey={key} />
         <div id="providers" className="scroll-mt-24">
-          <ProvidersCard />
+          <ProvidersCard opsKey={key} />
         </div>
       </div>
 
