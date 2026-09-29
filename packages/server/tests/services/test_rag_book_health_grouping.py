@@ -5,7 +5,6 @@ books — the same book uploaded by several accounts (identical
 content_hash) rendered one row per copy. Grouping collapses them with a
 copy count; genuinely zero-chunk books still surface individually.
 """
-from uuid import uuid4
 
 import pytest
 from sqlalchemy import select
@@ -19,9 +18,12 @@ HASH_A = 'a' * 64
 HASH_B = 'b' * 64
 
 
-def _book(file_hash: str | None, title: str) -> Book:
+def _book(file_hash: str | None, title: str, user_id=None) -> Book:
+    # PG enforces books_user_id_fkey — the user must actually exist.
+    # Tests create a throwaway user row when not given one (SQLite
+    # silently accepts random UUIDs; PostgreSQL does not).
     return Book(
-        user_id=uuid4(),
+        user_id=user_id,
         title=title,
         author='A',
         file_type='epub',
@@ -29,6 +31,21 @@ def _book(file_hash: str | None, title: str) -> Book:
         content_hash=file_hash,
         total_pages=0,
     )
+
+
+async def _make_user(db):
+    """Create a throwaway user so the books FK has a valid target."""
+    from app.models.user import User
+    import uuid as _uuid
+    u = User(
+        id=_uuid.uuid4(),
+        email=f'rag-h3-{_uuid.uuid4().hex[:8]}@test.example',
+        name='H3',
+    )
+    u.password_hash = "test-hash-not-real"
+    db.add(u)
+    await db.flush()
+    return u.id
 
 
 def _chunk(book_id, file_hash: str | None) -> BookChunk:
@@ -46,7 +63,8 @@ def _chunk(book_id, file_hash: str | None) -> BookChunk:
 @pytest.mark.asyncio
 async def test_shared_hash_copies_collapse_to_one_row():
     async with _TestSession() as db:
-        b1, b2, b3 = _book(HASH_A, 'Shared'), _book(HASH_A, 'Shared'), _book(HASH_B, 'Other')
+        uid = await _make_user(db)
+        b1, b2, b3 = _book(HASH_A, 'Shared', uid), _book(HASH_A, 'Shared', uid), _book(HASH_B, 'Other', uid)
         db.add_all([b1, b2, b3])
         await db.flush()
         db.add_all([_chunk(b1.id, HASH_A), _chunk(None, HASH_A), _chunk(b3.id, HASH_B)])
@@ -73,7 +91,8 @@ async def test_shared_hash_copies_collapse_to_one_row():
 @pytest.mark.asyncio
 async def test_zero_chunk_books_surface_individually():
     async with _TestSession() as db:
-        z1, z2 = _book(None, 'ZeroOne'), _book(None, 'ZeroTwo')
+        uid = await _make_user(db)
+        z1, z2 = _book(None, 'ZeroOne', uid), _book(None, 'ZeroTwo', uid)
         db.add_all([z1, z2])
         await db.commit()
 
