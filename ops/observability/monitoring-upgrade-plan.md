@@ -806,6 +806,17 @@ finish_reason / B5、F5 文案。24h 窗口下 p95 图与 by_model/by_client
 
 ## P-J 独立控制台第二阶段（2026-09-26 走查 feat/ops-standalone 后立项）
 
+**09-26 RAG 观测浏览器实操收尾（两个转交项修复）**：用户浏览器实操
+验证 RAG 观测全通（健康表 23 书/全链路追踪 7 阶段/零命中自动诊断，
+报告归档 test-results/rag-eval/）；转交的两项 UI 问题当日修复——
+① 书行选中态强化（aria-selected + ✓ 前缀 + outline-amber 环 +
+  font-semibold；原 bg-amber-50/50 过弱）；
+② 健康表加载骨架（booksLoading + 3 行 animate-pulse；books 查询经
+  dev 隧道实测 10-23s，空表窗口长且易误读为"无书"）。
+开发环境加固：**tunnel-keeper**（/tmp/tunnel-keeper.sh，单 ssh 双
+-L + ServerAlive 保活 + 断线自动重连）——当日隧道三掉，裸 ssh -N -L
+一次网络抖动即永久退出。
+
 **P-J 第三批执行状态（2026-09-26）**：
 - **J3 ✅**：后端 PUT 哨兵合并（空 api_key=保留现网密钥；新供应商无
   存量 key 直接拒绝，注册表永不含空凭证；2 单测）+ 前端
@@ -954,6 +965,37 @@ sessions（hours）、RAG（book/query）同步 searchParams。
 key 清理；控制台空态文案复核。
 
 **顺序（更新）**：~~J0/J1/J2~~（已完成）→ **K1** → K2/K4 → K3。
+
+### P-K/P-L 验证记录（2026-09-29，worktree 本地 8000/3001 全量走查）
+
+**全部实测通过**：
+
+- **J3 供应商管理页** ✅：表格（熔断/模型/优先级/maxRPM/maxTPM/实时）、
+  6 个数值输入、「↻ 从环境重载」实测 200 + 后端审计事件落结构化日志
+  （`registry_hot_reloaded client=ops request_id=…`）、「应用更改」
+  dirty 门控三态正确（改→解锁、还原→再禁，全程未产生真实变更）；
+  诚实披露「内存热切换——重启后回到部署环境值」。观察项：api_key
+  编辑未入 v1 表单（快照不含 key，符合只写设计但意味着换 key 仍须
+  改配置）。
+- **J4 URL 双向同步** ✅：`?hours=168&label=companion.stream` 冷加载
+  正确还原下拉；切 24h 后 URL 写回且保留 label。
+- **P-L L4 键盘** ✅：行 `tabindex=0` + `aria-expanded` + Enter 展开
+  面板；**L5 时间** ✅：`09-26 22:19` + 相对时间（`2d`）。
+- **J2 记住 key 端到端** ✅：解锁表单「☐ 在此浏览器记住
+  （localStorage）」明示存储位置 → 勾选解锁 → localStorage 落 key →
+  🔒 锁定清双存储。
+
+**走查方法论勘误（两条此前的误报，记录防复发）**：
+
+1. 「ops-key 丢失」×2 实为**浏览器标签页生命周期**——sessionStorage
+   按标签隔离，走查会话每次释放标签即清空；非应用缺陷，且正是 J2
+   「记住」要解决的场景（localStorage 跨标签已验证）。
+2. 「锁文案+空态并存」「供应商页零按钮」为 hidden DOM/flight 脚本串
+   误报——`textContent` 探针必须配可见性过滤（`offsetParent`）或截图
+   目验；G1a 面板只渲染于有内容的成功 span。
+
+**遗留**：24h 窗口 0 条为流量自然衰减（评估流量集中在 09-25/26），
+非缺陷。K1 供应商表单如需支持换 key，补「设置新 key」只写字段即可。
 
 ## P-L 交互操作优化（2026-09-26 交互专项走查，对照 CCR 交互形态）
 
