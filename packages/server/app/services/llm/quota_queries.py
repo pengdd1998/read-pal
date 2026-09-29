@@ -11,7 +11,7 @@ progress bar; 0 hides it.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from sqlalchemy import func, select
@@ -23,8 +23,8 @@ from app.models.llm_trace import LLMCallTrace
 def _day_floor(now: datetime, days_back: int = 0) -> datetime:
     """UTC-midnight bucket, timezone-aware (created_at is DateTime(tz=True)
     and existing trace queries compare against aware UTC datetimes)."""
-    day = (now.astimezone(timezone.utc) - timedelta(days=days_back)).date()
-    return datetime(day.year, day.month, day.day, tzinfo=timezone.utc)
+    day = (now.astimezone(UTC) - timedelta(days=days_back)).date()
+    return datetime(day.year, day.month, day.day, tzinfo=UTC)
 
 
 async def _window_totals(db: AsyncSession, start: datetime, end: datetime) -> dict[str, float]:
@@ -71,7 +71,7 @@ async def platform_quota_snapshot(db: AsyncSession) -> dict[str, Any]:
     """Today vs yesterday platform aggregates + top consumers (ops-only)."""
     from app.config import get_settings
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     today_start = _day_floor(now)
     yesterday_start = _day_floor(now, days_back=1)
 

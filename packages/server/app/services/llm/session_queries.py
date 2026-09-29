@@ -11,7 +11,7 @@ later if a real need appears.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from typing import Any
 
 from sqlalchemy import func, select
@@ -31,7 +31,7 @@ def _is_tool_label(label: str | None) -> bool:
 async def list_synthetic_sessions(db: AsyncSession, hours: int) -> dict[str, Any]:
     """Chain aggregates threaded into sessions, newest first."""
     hours = max(1, min(hours, MAX_SESSION_WINDOW_HOURS))
-    since = datetime.now(timezone.utc) - timedelta(hours=hours)
+    since = datetime.now(UTC) - timedelta(hours=hours)
 
     rows = (await db.execute(
         select(
