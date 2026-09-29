@@ -14,6 +14,7 @@ from sqlalchemy.exc import DBAPIError
 
 from app.config import get_settings
 from app.core.logging import setup_logging
+import redis.exceptions  # health degraded-path exception types
 from app.core.redis import get_redis
 from app.db import async_session, pool_status
 from app.middleware.exception_handlers import register_exception_handlers
@@ -254,8 +255,13 @@ async def health_check() -> dict[str, object]:
         checks['database'] = {'status': 'error'}
 
     try:
-        redis = get_redis()
-        await redis.ping()
+        # Local name must NOT shadow the redis module — the old local
+        # `redis = get_redis()` made the except clause below resolve
+        # `redis.exceptions` against the CLIENT instance (AttributeError
+        # → the degraded-health path itself 500'd; only visible once the
+        # tunnel actually dropped, 2026-09-26).
+        client = get_redis()
+        await client.ping()
         checks['redis'] = {'status': 'ok'}
     except (redis.exceptions.RedisError, ConnectionError) as exc:
         logger.error('health_check_redis_error', error=str(exc))

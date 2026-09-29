@@ -42,13 +42,20 @@ const Card = ({ label, value, sub }: { label: string; value: string; sub?: strin
 export default function OpsLlmPage() {
   const t = useTranslations('opsLlm');
   const router = useRouter();
+  // J4: window + filters ride the URL — refresh/share/deep-link safe.
+  // Read window.location.search directly: useSearchParams returns null on
+  // the static-shell first render, and lazy useState initializers never
+  // re-run (sessions page learned this first).
   const [key, setKey] = useState('');
   const [remember, setRemember] = useState(false);
   const [authed, setAuthed] = useState(false);
-  const [hours, setHours] = useState(720);
-  const [fLabel, setFLabel] = useState('');
-  const [fProvider, setFProvider] = useState('');
-  const [fModel, setFModel] = useState('');
+  const [hours, setHours] = useState(() => {
+    const h = Number(new URLSearchParams(window.location.search).get('hours'));
+    return [24, 168, 720].includes(h) ? h : 720;
+  });
+  const [fLabel, setFLabel] = useState(() => new URLSearchParams(window.location.search).get('label') || '');
+  const [fProvider, setFProvider] = useState(() => new URLSearchParams(window.location.search).get('provider') || '');
+  const [fModel, setFModel] = useState(() => new URLSearchParams(window.location.search).get('model') || '');
   const [data, setData] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(false);
   // H6/F5 residual: by_label column sort (calls/success/p95/cost).
@@ -92,6 +99,17 @@ export default function OpsLlmPage() {
   useEffect(() => {
     if (key) load(hours, key);
   }, [key, hours, load, fLabel, fProvider, fModel]);
+
+  // J4: reflect state into the URL without spamming history.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (hours !== 720) params.set('hours', String(hours));
+    if (fLabel) params.set('label', fLabel);
+    if (fProvider) params.set('provider', fProvider);
+    if (fModel) params.set('model', fModel);
+    const qs = params.toString();
+    window.history.replaceState(null, '', `${location.pathname}${qs ? '?' + qs : ''}`);
+  }, [hours, fLabel, fProvider, fModel]);
 
   // L1: a 401 in console mode broadcasts ops-key-changed — reflect the
   // lock in-page instead of ever leaving the console.

@@ -114,9 +114,25 @@ async def put_providers(
     registry = get_registry()
     if not body.providers:
         raise ValueError('At least one provider is required')
+
+    # J3: the state snapshot never returns api keys, so the console sends
+    # an empty api_key for unchanged providers — merge the live key back
+    # server-side. A provider that has no existing key (new entry) is
+    # rejected: the registry must never go live with an empty credential.
+    merged: list[ProviderConfig] = []
+    existing = {cfg.name: cfg for cfg in get_settings().provider_configs}
+    for p in body.providers:
+        if not p.api_key:
+            live = existing.get(p.name)
+            if not live or not live.api_key:
+                raise ValueError(f'Provider {p.name!r} has no stored key — supply api_key explicitly')
+            merged.append(p.model_copy(update={'api_key': live.api_key}))
+        else:
+            merged.append(p)
+
     prev_env = os.environ.get('LLM_PROVIDERS')
     try:
-        os.environ['LLM_PROVIDERS'] = json.dumps([p.model_dump() for p in body.providers])
+        os.environ['LLM_PROVIDERS'] = json.dumps([p.model_dump() for p in merged])
         reload_settings()
         changed = await registry.reload_if_changed()
         return GenericResponse(success=True, data={

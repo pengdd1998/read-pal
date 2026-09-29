@@ -806,6 +806,34 @@ finish_reason / B5、F5 文案。24h 窗口下 p95 图与 by_model/by_client
 
 ## P-J 独立控制台第二阶段（2026-09-26 走查 feat/ops-standalone 后立项）
 
+**P-J 第三批执行状态（2026-09-26）**：
+- **J3 ✅**：后端 PUT 哨兵合并（空 api_key=保留现网密钥；新供应商无
+  存量 key 直接拒绝，注册表永不含空凭证；2 单测）+ 前端
+  `/ops/llm/providers` 管理页（priority/maxRPM/maxTPM 行内编辑、
+  环境重载、应用热切换、会话级操作日志）+ 导航「供应商 / 配额」改指
+  实页。**边界重申**：内存热切换，重启回部署值；持久化仍走
+  LLM_PROVIDERS env（文档明示）。
+- **J4 ✅**：概览窗口+三维过滤、sessions 窗口全部 URL 同步
+  （replaceState 免历史污染；刷新/分享/深链安全）。**陷阱**：
+  useSearchParams 在静态壳首渲染返回 null 且 lazy useState 初始化器
+  不会重跑——首屏读 URL 一律直读 window.location.search（sessions
+  先踩、概览后踩）。
+- **顺手修复（J3 期间实锤的存量 bug）**：main.py 健康检查降级路径
+  名字遮蔽——局部 `redis = get_redis()` 使 except 子句的
+  `redis.exceptions.RedisError` 解析到客户端实例 → Redis 故障时降级
+  响应自身 500（隧道一掉才暴露）；局部改名 client + 顶部
+  `import redis.exceptions`。
+- **J5 部署回归清单（合并 feat/ops-standalone 后执行）**：
+  1. sessions 页生产 200（J0 修复的首次真实上线验证）；
+  2. 控制台无产品头 + key-only 解锁（P-I）；
+  3. 产品页抽样（dashboard/library/read）AppShell 完整（路由组迁移
+     120 文件回归）；
+  4. 健康条/记住 key/锁定按钮（J1/J2）；
+  5. 交互七项抽测（L1-L7：401 页内锁定/复制 ✓/tooltip/键盘/时间/
+     行内展开）；
+  6. providers 管理页只读渲染（写操作留给运维窗口）；
+  7. 移动端 390px 抽查。
+
 **P-J 执行状态（2026-09-26 第二批）**：J0 ✅（gitignore 否定行 + sessions
 页入库，worktree 5cc0fac5 + main c484c927 双树同修；`[locale]` 在
 gitignore 语法中是字符类须 `\[locale\]` 转义）；J1 ✅（OpsHealthStrip

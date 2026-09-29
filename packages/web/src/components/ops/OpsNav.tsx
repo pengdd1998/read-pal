@@ -27,8 +27,7 @@ const MONITOR_ITEMS: NavItem[] = [
   { href: '/ops/llm/rag', icon: '📊', key: 'nav_rag' },
 ];
 const RUNTIME_ITEMS: NavItem[] = [
-  // Anchor into the overview's provider runtime card — no separate page.
-  { href: '/ops/llm#providers', icon: '🔌', key: 'nav_providers', exact: true },
+  { href: '/ops/llm/providers', icon: '🔌', key: 'nav_providers' },
 ];
 
 const COLLAPSE_KEY = 'ops-nav-collapsed';

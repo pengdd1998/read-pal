@@ -34,7 +34,12 @@ interface SessionRow {
 export const SessionsBrowser = React.memo(function SessionsBrowser({ opsKey }: { opsKey: string }) {
   const t = useTranslations('opsLlm');
   const router = useRouter();
-  const [hours, setHours] = useState(24);
+  // J4: window rides the URL (?hours=24|168)
+  const [hours, setHours] = useState(() => {
+    const sp = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const h = Number(sp.get('hours'));
+    return [24, 168].includes(h) ? h : 24;
+  });
   const [rows, setRows] = useState<SessionRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -58,6 +63,11 @@ export const SessionsBrowser = React.memo(function SessionsBrowser({ opsKey }: {
   }, [opsKey]);
 
   useEffect(() => { load(hours); }, [hours, load]);
+
+  useEffect(() => {
+    if (hours !== 24) window.history.replaceState(null, '', `${location.pathname}?hours=${hours}`);
+    else window.history.replaceState(null, '', location.pathname);
+  }, [hours]);
 
   const dur = (s: SessionRow) => {
     const ms = new Date(s.last_active_at).getTime() - new Date(s.started_at).getTime();
