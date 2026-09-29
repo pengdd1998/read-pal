@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { authFetch } from '@/lib/auth-fetch';
+import { readOpsKey } from '@/lib/ops-key';
 
 interface BookHealth {
   book_id: string;
@@ -159,6 +160,9 @@ export default function RagPage() {
   const searchParams = useSearchParams() as ReturnType<typeof useSearchParams> | null;
   const [opsKey, setOpsKey] = useState('');
   const [books, setBooks] = useState<BookHealth[]>([]);
+  // walk-through residual: brief empty table read as "no books" while the
+  // /rag/books roundtrip (10s+ over the dev tunnel) is in flight.
+  const [booksLoading, setBooksLoading] = useState(true);
   const [zeroCount, setZeroCount] = useState(0);
   const [bookId, setBookId] = useState('');
   const [query, setQuery] = useState('');
@@ -167,17 +171,22 @@ export default function RagPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem('ops-key');
+    const saved = readOpsKey();
     if (saved) setOpsKey(saved);
     // URL pre-fill from traces drill-through
     const rq = searchParams?.get('replay_query');
     const rb = searchParams?.get('book_id');
     if (rq) setQuery(rq);
     if (rb) setBookId(rb);
+    // L1: re-read on broadcast (401 console mode / lock button)
+    const onKey = () => setOpsKey(readOpsKey() || '');
+    window.addEventListener('ops-key-changed', onKey);
+    return () => window.removeEventListener('ops-key-changed', onKey);
   }, [searchParams]);
 
   const loadBooks = useCallback(async () => {
     if (!opsKey) return;
+    setBooksLoading(true);
     try {
       const res = await authFetch('/api/v1/stats/llm/rag/books', { headers: { 'X-Ops-Key': opsKey } });
       const body = await res.json();
@@ -185,7 +194,9 @@ export default function RagPage() {
         setBooks(body.data.books ?? []);
         setZeroCount(body.data.zero_chunk_books ?? 0);
       }
-    } catch { /* best-effort */ }
+    } catch { /* best-effort */ } finally {
+      setBooksLoading(false);
+    }
   }, [opsKey]);
 
   useEffect(() => { loadBooks(); }, [loadBooks]);
@@ -240,11 +251,24 @@ export default function RagPage() {
             </tr>
           </thead>
           <tbody>
+            {booksLoading && books.length === 0 && (
+              [0, 1, 2].map((i) => (
+                <tr key={'skeleton-' + i} className="border-b border-surface-3/50" data-testid="books-skeleton">
+                  <td colSpan={3} className="px-4 py-2.5"><div className="h-4 rounded bg-surface-2 animate-pulse" /></td>
+                </tr>
+              ))
+            )}
             {books.slice(0, 100).map((b) => (
               <tr key={b.book_id}
                 onClick={() => setBookId(b.book_id)}
-                className={`border-b border-surface-3/50 last:border-0 cursor-pointer hover:bg-surface-1 ${bookId === b.book_id ? 'bg-amber-50/50' : ''} ${b.chunks === 0 ? 'text-red-600' : ''}`}>
+                aria-selected={bookId === b.book_id}
+                className={`border-b border-surface-3/50 last:border-0 cursor-pointer hover:bg-surface-1 ${
+                  bookId === b.book_id
+                    ? 'bg-amber-50 dark:bg-amber-900/25 outline outline-1 -outline-offset-1 outline-amber-400 font-semibold'
+                    : ''
+                } ${b.chunks === 0 ? 'text-red-600' : ''}`}>
                 <td className="px-4 py-2 font-medium truncate max-w-64">
+                  {bookId === b.book_id && <span className="mr-1 text-amber-600" aria-hidden="true">✓</span>}
                   {b.title}
                   {(b.copies ?? 1) > 1 && (
                     <span className="ml-1.5 px-1.5 py-0.5 rounded bg-surface-2 text-[10px] text-gray-500" title={b.content_hash || ''}>

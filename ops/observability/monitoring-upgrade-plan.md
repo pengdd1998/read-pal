@@ -781,6 +781,293 @@ finish_reason / B5、F5 文案。24h 窗口下 p95 图与 by_model/by_client
 运维备注：本地 `packages/server/.env` 已追加
 `LLM_TRACE_CONTENT_DB=true` 等三行（验证需要，与生产对齐，建议保留）。
 
+## P-I 监控独立于产品框架（2026-09-26 立项并实施，worktree feat/ops-standalone）
+
+> 评估结论先行：监控对产品框架的硬耦合只有总览接口的登录态要求，
+> 其余皆为可剥离包装层。推荐路线 = 同应用路由组剥离 + 关键端点
+> key-only 化，约 1 天。已在 worktree 实施：
+
+- **鉴权面变更（评审记录）**：新共享依赖 `ops_key_or_current_user`
+  （ops_auth.py）——有效 X-Ops-Key → 平台 scope、无需用户会话；无
+  key 时回落 Bearer 用户 scope（R2 用户态隔离不变）。接入
+  `/stats/llm`（原 get_current_user 硬依赖）与 `/llm-providers` 三端
+  点（ProvidersCard 依赖）。单因子 ops key（30+ 字符、header 传输、
+  P7.2 纪律）可看平台全局指标——单人部署可接受。
+- **前端路由组**：产品页全部收进 `[locale]/(main)/`（挂
+  AuthProvider/Analytics/SW/NetworkStatus/AppShell，URL 零变化）；
+  `/ops` 留组外——无产品顶栏、无用户上下文、纯 ops-key。E0.4 遗留
+  （未登录+有效 key 被 401 全局重定向 /auth）随之消除。
+- ProvidersCard 补 `opsKey` prop（控制台会话无登录态时带头）。
+- 测试：5 个新鉴权单测（key-only 200/无凭证 401/坏 key 401/用户态
+  隔离不变/llm-providers key-only）+ 1 个存量测试 hermeticity 修复
+  （capture_disabled 测试被本地 .env 的 LLM_TRACE_CONTENT_DB=true
+  污染——delenv 不挡 pydantic 的 .env 文件加载，改 monkeypatch 钉
+  settings 字段）。浏览器回归 8/8 + 登录态产品页全导航在位。
+
+## P-J 独立控制台第二阶段（2026-09-26 走查 feat/ops-standalone 后立项）
+
+**09-26 RAG 观测浏览器实操收尾（两个转交项修复）**：用户浏览器实操
+验证 RAG 观测全通（健康表 23 书/全链路追踪 7 阶段/零命中自动诊断，
+报告归档 test-results/rag-eval/）；转交的两项 UI 问题当日修复——
+① 书行选中态强化（aria-selected + ✓ 前缀 + outline-amber 环 +
+  font-semibold；原 bg-amber-50/50 过弱）；
+② 健康表加载骨架（booksLoading + 3 行 animate-pulse；books 查询经
+  dev 隧道实测 10-23s，空表窗口长且易误读为"无书"）。
+开发环境加固：**tunnel-keeper**（/tmp/tunnel-keeper.sh，单 ssh 双
+-L + ServerAlive 保活 + 断线自动重连）——当日隧道三掉，裸 ssh -N -L
+一次网络抖动即永久退出。
+
+**P-J 第三批执行状态（2026-09-26）**：
+- **J3 ✅**：后端 PUT 哨兵合并（空 api_key=保留现网密钥；新供应商无
+  存量 key 直接拒绝，注册表永不含空凭证；2 单测）+ 前端
+  `/ops/llm/providers` 管理页（priority/maxRPM/maxTPM 行内编辑、
+  环境重载、应用热切换、会话级操作日志）+ 导航「供应商 / 配额」改指
+  实页。**边界重申**：内存热切换，重启回部署值；持久化仍走
+  LLM_PROVIDERS env（文档明示）。
+- **J4 ✅**：概览窗口+三维过滤、sessions 窗口全部 URL 同步
+  （replaceState 免历史污染；刷新/分享/深链安全）。**陷阱**：
+  useSearchParams 在静态壳首渲染返回 null 且 lazy useState 初始化器
+  不会重跑——首屏读 URL 一律直读 window.location.search（sessions
+  先踩、概览后踩）。
+- **顺手修复（J3 期间实锤的存量 bug）**：main.py 健康检查降级路径
+  名字遮蔽——局部 `redis = get_redis()` 使 except 子句的
+  `redis.exceptions.RedisError` 解析到客户端实例 → Redis 故障时降级
+  响应自身 500（隧道一掉才暴露）；局部改名 client + 顶部
+  `import redis.exceptions`。
+- **J5 部署回归清单（合并 feat/ops-standalone 后执行）**：
+  1. sessions 页生产 200（J0 修复的首次真实上线验证）；
+  2. 控制台无产品头 + key-only 解锁（P-I）；
+  3. 产品页抽样（dashboard/library/read）AppShell 完整（路由组迁移
+     120 文件回归）；
+  4. 健康条/记住 key/锁定按钮（J1/J2）；
+  5. 交互七项抽测（L1-L7：401 页内锁定/复制 ✓/tooltip/键盘/时间/
+     行内展开）；
+  6. providers 管理页只读渲染（写操作留给运维窗口）；
+  7. 移动端 390px 抽查。
+
+**P-J 执行状态（2026-09-26 第二批）**：J0 ✅（gitignore 否定行 + sessions
+页入库，worktree 5cc0fac5 + main c484c927 双树同修；`[locale]` 在
+gitignore 语法中是字符类须 `\[locale\]` 转义）；J1 ✅（OpsHealthStrip
+常驻条：/api/v1/health 健康点 + providers 熔断摘要 + 锁定按钮，30s 轮询
++ ops-key-changed/storage 事件即时刷新）；J2 ✅（共享 lib/ops-key.ts：
+sessionStorage 默认 + 「记住」checkbox 显式 opt-in localStorage + 锁定
+双清；ops 布局独立 title「read-pal · ops」+ 专属 icon.svg）。浏览器 6/6
+（含新标签免输自动解锁、锁定回锁定态）。**实现陷阱**：load useCallback
+空依赖闭包吃掉 remember 状态（stale closure → 永远 false）；填密码本身
+触发 key-state effect 自动解锁（存量行为），记住 checkbox 须先行勾选。
+待做：J3 供应商管理页（决策已重开）/ J4 URL 状态同步补全 / J5 部署回归
+清单。
+
+> 走查方式：worktree 起服务（后端 8000 / 前端 **3001**——3000 被占、
+> CORS 白名单含 3001）+ 无登录态 key-only 浏览器全走查。P-I 主体
+> 实证通过：独立壳渲染（无产品头）、key-only 解锁、概览/调用链/RAG
+> 三页全可用。发现 1 个阻塞级缺陷 + 若干 CCR 对照增量。
+
+### J0 缺陷（阻塞级）：sessions 页从未入库——`.gitignore` 误伤
+
+- **现象**：控制台导航「🧵 会话」→ **404**；生产
+  `read.chishenma.top/zh/ops/llm/sessions` 同样 **404**。
+- **根因**：`.gitignore:116` 的 `sessions/` 规则（本意：会话数据目录）
+  按目录名任意深度匹配，**误伤**
+  `app/[locale]/ops/llm/sessions/page.tsx`——H5b 的页面文件从未被
+  git 跟踪。main 工作区有此未跟踪文件所以本地 3100 能用；git 构建
+  的 CI/生产/其他 worktree 全都没有该页。`SessionsBrowser.tsx` 组件
+  本体已跟踪（在 components/ops 下，不触发规则），测试因此全绿——
+  **测试覆盖不到 gitignore 陷阱**。与 R1（credentials.py 被挡库外）
+  同族，第二次踩中。
+- **修复（已在 worktree 工作区演示通过，3001 → 200）**：
+  `git add -f packages/web/src/app/\[locale\]/ops/llm/sessions/page.tsx`
+  + `.gitignore` 精确否定
+  `!packages/web/src/app/[locale]/ops/llm/sessions/`。
+  **main 树同病灶**（该文件在 main 同样未跟踪）——合并前 main 若先
+  部署，生产导航死链仍在；两树都要落。
+- **防线建议**：CI 加一条守护——`git ls-files | 核对 OpsNav 链接目标
+  路由文件存在`，或对 `app/**/page.tsx` 的 gitignore 命中做告警。
+
+### J1 常驻健康条（CCR 端点栏对应物）
+
+standalone layout 顶栏加：后端 `/api/v1/health` 状态点 + providers
+closed/open 摘要 + 内容捕获开关状态（`capture_disabled` 时提示），
+30s 轮询、失败变红。CCR 顶栏「端点 · 运行中」的等价物——控制台
+打开即知系统活着。
+
+### J2 key 会话管理
+
+- 解锁表单加「在此浏览器记住」checkbox（**localStorage opt-in** +
+  控制台内「锁定」按钮一键清除）——消除每开新标签页重输 key 的摩擦；
+  权衡（XSS 持久化面）写进 UI 说明，单人部署可接受。
+- 独立 favicon + tab 标题（「read-pal 运维控制台」），与产品 tab 区分。
+
+### J3 供应商管理页（重启"不做"决策——独立控制台改变了前提）
+
+`/ops/llm/providers`：消费现有 `POST/PUT/reload /llm-providers` 端点
+——列表/启停/优先级/模型列表/热重载，变更需二次确认 + 打 structlog
+审计事件。CCR「供应商」页的对应物；控制台由此从只读观测升级为
+运维操作面。原"不做"理由（配置文件够用）在控制台成为日常入口后
+不再成立。
+
+### J4 URL 状态同步补全
+
+概览过滤/窗口、会话页窗口同步 searchParams（traces 已有）——控制台
+视图可收藏/分享，刷新不丢状态。
+
+### J5 部署与回归注意
+
+- `(main)` 迁移动了 100+ 文件（URL 零变化、e2e 8/8），合并部署后
+  照例生产可见性走查，**必含 sessions 页**（本轮盲区即由此漏过）。
+- dev 端口约定固化：worktree 本地验证用 3000/3001（CORS 白名单内），
+  3100/3101 不在名单——写进 worktree README 或 .env.example 注释。
+
+### 顺序
+
+J0（阻塞，立即）→ J1/J2（小）→ J3（本期核心增量）→ J4/J5。
+
+### P-J 执行状态（09-26 二次复核）+ P-K 增补
+
+**J0/J1/J2 已实施并实测通过**（5cc0fac5 / f73a487c）：sessions 页
+入库 + `.gitignore` 否定规则；**健康条常驻顶栏**（🛰️ read-pal ops ·
+● API 正常 · ● glm · ● mimo + 🔒 锁定按钮）；独立 title
+「read-pal · ops」与 icon.svg。J3/J4/J5 未动。
+
+**P-K 增补（第三轮 CCR 对照；关键差异：CCR 是本机 127.0.0.1 服务，
+read-pal 控制台在公网域 /ops 下——威胁模型不同）**：
+
+**K1 = J3 供应商管理页**（本期核心；后端前提已备：POST/PUT/reload
+三 mutation 全部已挂 `ops_key_or_current_user` + account_limiter，
+`llm_providers.py:71-101`）
+
+- 页面 `/ops/llm/providers`（运行时组升级为页）：
+  - 列表 = 现有 GET 快照（circuit/TPM/RPM/延迟/模型/priority/
+    enabled）；
+  - 操作：新增/编辑/启停/删除（二次确认）/「重载配置」→
+    `POST /reload`；
+  - **api_key 只写不回显**（表单掩码至尾 4 位；GET 快照本就不含
+    key）；
+  - **审计**：每次 mutation 打 `ops.provider_mutated` structlog 事件
+    （name/字段摘要/ops-key-or-user 标识）——控制台从只读升级为操作
+    面后的最小审计线；
+  - reload 失败时原样展示配置校验错误（JSON 错误定位）。
+- 验收：UI 改一个 provider 的 baseUrl/启停 → 热重载生效（下一次
+  调用走新配置）+ 审计事件可查。
+
+**K2 = J4 URL 状态同步**：概览（label/provider/model/hours）、
+sessions（hours）、RAG（book/query）同步 searchParams。
+
+**K3 控制台暴露面加固**
+
+- ops 鉴权失败计数进 metrics（独立 counter 或 error_breakdown 加
+  `ops_auth_fail`）+ check.py 告警阈值（如 ≥50/h）——公网暴力尝试
+  从不可见变为可观测；
+- ops key 轮换接入既有 A3 轮换 runbook（解锁页 403 即轮换信号）；
+- 可选决策项：nginx 对 `/ops` 路径加 IP allowlist 或基础认证双因子。
+
+**K4 小项**：概览自动刷新 toggle（对齐 traces）；`w_1h` 冗余 i18n
+key 清理；控制台空态文案复核。
+
+**顺序（更新）**：~~J0/J1/J2~~（已完成）→ **K1** → K2/K4 → K3。
+
+### P-K/P-L 验证记录（2026-09-29，worktree 本地 8000/3001 全量走查）
+
+**全部实测通过**：
+
+- **J3 供应商管理页** ✅：表格（熔断/模型/优先级/maxRPM/maxTPM/实时）、
+  6 个数值输入、「↻ 从环境重载」实测 200 + 后端审计事件落结构化日志
+  （`registry_hot_reloaded client=ops request_id=…`）、「应用更改」
+  dirty 门控三态正确（改→解锁、还原→再禁，全程未产生真实变更）；
+  诚实披露「内存热切换——重启后回到部署环境值」。观察项：api_key
+  编辑未入 v1 表单（快照不含 key，符合只写设计但意味着换 key 仍须
+  改配置）。
+- **J4 URL 双向同步** ✅：`?hours=168&label=companion.stream` 冷加载
+  正确还原下拉；切 24h 后 URL 写回且保留 label。
+- **P-L L4 键盘** ✅：行 `tabindex=0` + `aria-expanded` + Enter 展开
+  面板；**L5 时间** ✅：`09-26 22:19` + 相对时间（`2d`）。
+- **J2 记住 key 端到端** ✅：解锁表单「☐ 在此浏览器记住
+  （localStorage）」明示存储位置 → 勾选解锁 → localStorage 落 key →
+  🔒 锁定清双存储。
+
+**走查方法论勘误（两条此前的误报，记录防复发）**：
+
+1. 「ops-key 丢失」×2 实为**浏览器标签页生命周期**——sessionStorage
+   按标签隔离，走查会话每次释放标签即清空；非应用缺陷，且正是 J2
+   「记住」要解决的场景（localStorage 跨标签已验证）。
+2. 「锁文案+空态并存」「供应商页零按钮」为 hidden DOM/flight 脚本串
+   误报——`textContent` 探针必须配可见性过滤（`offsetParent`）或截图
+   目验；G1a 面板只渲染于有内容的成功 span。
+
+**遗留**：24h 窗口 0 条为流量自然衰减（评估流量集中在 09-25/26），
+非缺陷。K1 供应商表单如需支持换 key，补「设置新 key」只写字段即可。
+
+## P-L 交互操作优化（2026-09-26 交互专项走查，对照 CCR 交互形态）
+
+**P-L 执行状态（2026-09-26 交互审计后实施，全项 ✅）**：
+- **L1 ✅**：interceptors 的 handleExpiredSession 前置控制台分支——`/ops`
+  路径或请求带 X-Ops-Key 时，401 只清 sessionStorage 的 ops-key 并广播
+  `ops-key-changed`（页内锁定态），**永不**清 token/跳产品登录页；四页
+  （概览/traces/sessions/rag）+ 健康条监听该事件即时反映锁定/解锁。
+- **L2 ✅**：copy 增加 execCommand 回退（headless/加固浏览器拒 async
+  clipboard API 时仍闪 ✓）——实测 NotAllowedError → 回退 →「已复制」。
+- **L3 ✅**：SeriesChart 悬浮即时 tooltip（原生 title 需长驻留）。
+- **L4 ✅**：traces/sessions 行 tabIndex=0 + role=button + aria-expanded
+  + Enter/Space 展开（focus-visible 轮廓）。
+- **L5 ✅**：lib/ops-format.ts formatTraceTime——本地时区 MM-DD HH:mm +
+  相对时间副行（now/m/h/d）+ title 全文带 GMT 偏移；traces/sessions 两表。
+- **L6 ✅**：时间列 whitespace-nowrap、model 列 max-w-40 truncate + title。
+- **L7 ✅**：链面板改**行内展开**（点击行正下方 tr 插入，scrollIntoView
+  就近滚动），替换底部追加挂载；再次点击/Enter 折叠。
+- **实现教训（同 J2 闭包家族第二次）**：openChain 的 useCallback deps
+  只有 [opsKey]，闭包里 selectedHttpId 永远是首渲染的 null——二次点击
+  重新打开而非折叠；用 ref 镜像 state 判等修复。jsdom 无 scrollIntoView
+  须可选调用（`?.scrollIntoView?.`）。
+
+> 走查方法：浏览器交互探针逐项实测（行展开位置/自动滚动/aria 属性/
+> 复制反馈/内容滚动/移动端 390px 视口）。结论：链面板自动滚动、瀑布
+> 时间线、G1a 组装透视（结构化切换+装配占比条+RAG 空警示）、失败
+> span 空态、健康条移动端压缩、390px 纵向堆叠布局——全部达标。
+> 以下为实测未达项。
+
+### L1 控制台 401 语义（交互阻塞项）
+
+`api/interceptors.ts:128-149` `handleExpiredSession` 对**任何** 401
+（重试耗尽后）执行 清存储 + `window.location.href=/auth`——不区分请求
+是否带 ops key。实测后果：控制台使用中一次瞬态 401（热更新窗口）即
+**ops-key 丢失 + 整个控制台被炸回产品登录页**。修：api client 增加
+控制台模式感知——当前 path 在 `/ops` 下（或请求带 X-Ops-Key）时，401
+不走 handleExpiredSession，改为派发 `ops-key-changed` 事件触发页内
+锁定态（J2 的 storage helper 已有 broadcast 机制）；且
+`handleExpiredSession` 的清除逻辑不得波及 `ops-key` 存储。
+
+### L2 复制反馈缺失
+
+「复制 ID」点击后按钮无任何状态变化（实测前后文本一致）——加瞬时
+✓/已复制 态 1.2s 回退，经 copyImpl seam 统一（所有 copy 按钮）。
+
+### L3 图表 hover tooltip
+
+概览趋势/柱状图无数值悬浮（CCR 图表/日条带 hover 显示逐桶数值）——
+零依赖实现：SVG `<title>` 或轻量浮层，柱/点 hover 显示
+calls/success/tokens/cost。
+
+### L4 键盘可达性
+
+表格行不可聚焦（无 tabindex）、无 aria-expanded、Enter 不能展开——
+补 tabindex=0 + Enter/Space 展开 + aria-expanded + 焦点样式。
+
+### L5 时间显示人性化
+
+traces 时间列为原始 ISO（`09-25T18:14:33`，无时区）——改为本地时区
+`MM-DD HH:mm:ss` 主显示 + 相对时间副行 + title 绝对时间（CCR 带
+GMT+8）。
+
+### L6 移动端表格打磨
+
+390px 下时间列换行、model 列截断（整体可用）——列优先级（隐藏低价值
+列）或卡片化，时间列 `whitespace-nowrap`。
+
+### 顺序
+
+L1（交互阻塞）→ L2/L5（高频感知）→ L3/L4 → L6/L7（打磨）。
+全部纯前端，可与 K 系列并行。
+
 ## 明确不做（边界）
 
 - 账户余额卡（供应商 API 口径不一）

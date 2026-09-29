@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
+import { formatTraceTime } from '@/lib/ops-format';
 import { api } from '@/lib/api/client';
 import { authFetch } from '@/lib/auth-fetch';
 
@@ -126,12 +127,16 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
   const [loading, setLoading] = useState(false);
   const [chain, setChain] = useState<ChainData | null>(null);
   const [chainLoading, setChainLoading] = useState(false);
+  const [selectedHttpId, setSelectedHttpId] = useState<string | null>(null);
+  const selectedHttpIdRef = useRef<string | null>(null);
+  selectedHttpIdRef.current = selectedHttpId;
   const [copied, setCopied] = useState<string | null>(null);
   const router = useRouter();
 
   const load = useCallback(async () => {
     setLoading(true);
     setChain(null);
+    setSelectedHttpId(null);
     try {
       const params: Record<string, string | number | boolean> = { hours, limit: pageSize, offset: page * pageSize };
       if (labelFilter.trim()) params.label = labelFilter.trim();
@@ -166,6 +171,17 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
 
   const openChain = useCallback(async (httpRequestId: string) => {
     if (!httpRequestId) return;
+    // toggle: clicking the expanded row closes it (L7 inline accordion).
+    // Compare via ref — the useCallback deps ([opsKey]) close over a stale
+    // selectedHttpId (null on first render), so a plain state read here
+    // would re-open instead of toggling closed (same closure family as
+    // the J2 remember flag).
+    if (selectedHttpIdRef.current === httpRequestId) {
+      setSelectedHttpId(null);
+      setChain(null);
+      return;
+    }
+    setSelectedHttpId(httpRequestId);
     setChainLoading(true);
     try {
       const res = await api.get<ChainData>(
@@ -189,7 +205,21 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
       setCopied(text);
       setTimeout(() => setCopied(null), 1500);
     } catch {
-      /* clipboard unavailable — the raw id is still selectable */
+      // L2: some contexts (insecure iframes, hardened browsers) deny the
+      // async clipboard API — fall back to the legacy execCommand path so
+      // the button still flashes its ✓ feedback.
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        setCopied(text);
+        setTimeout(() => setCopied(null), 1500);
+      } catch { /* truly no clipboard — the raw id is still selectable */ }
     }
   };
 
@@ -242,129 +272,10 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
   const total = data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / pageSize));
 
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 items-center">
-        <select
-          value={hours}
-          onChange={(e) => { setHours(Number(e.target.value)); setPage(0); }}
-          className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm"
-          aria-label={t('window')}
-        >
-          <option value={1}>1h</option>
-          <option value={24}>24h</option>
-          <option value={168}>7d</option>
-        </select>
-        <input
-          value={labelFilter}
-          onChange={(e) => { setLabelFilter(e.target.value); setPage(0); }}
-          placeholder={t('f_label')}
-          className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm w-44"
-        />
-        <input
-          value={requestPrefix}
-          onChange={(e) => { setRequestPrefix(e.target.value); setPage(0); }}
-          placeholder={t('f_request')}
-          className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm w-44 font-mono"
-        />
-        <input
-          value={contentQuery}
-          onChange={(e) => { setContentQuery(e.target.value); setPage(0); }}
-          placeholder={t('f_content_search')}
-          data-testid="content-search"
-          className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm w-56"
-        />
-        <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
-          <input type="checkbox" checked={onlyFailed} onChange={(e) => { setOnlyFailed(e.target.checked); setPage(0); }} />
-          {t('f_failed')}
-        </label>
-        <button type="button" onClick={load} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-sm">
-          {t('f_apply')}
-        </button>
-        <button type="button" onClick={load} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-sm">
-          ↻
-        </button>
-        <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-          <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
-          {t('auto_refresh')}
-        </label>
-        <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
-          className="px-2 py-1 rounded border border-surface-3 bg-surface-1 text-xs" aria-label={t('page_size')}>
-          {[25, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
-        {data?.content_search_unavailable && (
-          <span className="text-xs text-amber-600" data-testid="content-search-off">{t('content_search_off')}</span>
-        )}
-        <span className="text-xs text-gray-400 ml-auto">{t('total_rows', { count: total })}</span>
-      </div>
-
-      <div className="bg-surface-0 rounded-2xl border border-surface-3 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-surface-3 text-left text-xs text-gray-500">
-              <th className="px-3 py-2.5">{t('t_time')}</th>
-              <th className="px-3 py-2.5">{t('label')}</th>
-              <th className="px-3 py-2.5">model</th>
-              <th className="px-3 py-2.5">{t('t_latency')}</th>
-              <th className="px-3 py-2.5">{t('t_status')}</th>
-              <th className="px-3 py-2.5">{t('t_http')}</th>
-              <th className="px-3 py-2.5">request_id</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(data?.items ?? []).map((row) => (
-              <tr
-                key={row.id}
-                onClick={() => openChain(row.http_request_id || '')}
-                className="border-b border-surface-3/50 last:border-0 cursor-pointer hover:bg-surface-1"
-              >
-                <td className="px-3 py-2.5 font-mono text-xs">{row.ts.slice(5, 19)}</td>
-                <td className="px-3 py-2.5">{row.label}</td>
-                <td className="px-3 py-2.5 text-xs text-gray-500">{row.provider}/{row.model}</td>
-                <td className="px-3 py-2.5 tabular-nums">{(row.latency_ms / 1000).toFixed(1)}s</td>
-                <td className="px-3 py-2.5">
-                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                    row.success
-                      ? row.fallback_used
-                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40'
-                        : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800/40'
-                      : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/40'
-                  }`}>
-                    {row.success ? (row.fallback_used ? t('status_okfb') : t('status_ok')) : (row.error_type || t('status_error'))}
-                  </span>
-                  {row.streaming && <span className="ml-1 text-[9px] text-violet-500" title={t('t_streaming')}>⚡</span>}
-                </td>
-                <td className="px-3 py-2.5 text-xs text-gray-400 tabular-nums">{row.http_status ?? '—'}</td>
-                <td className="px-3 py-2.5 font-mono text-xs text-gray-500">{row.http_request_id || '—'}</td>
-              </tr>
-            ))}
-            {(!data || data.items.length === 0) && !loading && (() => {
-              // F4: three different empties — filtered-out vs no traffic in
-              // window vs capture off — used to collapse into one string.
-              const filtersOn = !!(labelFilter.trim() || requestPrefix.trim() || contentQuery.trim() || onlyFailed);
-              return (
-                <tr><td colSpan={7} className="px-3 py-8 text-center text-gray-400" data-testid="traces-empty">
-                  {filtersOn ? t('empty_filtered') : t('empty')}
-                </td></tr>
-              );
-            })()}
-          </tbody>
-        </table>
-      </div>
-
-      {pages > 1 && (
-        <div className="flex items-center gap-2 text-sm">
-          <button type="button" disabled={page === 0} onClick={() => setPage(page - 1)} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 disabled:opacity-40">
-            ←
-          </button>
-          <span className="text-xs text-gray-500">{page + 1} / {pages}</span>
-          <button type="button" disabled={(page + 1) * pageSize >= total} onClick={() => setPage(page + 1)} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 disabled:opacity-40">
-            →
-          </button>
-        </div>
-      )}
-
-      {(chainLoading || chain) && (
+  // L7 (P-L): the chain panel renders INLINE under the expanded row
+  // instead of appending after the table — bottom-mount pushed it far
+  // from the click and forced a manual scroll hunt.
+  const chainPanel = (chainLoading || chain) ? (
         <div className="bg-surface-0 rounded-2xl border border-surface-3 p-5" data-testid="chain-panel">
           {chainLoading || !chain ? (
             <div className="text-xs text-gray-400">{t('loading')}</div>
@@ -580,7 +491,161 @@ export const TracesBrowser = React.memo(function TracesBrowser({ opsKey, copyImp
             </>
           )}
         </div>
+  ) : null;
+
+  // L7: keep the freshly opened panel in view.
+  useEffect(() => {
+    if (chain) {
+      // jsdom has no scrollIntoView — guard rather than mock in every test
+      document.querySelector('[data-testid="chain-row-inline"]')?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [chain]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2 items-center">
+        <select
+          value={hours}
+          onChange={(e) => { setHours(Number(e.target.value)); setPage(0); }}
+          className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm"
+          aria-label={t('window')}
+        >
+          <option value={1}>1h</option>
+          <option value={24}>24h</option>
+          <option value={168}>7d</option>
+        </select>
+        <input
+          value={labelFilter}
+          onChange={(e) => { setLabelFilter(e.target.value); setPage(0); }}
+          placeholder={t('f_label')}
+          className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm w-44"
+        />
+        <input
+          value={requestPrefix}
+          onChange={(e) => { setRequestPrefix(e.target.value); setPage(0); }}
+          placeholder={t('f_request')}
+          className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm w-44 font-mono"
+        />
+        <input
+          value={contentQuery}
+          onChange={(e) => { setContentQuery(e.target.value); setPage(0); }}
+          placeholder={t('f_content_search')}
+          data-testid="content-search"
+          className="px-3 py-1.5 rounded-lg border border-surface-3 bg-surface-1 text-sm w-56"
+        />
+        <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-300">
+          <input type="checkbox" checked={onlyFailed} onChange={(e) => { setOnlyFailed(e.target.checked); setPage(0); }} />
+          {t('f_failed')}
+        </label>
+        <button type="button" onClick={load} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-sm">
+          {t('f_apply')}
+        </button>
+        <button type="button" onClick={load} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 text-sm">
+          ↻
+        </button>
+        <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+          <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} />
+          {t('auto_refresh')}
+        </label>
+        <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
+          className="px-2 py-1 rounded border border-surface-3 bg-surface-1 text-xs" aria-label={t('page_size')}>
+          {[25, 50, 100].map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+        {data?.content_search_unavailable && (
+          <span className="text-xs text-amber-600" data-testid="content-search-off">{t('content_search_off')}</span>
+        )}
+        <span className="text-xs text-gray-400 ml-auto">{t('total_rows', { count: total })}</span>
+      </div>
+
+      <div className="bg-surface-0 rounded-2xl border border-surface-3 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-surface-3 text-left text-xs text-gray-500">
+              <th className="px-3 py-2.5">{t('t_time')}</th>
+              <th className="px-3 py-2.5">{t('label')}</th>
+              <th className="px-3 py-2.5">model</th>
+              <th className="px-3 py-2.5">{t('t_latency')}</th>
+              <th className="px-3 py-2.5">{t('t_status')}</th>
+              <th className="px-3 py-2.5">{t('t_http')}</th>
+              <th className="px-3 py-2.5">request_id</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(data?.items ?? []).map((row) => {
+              const expanded = selectedHttpId !== null && row.http_request_id === selectedHttpId;
+              const ts = formatTraceTime(row.ts);
+              return (
+              <React.Fragment key={row.id}>
+              <tr
+                onClick={() => openChain(row.http_request_id || '')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openChain(row.http_request_id || '');
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-expanded={expanded}
+                className={`border-b border-surface-3/50 cursor-pointer hover:bg-surface-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-500 ${expanded ? 'bg-amber-50/40' : ''}`}
+              >
+                <td className="px-3 py-2.5 font-mono text-xs whitespace-nowrap" title={ts.full}>
+                  {ts.main} <span className="text-gray-400">{ts.rel}</span>
+                </td>
+                <td className="px-3 py-2.5">{row.label}</td>
+                <td className="px-3 py-2.5 text-xs text-gray-500 max-w-40 truncate" title={`${row.provider}/${row.model}`}>{row.provider}/{row.model}</td>
+                <td className="px-3 py-2.5 tabular-nums">{(row.latency_ms / 1000).toFixed(1)}s</td>
+                <td className="px-3 py-2.5">
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                    row.success
+                      ? row.fallback_used
+                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/40'
+                        : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800/40'
+                      : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/40'
+                  }`}>
+                    {row.success ? (row.fallback_used ? t('status_okfb') : t('status_ok')) : (row.error_type || t('status_error'))}
+                  </span>
+                  {row.streaming && <span className="ml-1 text-[9px] text-violet-500" title={t('t_streaming')}>⚡</span>}
+                </td>
+                <td className="px-3 py-2.5 text-xs text-gray-400 tabular-nums">{row.http_status ?? '—'}</td>
+                <td className="px-3 py-2.5 font-mono text-xs text-gray-500">{row.http_request_id || '—'}</td>
+              </tr>
+              {expanded && (
+                <tr className="bg-surface-1/40" data-testid="chain-row-inline">
+                  <td colSpan={7} className="px-4 py-3">
+                    {chainPanel}
+                  </td>
+                </tr>
+              )}
+              </React.Fragment>
+              );
+            })}
+            {(!data || data.items.length === 0) && !loading && (() => {
+              // F4: three different empties — filtered-out vs no traffic in
+              // window vs capture off — used to collapse into one string.
+              const filtersOn = !!(labelFilter.trim() || requestPrefix.trim() || contentQuery.trim() || onlyFailed);
+              return (
+                <tr><td colSpan={7} className="px-3 py-8 text-center text-gray-400" data-testid="traces-empty">
+                  {filtersOn ? t('empty_filtered') : t('empty')}
+                </td></tr>
+              );
+            })()}
+          </tbody>
+        </table>
+      </div>
+
+      {pages > 1 && (
+        <div className="flex items-center gap-2 text-sm">
+          <button type="button" disabled={page === 0} onClick={() => setPage(page - 1)} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 disabled:opacity-40">
+            ←
+          </button>
+          <span className="text-xs text-gray-500">{page + 1} / {pages}</span>
+          <button type="button" disabled={(page + 1) * pageSize >= total} onClick={() => setPage(page + 1)} className="px-3 py-1.5 rounded-lg bg-surface-1 border border-surface-3 disabled:opacity-40">
+            →
+          </button>
+        </div>
       )}
+
       {loading && <div className="text-center text-xs text-gray-400">{t('loading')}</div>}
     </div>
   );

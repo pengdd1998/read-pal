@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { TracesBrowser } from '@/components/ops/TracesBrowser';
+import { readOpsKey } from '@/lib/ops-key';
 
 /**
  * Trace browsing page (P-B): shares the ops key with /ops/llm via
@@ -17,7 +18,10 @@ export default function OpsLlmTracesPage() {
   const [opsKey, setOpsKey] = useState<string | null>(null);
 
   useEffect(() => {
-    setOpsKey(sessionStorage.getItem('ops-key'));
+    setOpsKey(readOpsKey());
+    const onKey = () => setOpsKey(readOpsKey());
+    window.addEventListener('ops-key-changed', onKey);
+    return () => window.removeEventListener('ops-key-changed', onKey);
   }, []);
 
   return (

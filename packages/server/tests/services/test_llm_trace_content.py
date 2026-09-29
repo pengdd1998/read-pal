@@ -224,7 +224,11 @@ class TestContentRouter:
 
     @pytest.mark.asyncio
     async def test_capture_disabled_404(self, client, ops_env, monkeypatch):
-        monkeypatch.delenv('LLM_TRACE_CONTENT_DB', raising=False)
+        # delenv alone does not shield the test from a local .env that
+        # enables capture (pydantic loads the file into Settings) — pin the
+        # field on the settings singleton instead.
+        from app.config import get_settings
+        monkeypatch.setattr(get_settings(), 'llm_trace_content_db', False)
         reg = await register_user(client)
         resp = await client.get(
             '/api/v1/stats/llm/requests/abc123/content',

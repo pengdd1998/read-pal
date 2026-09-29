@@ -130,6 +130,20 @@ function handleExpiredSession(
   error: AxiosError<ApiResponse>,
   nonCriticalPrefixes: string[],
 ): Promise<never> {
+  // L1 (P-L): the standalone ops console must never be catapulted to the
+  // product login page — a transient 401 there (e.g. during a dev hot
+  // reload) cleared storage and hard-redirected /auth mid-triage. Console
+  // semantics: drop the in-memory session key, broadcast the change (the
+  // health strip + pages re-render their locked state), reject as usual.
+  const opsHeader = (error.config?.headers as Record<string, unknown> | undefined);
+  const isOpsConsole =
+    window.location.pathname.includes('/ops') ||
+    !!(opsHeader && ('X-Ops-Key' in opsHeader || 'x-ops-key' in opsHeader));
+  if (isOpsConsole) {
+    try { sessionStorage.removeItem('ops-key'); } catch { /* no storage */ }
+    try { window.dispatchEvent(new Event('ops-key-changed')); } catch { /* no window */ }
+    return Promise.reject(error);
+  }
   if (
     !window.location.pathname.includes('/auth') &&
     !window.location.pathname.includes('/login') &&

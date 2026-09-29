@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api/client';
+import { formatTraceTime } from '@/lib/ops-format';
 
 /**
  * Synthetic session browser (H5b, P-H): chains threaded by
@@ -33,7 +34,12 @@ interface SessionRow {
 export const SessionsBrowser = React.memo(function SessionsBrowser({ opsKey }: { opsKey: string }) {
   const t = useTranslations('opsLlm');
   const router = useRouter();
-  const [hours, setHours] = useState(24);
+  // J4: window rides the URL (?hours=24|168)
+  const [hours, setHours] = useState(() => {
+    const sp = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const h = Number(sp.get('hours'));
+    return [24, 168].includes(h) ? h : 24;
+  });
   const [rows, setRows] = useState<SessionRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -57,6 +63,11 @@ export const SessionsBrowser = React.memo(function SessionsBrowser({ opsKey }: {
   }, [opsKey]);
 
   useEffect(() => { load(hours); }, [hours, load]);
+
+  useEffect(() => {
+    if (hours !== 24) window.history.replaceState(null, '', `${location.pathname}?hours=${hours}`);
+    else window.history.replaceState(null, '', location.pathname);
+  }, [hours]);
 
   const dur = (s: SessionRow) => {
     const ms = new Date(s.last_active_at).getTime() - new Date(s.started_at).getTime();
@@ -93,14 +104,26 @@ export const SessionsBrowser = React.memo(function SessionsBrowser({ opsKey }: {
             </tr>
           </thead>
           <tbody>
-            {rows.map((s, i) => (
+            {rows.map((s, i) => {
+              const ts = formatTraceTime(s.started_at);
+              return (
               <React.Fragment key={`${s.user}-${s.started_at}-${i}`}>
                 <tr
                   onClick={() => setExpanded(expanded === i ? null : i)}
-                  className={`border-b border-surface-3/50 cursor-pointer hover:bg-surface-1 ${expanded === i ? 'bg-amber-50/40' : ''}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpanded(expanded === i ? null : i);
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
                   aria-expanded={expanded === i}
+                  className={`border-b border-surface-3/50 cursor-pointer hover:bg-surface-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-500 ${expanded === i ? 'bg-amber-50/40' : ''}`}
                 >
-                  <td className="px-4 py-3 font-mono text-xs">{s.started_at.slice(5, 16).replace('T', ' ')}</td>
+                  <td className="px-4 py-3 font-mono text-xs whitespace-nowrap" title={ts.full}>
+                    {ts.main} <span className="text-gray-400">{ts.rel}</span>
+                  </td>
                   <td className="px-4 py-3 font-mono text-xs">{s.user ?? '—'}</td>
                   <td className="px-4 py-3">{dur(s)}</td>
                   <td className="px-4 py-3">{s.chains}</td>
@@ -133,7 +156,8 @@ export const SessionsBrowser = React.memo(function SessionsBrowser({ opsKey }: {
                   </tr>
                 )}
               </React.Fragment>
-            ))}
+              );
+            })}
             {rows.length === 0 && !loading && (
               <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400" data-testid="sessions-empty">{t('empty')}</td></tr>
             )}

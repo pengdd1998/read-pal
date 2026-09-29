@@ -20,7 +20,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ValidationError
 
 from app.config import ProviderConfig, get_settings, reload_settings
-from app.middleware.auth import get_current_user
+from app.middleware.auth import get_current_user  # noqa: F401 — kept for reference
+from app.middleware.ops_auth import ops_key_or_current_user
 from app.middleware.rate_limiter import account_limiter
 from app.schemas.common import GenericResponse
 from app.services.llm.registry import get_registry
@@ -67,7 +68,7 @@ class ProviderListBody(BaseModel):
 
 @router.get('', response_model=GenericResponse)
 async def list_providers(
-    _current_user: dict = Depends(get_current_user),
+    _current_user: dict | None = Depends(ops_key_or_current_user),
 ) -> GenericResponse:
     """List configured LLM providers with live circuit/RPM state."""
     registry = get_registry()
@@ -82,7 +83,7 @@ async def list_providers(
 
 @router.post('/reload', response_model=GenericResponse)
 async def reload_providers(
-    _current_user: dict = Depends(get_current_user),
+    _current_user: dict | None = Depends(ops_key_or_current_user),
 ) -> GenericResponse:
     """Re-read settings from env and hot-reload the registry if changed."""
     reload_settings()
@@ -97,7 +98,7 @@ async def reload_providers(
 @router.put('', response_model=GenericResponse)
 async def put_providers(
     body: ProviderListBody,
-    _current_user: dict = Depends(get_current_user),
+    _current_user: dict | None = Depends(ops_key_or_current_user),
 ) -> GenericResponse:
     """Replace the live provider set (in-memory hot swap).
 
@@ -113,9 +114,25 @@ async def put_providers(
     registry = get_registry()
     if not body.providers:
         raise ValueError('At least one provider is required')
+
+    # J3: the state snapshot never returns api keys, so the console sends
+    # an empty api_key for unchanged providers — merge the live key back
+    # server-side. A provider that has no existing key (new entry) is
+    # rejected: the registry must never go live with an empty credential.
+    merged: list[ProviderConfig] = []
+    existing = {cfg.name: cfg for cfg in get_settings().provider_configs}
+    for p in body.providers:
+        if not p.api_key:
+            live = existing.get(p.name)
+            if not live or not live.api_key:
+                raise ValueError(f'Provider {p.name!r} has no stored key — supply api_key explicitly')
+            merged.append(p.model_copy(update={'api_key': live.api_key}))
+        else:
+            merged.append(p)
+
     prev_env = os.environ.get('LLM_PROVIDERS')
     try:
-        os.environ['LLM_PROVIDERS'] = json.dumps([p.model_dump() for p in body.providers])
+        os.environ['LLM_PROVIDERS'] = json.dumps([p.model_dump() for p in merged])
         reload_settings()
         changed = await registry.reload_if_changed()
         return GenericResponse(success=True, data={

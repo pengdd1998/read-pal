@@ -17,8 +17,15 @@ from __future__ import annotations
 
 import hmac
 import os
+from typing import Any
 
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db import get_db
+from app.middleware.auth import _authenticate_jwt, _bearer_scheme, _raise_401
+from app.utils.i18n import t
 
 
 def ops_key_valid(provided: str | None) -> bool:
@@ -42,3 +49,23 @@ async def require_ops_key(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={'code': 'OPS_KEY_REQUIRED', 'message': 'Valid X-Ops-Key header required.'},
         )
+
+
+async def ops_key_or_current_user(
+    x_ops_key: str | None = Header(None, alias='X-Ops-Key'),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any] | None:
+    """Ops-console dependency (P-H standalone, 2026-09-26 auth-surface
+    change): a valid ops key unlocks the PLATFORM scope with NO user
+    session — the ops UI lives outside the product shell and must not
+    require a product login (also retires the E0.4 annoyance where an
+    unlogged visitor with a valid key was 401-redirected to /auth by the
+    web client). Without a key, a valid Bearer session is required (user
+    scope). Returns None for platform scope, a user dict for user scope.
+    """
+    if ops_key_valid(x_ops_key):
+        return None
+    if credentials is None:
+        _raise_401('UNAUTHORIZED', t('errors.missing_auth'))
+    return await _authenticate_jwt(credentials.credentials, db)

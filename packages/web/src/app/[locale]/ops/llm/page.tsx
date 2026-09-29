@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { api } from '@/lib/api/client';
+import { readOpsKey, writeOpsKey } from '@/lib/ops-key';
 import { ProvidersCard } from '@/components/ops/ProvidersCard';
 import { QuotaCard } from '@/components/ops/QuotaCard';
 import { ActivityHeatmap } from '@/components/ops/ActivityHeatmap';
@@ -41,12 +42,20 @@ const Card = ({ label, value, sub }: { label: string; value: string; sub?: strin
 export default function OpsLlmPage() {
   const t = useTranslations('opsLlm');
   const router = useRouter();
+  // J4: window + filters ride the URL — refresh/share/deep-link safe.
+  // Read window.location.search directly: useSearchParams returns null on
+  // the static-shell first render, and lazy useState initializers never
+  // re-run (sessions page learned this first).
   const [key, setKey] = useState('');
+  const [remember, setRemember] = useState(false);
   const [authed, setAuthed] = useState(false);
-  const [hours, setHours] = useState(720);
-  const [fLabel, setFLabel] = useState('');
-  const [fProvider, setFProvider] = useState('');
-  const [fModel, setFModel] = useState('');
+  const [hours, setHours] = useState(() => {
+    const h = Number(new URLSearchParams(window.location.search).get('hours'));
+    return [24, 168, 720].includes(h) ? h : 720;
+  });
+  const [fLabel, setFLabel] = useState(() => new URLSearchParams(window.location.search).get('label') || '');
+  const [fProvider, setFProvider] = useState(() => new URLSearchParams(window.location.search).get('provider') || '');
+  const [fModel, setFModel] = useState(() => new URLSearchParams(window.location.search).get('model') || '');
   const [data, setData] = useState<MetricsData | null>(null);
   const [loading, setLoading] = useState(false);
   // H6/F5 residual: by_label column sort (calls/success/p95/cost).
@@ -54,10 +63,12 @@ export default function OpsLlmPage() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
-    // Key lives in sessionStorage only — a ?key= URL would persist the
-    // secret in browser history and nginx access logs (page navigation).
-    const saved = sessionStorage.getItem('ops-key');
+    // Key lives in storage only — a ?key= URL would persist the secret in
+    // browser history and nginx access logs (page navigation). J2: the
+    // remembered (localStorage) copy is an explicit per-browser opt-in.
+    const saved = readOpsKey();
     if (saved) setKey(saved);
+    setRemember(!!(typeof window !== 'undefined' && localStorage.getItem('ops-key-remembered')));
   }, [, fLabel, fProvider, fModel]);
 
   const load = useCallback(async (h: number, k: string) => {
@@ -74,7 +85,7 @@ export default function OpsLlmPage() {
       if (res.success && res.data) {
         setData(res.data);
         setAuthed(true);
-        sessionStorage.setItem('ops-key', k);
+        writeOpsKey(k, remember);
       } else {
         setAuthed(false);
       }
@@ -83,11 +94,37 @@ export default function OpsLlmPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [remember]); // remember rides the closure into writeOpsKey (J2)
 
   useEffect(() => {
     if (key) load(hours, key);
   }, [key, hours, load, fLabel, fProvider, fModel]);
+
+  // J4: reflect state into the URL without spamming history.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (hours !== 720) params.set('hours', String(hours));
+    if (fLabel) params.set('label', fLabel);
+    if (fProvider) params.set('provider', fProvider);
+    if (fModel) params.set('model', fModel);
+    const qs = params.toString();
+    window.history.replaceState(null, '', `${location.pathname}${qs ? '?' + qs : ''}`);
+  }, [hours, fLabel, fProvider, fModel]);
+
+  // L1: a 401 in console mode broadcasts ops-key-changed — reflect the
+  // lock in-page instead of ever leaving the console.
+  useEffect(() => {
+    const onKey = () => {
+      const k = readOpsKey();
+      setKey(k || '');
+      if (!k) {
+        setAuthed(false);
+        setData(null);
+      }
+    };
+    window.addEventListener('ops-key-changed', onKey);
+    return () => window.removeEventListener('ops-key-changed', onKey);
+  }, []);
 
   if (!key || (!authed && !loading && key)) {
     return (
@@ -111,6 +148,10 @@ export default function OpsLlmPage() {
             {t('unlock')}
           </button>
         </div>
+        <label className="mt-3 flex items-center justify-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+          {t('remember_key')}
+        </label>
       </div>
     );
   }
@@ -262,7 +303,7 @@ export default function OpsLlmPage() {
         </div>
         <QuotaCard opsKey={key} />
         <div id="providers" className="scroll-mt-24">
-          <ProvidersCard />
+          <ProvidersCard opsKey={key} />
         </div>
       </div>
 

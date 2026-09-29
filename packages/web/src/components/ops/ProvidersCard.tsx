@@ -34,15 +34,20 @@ const CIRCUIT_COLOR: Record<string, string> = {
   half_open: 'text-amber-600 dark:text-amber-400',
 };
 
-export const ProvidersCard = React.memo(function ProvidersCard() {
+export const ProvidersCard = React.memo(function ProvidersCard({ opsKey }: { opsKey?: string }) {
   const t = useTranslations('opsLlm');
   const [providers, setProviders] = useState<ProviderState[]>([]);
   const [transitions, setTransitions] = useState<Transition[]>([]);
 
   const load = useCallback(async () => {
     try {
+      // P-H standalone: attach the ops key when present (the console runs
+      // without a product login; without a key the request falls back to
+      // the user-scoped view for product users).
       const res = await api.get<{ providers: ProviderState[]; circuitTransitions: Transition[] }>(
         '/api/v1/llm-providers',
+        {},
+        opsKey ? { headers: { 'X-Ops-Key': opsKey } } : undefined,
       );
       if (res.success && res.data) {
         setProviders(res.data.providers ?? []);
@@ -51,7 +56,7 @@ export const ProvidersCard = React.memo(function ProvidersCard() {
     } catch {
       /* transient — next poll retries */
     }
-  }, []);
+  }, [opsKey]);
 
   useEffect(() => {
     load();

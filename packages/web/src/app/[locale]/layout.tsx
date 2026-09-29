@@ -2,12 +2,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { DM_Sans, Crimson_Pro, Source_Serif_4, Literata, Fira_Code, Noto_Serif_SC } from 'next/font/google';
-import { AuthProvider } from '@/components/AuthProvider';
-import { AppShell } from '@/components/shared/AppShell';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
-import { ServiceWorkerRegistrar } from '@/components/shared/ServiceWorkerRegistrar';
-import { NetworkStatus } from '@/components/shared/NetworkStatus';
-import { AnalyticsProvider } from '@/components/shared/AnalyticsProvider';
 import { routing } from '@/i18n/routing';
 
 const dmSans = DM_Sans({
@@ -105,15 +100,9 @@ export default async function LocaleLayout({
   </head>
   <body className="font-sans antialiased">
   <NextIntlClientProvider messages={messages}>
-   <AuthProvider>
-   <AnalyticsProvider>
-    <ErrorBoundary>
-    <ServiceWorkerRegistrar />
-    <NetworkStatus />
-    <AppShell>{children}</AppShell>
-    </ErrorBoundary>
-   </AnalyticsProvider>
-   </AuthProvider>
+   {/* P-H standalone: product providers/AppShell moved into (main) — the
+   ops console (/ops) renders outside the product UI framework, key-only. */}
+   <ErrorBoundary>{children}</ErrorBoundary>
   </NextIntlClientProvider>
   </body>
  </html>
