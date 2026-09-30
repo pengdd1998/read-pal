@@ -146,14 +146,14 @@ class TestProvidersRouter:
         prev_env = os.environ.get('LLM_PROVIDERS')
         try:
             body = ProviderListBody(providers=[ProviderConfig(**_cfg('glm')), ProviderConfig(**_cfg('backup', priority=2))])
-            result = await put_providers(body, {'userId': 'u1'})
+            result = await put_providers(body)
             names = [p['name'] for p in result.data['providers']]
             assert set(names) == {'glm', 'backup'}
             assert json.loads(os.environ['LLM_PROVIDERS'])[1]['name'] == 'backup'
 
             # Empty list → rejected, env restored
             with pytest.raises(ValueError):
-                await put_providers(ProviderListBody(providers=[]), {'userId': 'u1'})
+                await put_providers(ProviderListBody(providers=[]))
             names_now = {s.config.name for s in reg.all_providers()}
             assert names_now == {'glm', 'backup'}
         finally:

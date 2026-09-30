@@ -6,11 +6,16 @@ body means "keep the live key"; a new provider without any stored key is
 rejected so the registry never goes live with an empty credential.
 """
 import pytest
-from httpx import AsyncClient
 
 from tests.conftest import register_user
 
 BASE = '/api/v1/llm-providers'
+OPS_KEY = 'test-ops-key-zj'
+
+
+@pytest.fixture
+def ops_env(monkeypatch):
+    monkeypatch.setenv('OPS_KEY', OPS_KEY)
 
 
 def _body(providers: list[dict]) -> dict:
@@ -33,9 +38,9 @@ def _glm_payload(**over) -> dict:
 
 
 @pytest.mark.asyncio
-async def test_put_empty_api_key_merges_live_key(client):
+async def test_put_empty_api_key_merges_live_key(client, ops_env):
     reg = await register_user(client)
-    headers = {'Authorization': f'Bearer {reg["token"]}'}
+    headers = {'Authorization': f'Bearer {reg["token"]}', 'X-Ops-Key': 'test-ops-key-zj'}
 
     # mutate priority with an empty (sentinel) key
     resp = await client.put(BASE, json=_body([_glm_payload(priority=2)]), headers=headers)
@@ -57,9 +62,9 @@ async def test_put_empty_api_key_merges_live_key(client):
 
 
 @pytest.mark.asyncio
-async def test_put_new_provider_without_key_rejected(client):
+async def test_put_new_provider_without_key_rejected(client, ops_env):
     reg = await register_user(client)
-    headers = {'Authorization': f'Bearer {reg["token"]}'}
+    headers = {'Authorization': f'Bearer {reg["token"]}', 'X-Ops-Key': 'test-ops-key-zj'}
 
     resp = await client.put(BASE, json=_body([_glm_payload(name='brand-new', api_key='')]), headers=headers)
     assert resp.status_code in (400, 422, 500) or resp.json().get('success') is False

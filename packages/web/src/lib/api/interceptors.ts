@@ -8,6 +8,7 @@
 import { AxiosError, AxiosRequestConfig, AxiosInstance } from 'axios';
 import type { ApiResponse } from '@read-pal/shared';
 import { deterministicIdempotencyKey } from '@read-pal/shared';
+import { clearOpsKey } from '@/lib/ops-key';
 import {
   getAuthToken,
   getAuthTokenAsync,
@@ -140,8 +141,13 @@ function handleExpiredSession(
     window.location.pathname.includes('/ops') ||
     !!(opsHeader && ('X-Ops-Key' in opsHeader || 'x-ops-key' in opsHeader));
   if (isOpsConsole) {
-    try { sessionStorage.removeItem('ops-key'); } catch { /* no storage */ }
-    try { window.dispatchEvent(new Event('ops-key-changed')); } catch { /* no window */ }
+    // GB-13 (2026-09-30): a 401 on an ops endpoint means the key is
+    // revoked/expired — clearing only sessionStorage let the localStorage
+    // "remembered" copy persist (readOpsKey falls back to it), so the
+    // console re-read a dead key and looped 401s without ever locking.
+    // clearOpsKey() removes both storages symmetrically with the manual
+    // lock button and broadcasts the change.
+    try { clearOpsKey(); } catch { /* no storage */ }
     return Promise.reject(error);
   }
   if (
