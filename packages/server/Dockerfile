@@ -1,16 +1,20 @@
 # --- Builder ---
 FROM python:3.12-slim AS builder
 
-COPY --from=ghcr.io/astral-sh/uv:0.11.13 /uv /uvx /usr/local/bin/
-
 WORKDIR /app
 
-# Use Aliyun mirror for faster downloads in China
-ENV UV_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
-
-# Install deps first (cache layer)
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project
+# pip (HTTP/1.1 + OpenSSL) instead of uv for the network fetch: uv crawls
+# at ~KB/s from the deploy VPS against every mirror tested (aliyun/tencent/
+# pypi direct, single- and multi-connection, rustls and native-tls) while
+# pip pulls the same set at MB/s. Diagnosed 2026-10-16 after two stalled
+# cold builds. Integrity stays hash-pinned via requirements.lock exported
+# from uv.lock — regenerate it whenever uv.lock changes:
+#   uv export --frozen --no-dev --no-emit-project -o requirements.lock
+COPY requirements.lock ./
+RUN python -m venv /app/.venv \
+    && /app/.venv/bin/pip install --no-cache-dir --quiet \
+       -i https://mirrors.cloud.tencent.com/pypi/simple/ \
+       -r requirements.lock
 
 # Copy application code
 COPY . .
