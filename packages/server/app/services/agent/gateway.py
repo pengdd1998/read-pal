@@ -211,6 +211,12 @@ async def sse_bytes_stream(
     # 503s the stream.
     from app.services.llm.concurrency import acquire_stream_slot, release_stream_slot
     if not await acquire_stream_slot(actual_request_id):
+        # GB-1: this raise sits before the try/finally below, so the registry
+        # entries above would leak — _INFLIGHT_STREAMS has no sweeper/TTL
+        # (stream_registry.py) and the Redis owner key lingers its full 300s.
+        # Roll both back explicitly, mirroring research_stream.py:206.
+        release_stream(actual_request_id)
+        await release_stream_cross_worker(actual_request_id)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={

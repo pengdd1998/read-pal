@@ -13,6 +13,7 @@ follows instructions far better than a multi-rule companion prompt.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from typing import Any
@@ -21,6 +22,9 @@ from app.services.rag._constants import logger
 
 # Maximum sentences to check in one LLM call (bounds latency/cost)
 _MAX_SENTENCES = 30
+# Hard cap on the fact-check call: the filter runs after the user already saw
+# the answer, so a hung check must never stall settlement — on timeout it
+# degrades to None (check unavailable), same as any other check failure.
 _TIMEOUT_S = 5.0
 
 _CHECK_PROMPT = """You are a strict fact-checker. Given book passages and an AI response, identify which sentences in the response make factual claims that are NOT supported by the passages.
@@ -99,11 +103,14 @@ async def check_faithfulness(
         from langchain_core.messages import HumanMessage
         from app.services.llm.safe_invoke import safe_llm_call
 
-        raw = await safe_llm_call(
-            [HumanMessage(content=prompt)],
-            log_label='companion.faithfulness_check',
-            use_cache=False,
-            max_tokens=200,  # just a JSON array of indices
+        raw = await asyncio.wait_for(
+            safe_llm_call(
+                [HumanMessage(content=prompt)],
+                log_label='companion.faithfulness_check',
+                use_cache=False,
+                max_tokens=200,  # just a JSON array of indices
+            ),
+            timeout=_TIMEOUT_S,
         )
         if not raw:
             return None

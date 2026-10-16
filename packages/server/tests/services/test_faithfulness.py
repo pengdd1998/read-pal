@@ -124,6 +124,28 @@ class TestCheckFaithfulness:
             result = await check_faithfulness('First. Second. Third.', [msg])
             assert result == [0]  # only valid index kept
 
+    @pytest.mark.asyncio
+    async def test_llm_timeout_degrades_to_none(self):
+        """GB-12: a hung fact-check call must hit the hard timeout and
+        degrade to None — the filter runs post-stream and must never stall
+        settlement."""
+        import asyncio
+
+        settings = MagicMock(faithfulness_check_enabled=True)
+
+        async def hang(*args, **kwargs):
+            await asyncio.sleep(30)
+
+        with (
+            patch('app.config.get_settings', return_value=settings),
+            patch('app.services.llm.safe_invoke.safe_llm_call', new=hang),
+            patch('app.services.companion.faithfulness._TIMEOUT_S', 0.05),
+        ):
+            msg = MagicMock()
+            msg.content = '<book_passages>\nBook context with sufficient length to pass the minimum threshold check.\n</book_passages>'
+            result = await check_faithfulness('First sentence. Second sentence.', [msg])
+            assert result is None
+
 
 class TestFormatAnnotation:
     def test_formats_warning(self):
