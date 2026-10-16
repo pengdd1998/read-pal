@@ -101,6 +101,9 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-noreply@read-pal.com}
+      # Resend HTTP API (C1 primary transport) — unset = SMTP/console fallback
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-}
       # Object storage (MinIO / S3-compatible) for book covers — optional.
       # When unset, covers fall back to the generated gradient placeholder.
       OSS_ENDPOINT: ${OSS_ENDPOINT:-}
