@@ -117,8 +117,14 @@ async def main() -> None:
             # bare-p definitions yield new scoped keys with nothing to
             # strip. The metadata comparison is the real change signal;
             # html_changed only gates the chapter rewrite.
+            # Guard: books backfilled on 2026-09-23 already had their
+            # notecontent blocks STRIPPED from raw_chapters — re-extraction
+            # from the stripped source legitimately yields {} while their
+            # metadata still holds the live defs. An empty re-extraction
+            # must never overwrite a populated map.
             existing_defs = (row.metadata_ or {}).get('footnote_definitions') or {}
-            if not (html_changed or scoped != existing_defs):
+            metadata_changed = bool(scoped) and scoped != existing_defs
+            if not (html_changed or metadata_changed):
                 continue
             n_rows += 1
             fixed_hashes[row.content_hash] = scoped
@@ -135,9 +141,12 @@ async def main() -> None:
                 ]
                 flag_modified(row, 'raw_chapters')
                 flag_modified(row, 'chapters')
-            meta = dict(row.metadata_ or {})
-            meta['footnote_definitions'] = scoped
-            row.metadata_ = meta
+            if scoped:
+                # Only a non-empty re-extraction may touch the defs maps —
+                # same guard as metadata_changed above, applied to the write.
+                meta = dict(row.metadata_ or {})
+                meta['footnote_definitions'] = scoped
+                row.metadata_ = meta
 
             books = (
                 await s.execute(
@@ -145,7 +154,8 @@ async def main() -> None:
                 )).scalars().all()
             for book in books:
                 bmeta = dict(book.metadata_ or {})
-                bmeta['footnote_definitions'] = scoped
+                if scoped:
+                    bmeta['footnote_definitions'] = scoped
                 book.metadata_ = bmeta
                 await invalidate_cached_chapters(book.id)
                 n_books += 1
