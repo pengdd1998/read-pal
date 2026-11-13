@@ -40,6 +40,14 @@ _DEF_ELEMENT_RE = re.compile(
     r'<a[^>]*\bid="(fn[\w-]*|note[\w-]*)"[^>]*>(.*?)</a>',
     re.DOTALL | re.IGNORECASE,
 )
+# Bare definition paragraphs (P8.2 / crowdtest CROWD-2): the id rides on
+# the <p> itself — no notecontent class, no inner anchor. Common in real
+# publishing flows; previously matched neither layer and was dropped
+# silently, killing the whole book's footnote chain.
+_BARE_P_DEF_RE = re.compile(
+    r'<p\b[^>]*\bid="((?:fn|footnote|note|endnote|nt)[\w.-]*)"[^>]*>(.*?)</p>',
+    re.DOTALL | re.IGNORECASE,
+)
 _TAG_RE = re.compile(r'<[^>]+>')
 
 # Total-size valve: each definition is already capped at 2000 chars; this
@@ -54,6 +62,11 @@ def _strip_tags(html: str) -> str:
 
 def _is_definition_anchor(el_id: str) -> bool:
     return bool(_DEF_ID_RE.match(el_id))
+
+
+def _is_backlink_id(el_id: str) -> bool:
+    """Marker/backlink ids (noteBack_N, fnref_N) — never definitions."""
+    return el_id.lower().startswith(('noteback', 'fnref'))
 
 
 def extract_footnote_definitions(raw_html: str, chapter_href: str) -> dict[str, str]:
@@ -93,6 +106,20 @@ def extract_footnote_definitions(raw_html: str, chapter_href: str) -> dict[str, 
         if el_id not in out:
             out[el_id] = text[:2000]
 
+    # Layer 3: bare definition paragraphs <p id="note_3">body</p> (P8.2).
+    # The paragraph itself is the definition body; a leading [N] backlink
+    # marker is stripped the same way Layer 1 drops the wrapper's backlink.
+    for m in _BARE_P_DEF_RE.finditer(raw_html):
+        el_id, body_html = m.group(1), m.group(2)
+        if _is_backlink_id(el_id) or not _is_definition_anchor(el_id):
+            continue
+        text = _strip_tags(body_html)
+        text = re.sub(r'^\[\d+\]\s*', '', text)
+        if not text or re.fullmatch(r'[\[\]0-9\s]+', text):
+            continue
+        if el_id not in out:
+            out[el_id] = text[:2000]
+
     if out:
         logger.debug(
             'footnote_definitions_extracted file=%s count=%d',
@@ -101,8 +128,8 @@ def extract_footnote_definitions(raw_html: str, chapter_href: str) -> dict[str, 
     return out
 
 
-def strip_footnote_blocks(html: str) -> str:
-    """Remove recognized notecontent definition paragraphs from chapter HTML.
+def strip_footnote_blocks(html: str, definition_ids: set[str] | None = None) -> str:
+    """Remove recognized definition paragraphs from chapter HTML.
 
     Pairs with extraction: once the note bodies live in the metadata map,
     keeping the ``<p class="notecontent">`` blocks in the chapter leaks
@@ -111,11 +138,22 @@ def strip_footnote_blocks(html: str) -> str:
     inner anchor matches the definition shape are dropped — a
     ``notecontent`` paragraph without a definition anchor is ordinary
     content and stays.
+
+    *definition_ids* (P8.2) extends the same pairing to bare
+    ``<p id="note_N">`` definitions: pass the ids this file's extraction
+    actually captured and exactly those paragraphs are dropped. Matching
+    is by captured id, NOT by the id-shape regex — a body paragraph whose
+    id merely looks like a footnote id is never stripped on its own.
     """
     def _drop(m: re.Match) -> str:
         return '' if _WRAPPER_ID_RE.search(m.group(1)) else m.group(0)
 
-    return _WRAPPER_RE.sub(_drop, html)
+    stripped = _WRAPPER_RE.sub(_drop, html)
+    if definition_ids:
+        def _drop_bare(m: re.Match) -> str:
+            return '' if m.group(1) in definition_ids else m.group(0)
+        stripped = _BARE_P_DEF_RE.sub(_drop_bare, stripped)
+    return stripped
 
 
 def scoped_footnote_key(chapter_index: int, anchor_id: str) -> str:

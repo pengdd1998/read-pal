@@ -82,8 +82,6 @@ async def main() -> None:
         n_rows = n_books = 0
         for row in rows:
             chapters = row.raw_chapters or []
-            if not any('notecontent' in (ch.get('rawContent') or '') for ch in chapters if isinstance(ch, dict)):
-                continue
 
             file_names = [
                 _chapter_file_name(ch.get('rawContent') or '', i)
@@ -94,42 +92,49 @@ async def main() -> None:
                 file_to_idx.setdefault(name, i)
 
             scoped: dict[str, str] = {}
-            changed = False
+            html_changed = False
             for i, ch in enumerate(chapters):
                 if not isinstance(ch, dict):
                     continue
                 raw = ch.get('rawContent') or ''
                 # Extract BEFORE stripping — the notecontent blocks ARE the
-                # Layer-1 definition source.
+                # Layer-1 definition source. P8.2: pass the captured ids so
+                # bare <p id="note_N"> definitions strip symmetrically.
                 defs = extract_footnote_definitions(raw, file_names[i])
-                stripped = strip_footnote_blocks(raw)
+                stripped = strip_footnote_blocks(raw, set(defs))
                 for frag, body in defs.items():
                     scoped[f'rpfnd-ch{i}-{frag}'] = body
                 if stripped == raw:
                     continue
-                changed = True
+                html_changed = True
                 rewritten = rewrite_footnote_hrefs(stripped, file_names[i], file_to_idx)
                 ch['rawContent'] = rewritten
                 text = html_to_structured_text(rewritten)
                 ch['content'] = coalesce_fragments_text(text)
                 ch['wordCount'] = len(text.split())
 
-            if not changed:
+            # P8.2: unchanged chapter HTML does NOT mean unchanged defs —
+            # bare-p definitions yield new scoped keys with nothing to
+            # strip. The metadata comparison is the real change signal;
+            # html_changed only gates the chapter rewrite.
+            existing_defs = (row.metadata_ or {}).get('footnote_definitions') or {}
+            if not (html_changed or scoped != existing_defs):
                 continue
             n_rows += 1
             fixed_hashes[row.content_hash] = scoped
-            # JSONB change detection compares the loaded value with the
-            # assigned one by equality — in-place mutation of the loaded
-            # dicts (or rebuilding an identical-content list) compares
-            # equal and the column never lands in the UPDATE. flag_modified
-            # is the canonical escape hatch for mutable JSONB.
-            row.raw_chapters = [dict(ch) for ch in chapters if isinstance(ch, dict)]
-            row.chapters = [
-                {k: v for k, v in ch.items() if k != 'rawContent'}
-                for ch in chapters if isinstance(ch, dict)
-            ]
-            flag_modified(row, 'raw_chapters')
-            flag_modified(row, 'chapters')
+            if html_changed:
+                # JSONB change detection compares the loaded value with the
+                # assigned one by equality — in-place mutation of the loaded
+                # dicts (or rebuilding an identical-content list) compares
+                # equal and the column never lands in the UPDATE. flag_modified
+                # is the canonical escape hatch for mutable JSONB.
+                row.raw_chapters = [dict(ch) for ch in chapters if isinstance(ch, dict)]
+                row.chapters = [
+                    {k: v for k, v in ch.items() if k != 'rawContent'}
+                    for ch in chapters if isinstance(ch, dict)
+                ]
+                flag_modified(row, 'raw_chapters')
+                flag_modified(row, 'chapters')
             meta = dict(row.metadata_ or {})
             meta['footnote_definitions'] = scoped
             row.metadata_ = meta

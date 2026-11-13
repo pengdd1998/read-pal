@@ -294,8 +294,10 @@ def _build_chapters(
         enriched = _enrich_html(raw_html, resolved, image_map, css_str)
         # Note bodies now live in the metadata map — drop the definition
         # paragraphs from the reading flow (they used to leak as plain
-        # text at the end of every chapter).
-        enriched = strip_footnote_blocks(enriched)
+        # text at the end of every chapter). P8.2: pass this file's
+        # captured ids so bare <p id="note_N"> definitions strip
+        # symmetrically with their extraction.
+        enriched = strip_footnote_blocks(enriched, set(defs_by_file.get(resolved, {})))
 
         text = html_to_structured_text(enriched)
         title = _resolve_title(resolved, raw_html, toc_map)

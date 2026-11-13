@@ -48,3 +48,55 @@ anchors overflowed the viewport bottom (field evidence: popover box bottom
    unit tests pinning exactly the crowdtest failure shapes: bottom-edge
    flip, flip-overflow top floor, right/left-edge clamps, and the legacy
    0×0-rect degradation.
+
+## P8.2 — Bare `<p id="note_N">` footnote definitions silently dropped
+
+**Found:** 2026-11-13 crowdtest, 3/4 models cross-validated (verso
+PARSE-STD-REQUIRED, stolon PARSE-STD-03, limen defs=0). Fix: this cluster's
+second commit.
+
+**Severity:** P2 (correctness/silent data loss: the whole book's footnote
+chain dies with zero diagnostics; common real-publishing shape).
+
+**Locations**
+- `packages/server/app/services/parsers/epub/footnote_defs.py` — Layer 3
+  extraction + `strip_footnote_blocks(definition_ids=…)` symmetry
+- `packages/server/app/services/parsers/epub/zipfile_path.py` — strip call
+  passes the file's captured ids
+- `packages/server/scripts/backfill_scoped_footnotes.py` — gating fix (below)
+- `packages/server/tests/services/test_epub_footnote_bare_p.py` — regression
+
+**What went wrong**
+
+Definition extraction recognized exactly two shapes: the LuBianYeCan
+`<p class="notecontent">` wrapper (Layer 1) and bare anchors
+`<a id="fn…|note…">` (Layer 2). Real publishing flows also carry
+`<p id="note_N">定义正文</p>` — the id rides on the paragraph itself —
+which matched neither contract and was dropped with no warning. The
+marker's href still pointed at `#note_N`, so every click became a dead
+link.
+
+Two secondary defects surfaced while fixing:
+
+1. **Strip asymmetry**: `strip_footnote_blocks` only knew the wrapper
+   shape, so even with extraction fixed the bare-p definitions would
+   remain in the reading flow (the 2026-09-23 leak class).
+2. **Backfill gating**: `backfill_scoped_footnotes.py` treated
+   `stripped == raw` as "nothing to do" AND pre-filtered books by the
+   presence of `notecontent` — a bare-p-only book never even entered the
+   loop, and a defs-only change (nothing to strip) was skipped even when
+   it did.
+
+**Why the fix works**
+
+Layer 3 extracts `<p id="(fn|footnote|note|endnote|nt)…">` bodies with
+the same guards as Layer 2 (definition-id family, bracket-only bodies
+skipped, leading `[N]` backlink stripped, `[:2000]` cap, `not in out`
+dedup so wrapper shapes keep precedence; `noteBack_*`/`fnref_*` backlink
+ids explicitly excluded). `strip_footnote_blocks` gains an optional
+`definition_ids` set and drops exactly the captured paragraphs — matching
+by captured id, never by id shape, so a body paragraph with a
+footnote-looking id is never stripped on its own. The backfill gating now
+relaxes the `notecontent` pre-filter and treats
+`scoped != existing footnote_definitions` as a change signal independent
+of the html rewrite signal.
