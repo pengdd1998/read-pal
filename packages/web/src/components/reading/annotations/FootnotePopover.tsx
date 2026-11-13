@@ -4,6 +4,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import { purifySync } from '@/lib/render/dompurify';
+import { computePopoverPosition } from './popoverPosition';
 
 export interface FootnotePopoverData {
   /** Marker text, e.g. "[3]" */
@@ -44,16 +45,17 @@ export function FootnotePopover({ data, onClose }: {
   useLayoutEffect(() => {
     if (isNarrow || !ref.current) return;
     const a = data.anchorEl.getBoundingClientRect();
+    // The un-positioned frame is visibility:hidden (not display:none) with a
+    // real width, so this rect carries the true content height. P8.1: with
+    // display:none the rect was 0x0 — the flip and right-edge clamp below
+    // silently never fired and bottom/right-edge popovers overflowed the
+    // viewport on first open.
     const r = ref.current.getBoundingClientRect();
-    const margin = 8;
-    let top = a.bottom + margin;
-    let left = a.left + a.width / 2 - r.width / 2;
-    // Flip above when overflowing the bottom.
-    if (top + r.height > window.innerHeight - margin) {
-      top = Math.max(margin, a.top - r.height - margin);
-    }
-    left = Math.max(margin, Math.min(left, window.innerWidth - r.width - margin));
-    setPos({ top, left });
+    setPos(computePopoverPosition(
+      { top: a.top, bottom: a.bottom, left: a.left, width: a.width },
+      { width: r.width, height: r.height },
+      { width: window.innerWidth, height: window.innerHeight },
+    ));
   }, [data, isNarrow]);
 
   useEffect(() => {
@@ -120,7 +122,11 @@ export function FootnotePopover({ data, onClose }: {
       style={
         pos
           ? { position: 'fixed', top: pos.top, left: pos.left, width: 'min(420px, 90vw)' }
-          : { display: 'none' }
+          // Measurable pre-position frame (P8.1): display:none collapsed the
+          // rect to 0x0 so flip/clamp never fired on first open. Fixed at
+          // 0,0 keeps it out of flow; useLayoutEffect repositions before
+          // paint, so the hidden frame is never shown.
+          : { position: 'fixed', top: 0, left: 0, width: 'min(420px, 90vw)', visibility: 'hidden' }
       }
       className="footnote-popover z-[60] rounded-xl border border-amber-300/60 dark:border-amber-800/50 bg-amber-50/95 dark:bg-amber-950/80 shadow-xl p-4 text-sm"
     >
