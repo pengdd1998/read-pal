@@ -1,8 +1,9 @@
 """Primary-provider streaming + circuit-breaker fallback orchestration.
 
 Extracted from streaming.py (see stream_pump.py header). This module owns:
-which provider streams, circuit-open handling, failure recording, and the
-B3 metadata event emitted whenever the user is downgraded to a fallback.
+which provider streams, circuit-open handling, and failure recording. The
+B3 metadata event (user downgraded to a fallback) is emitted by
+``stream_fallback`` for the hop that actually answers.
 """
 
 import asyncio
@@ -14,10 +15,12 @@ from uuid import UUID
 import structlog
 
 from app.services.companion.safety import persist_stream_log
-from app.services.companion.stream_fallback import stream_fallback
-from app.services.companion.stream_pump import _stream_with_llm, _emit_metadata_with_seq
+from app.services.companion.stream_cooldown import model_cooling, note_rate_limited
+from app.services.companion.stream_fallback import has_fresh_alternative, stream_fallback
+from app.services.companion.stream_pump import _stream_with_llm
 from app.services.llm import get_llm
 from app.services.llm.registry import get_registry
+from app.services.llm.tiers import is_config_error, is_rate_limited
 
 logger = structlog.get_logger('read-pal.companion')
 
@@ -28,6 +31,24 @@ logger = structlog.get_logger('read-pal.companion')
 # _STREAM_RESERVED_OUTPUT_TOKENS (streaming.py) so the budget pre-charge never
 # reserves more than the vendor could actually emit.
 _STREAM_MAX_OUTPUT_TOKENS = 2000
+
+
+def _stream_llm_kwargs(provider_name: str, model: str | None = None) -> dict[str, Any]:
+    """get_llm kwargs for a companion stream — primary or fallback hop.
+
+    ``max_retries=0``: this path owns a fallback chain, so a 429 must
+    surface at once instead of after the SDK's silent client retries.
+    """
+    from app.config import get_settings
+
+    kwargs: dict[str, Any] = {
+        'provider': provider_name, 'max_tokens': _STREAM_MAX_OUTPUT_TOKENS, 'max_retries': 0,
+    }
+    if model:
+        kwargs['model'] = model
+    if get_settings().llm_stream_disable_thinking:
+        kwargs['disable_thinking'] = True
+    return kwargs
 
 
 def _get_stream_provider(
@@ -61,7 +82,11 @@ async def _handle_stream_failure(
         model=model_used, latency_ms=latency_ms, success=False,
         error=str(exc)[:500],
     )
-    await state.circuit.record_failure()
+    # P9.1: a config error (retired model, revoked key) trips a long cooldown.
+    await state.circuit.record_failure(config_error=is_config_error(exc))
+    # P9.2: a 429 parks THIS model briefly; the provider's sibling is fine.
+    if is_rate_limited(exc):
+        note_rate_limited(provider_name, model_used)
     registry = registry if registry is not None else get_registry()
     registry.record_latency(provider_name, latency_ms, False)
     persist_stream_log(
@@ -100,40 +125,36 @@ async def _stream_from_provider(
     failure path records latency against the same registry instance that
     resolved the provider (single resolution per request).
     """
-    if not await state.circuit.allow_request():
+    # P9.2: skip a model that just returned 429, but only when the chain
+    # holds a model that is not cooling — a single-model deployment must
+    # still try (the failed attempt costs ~0.2s, not a refused turn).
+    cooling = (
+        model_cooling(provider_name, model_used)
+        and has_fresh_alternative(provider_name, model_used)
+    )
+    if cooling or not await state.circuit.allow_request():
         logger.warning(
-            'companion.stream.circuit_blocked',
+            'companion.stream.model_rate_limited' if cooling else 'companion.stream.circuit_blocked',
             request_id=request_id,
             provider=provider_name,
+            model=model_used,
             user_id=str(user_id),
             book_id=str(book_id),
         )
-        # B3: emit metadata before fallback so client can surface quality
-        # downgrade. Even circuit-blocked counts as "primary unavailable" —
-        # the user is getting a different provider than the router picked.
-        fb_meta = _resolve_fallback_metadata(
-            failed_provider_name=provider_name,
-            failed_model=model_used,
-        )
-        if fb_meta is not None:
-            yield await _emit_metadata_with_seq(
-                request_id=request_id,
-                model=fb_meta['model'],
-                fallback_used=True,
-                primary_model=model_used,
-                primary_provider=provider_name,
-                seq_state=seq_state,
-            )
+        # Either way the user is getting a different model than the router
+        # picked. stream_fallback announces whichever hop answers (B3).
         async for chunk in stream_fallback(
             messages, collected_parts, request_id, start_time,
             user_id, book_id, lang, failed_provider_name=provider_name,
+            failed_model=model_used, primary_model=model_used,
+            primary_provider=provider_name,
             cancelled=cancelled, request=request, seq_state=seq_state,
         ):
             yield chunk
         return
 
     try:
-        llm = get_llm(provider=provider_name, max_tokens=_STREAM_MAX_OUTPUT_TOKENS)
+        llm = get_llm(**_stream_llm_kwargs(provider_name))
         async for chunk in _stream_with_llm(
             llm, messages, collected_parts, request_id,
             start_time, model_used, user_id, book_id,
@@ -167,47 +188,13 @@ async def _stream_from_provider(
                     billing_state.get('partial_chars', 0) + partial_len
                 )
             collected_parts.clear()
-        # B3: emit metadata before fallback chunks — primary failed mid-stream
-        # and the user is now getting a different model's output.
-        fb_meta = _resolve_fallback_metadata(
-            failed_provider_name=provider_name,
-            failed_model=model_used,
-        )
-        if fb_meta is not None:
-            yield await _emit_metadata_with_seq(
-                request_id=request_id,
-                model=fb_meta['model'],
-                fallback_used=True,
-                primary_model=model_used,
-                primary_provider=provider_name,
-                seq_state=seq_state,
-            )
+        # stream_fallback emits the B3 metadata (fallback model took over)
+        # before its first chunk, then works down the fallback chain.
         async for chunk in stream_fallback(
             messages, collected_parts, request_id, start_time,
             user_id, book_id, lang, failed_provider_name=provider_name,
+            failed_model=model_used, primary_model=model_used,
+            primary_provider=provider_name,
             cancelled=cancelled, request=request, seq_state=seq_state,
         ):
             yield chunk
-
-
-def _resolve_fallback_metadata(
-    *,
-    failed_provider_name: str,
-    failed_model: str,
-) -> dict | None:
-    """Resolve the fallback provider/model the stream will switch to.
-
-    Returns ``{'provider': str, 'model': str}`` or None when no fallback is
-    available (caller should skip the metadata event — the user gets a
-    fallback-error chunk from ``stream_fallback`` instead).
-    """
-    from app.services.companion.stream_fallback import resolve_fallback_provider
-    next_state = resolve_fallback_provider(
-        lang='', failed_provider_name=failed_provider_name,
-    )
-    if next_state is None:
-        return None
-    return {
-        'provider': next_state.config.name,
-        'model': next_state.config.default_model,
-    }

@@ -52,8 +52,16 @@ class CircuitBreaker:
         self.state = CircuitState.CLOSED
         self._failures = 0
         self._opened_at: float = 0.0
+        # P9.1: override for the reset timeout while OPEN — set by a
+        # configuration-error trip, None for ordinary overload trips.
+        self._open_for: float | None = None
         self._probe_in_progress = False
         self._lock = asyncio.Lock()
+
+    def _reset_timeout(self) -> float:
+        if self._open_for is not None:
+            return self._open_for
+        return get_settings().circuit_reset_timeout_seconds
 
     async def allow_request(self) -> bool:
         """Return True if a request is allowed to proceed."""
@@ -61,9 +69,8 @@ class CircuitBreaker:
             if self.state == CircuitState.CLOSED:
                 return True
             if self.state == CircuitState.OPEN:
-                settings = get_settings()
                 elapsed = time.monotonic() - self._opened_at
-                if elapsed >= settings.circuit_reset_timeout_seconds:
+                if elapsed >= self._reset_timeout():
                     old, self.state = self.state, CircuitState.HALF_OPEN
                     self._probe_in_progress = True
                     _record_transition(self.name, old, self.state)
@@ -81,30 +88,41 @@ class CircuitBreaker:
         async with self._lock:
             self._failures = 0
             self._probe_in_progress = False
+            self._open_for = None
             if self.state != CircuitState.CLOSED:
                 old, self.state = self.state, CircuitState.CLOSED
                 _record_transition(self.name, old, self.state)
                 logger.info('circuit_breaker_closed')
 
-    async def record_failure(self) -> None:
-        """Record a failure; open circuit if threshold is reached."""
+    async def _trip(self, reason: str, **fields: Any) -> None:
+        old, self.state = self.state, CircuitState.OPEN
+        self._opened_at = time.monotonic()
+        _record_transition(self.name, old, self.state)
+        logger.warning(f'circuit_breaker_{reason}', **fields)
+
+    async def record_failure(self, *, config_error: bool = False) -> None:
+        """Record a failure; open circuit if threshold is reached.
+
+        *config_error* (P9.1) trips immediately regardless of the threshold
+        and holds the circuit open for ``circuit_config_error_timeout_seconds``:
+        a retired model or revoked key cannot recover between probes, and the
+        ordinary threshold + short reset let such a provider keep taking its
+        share of every routing pick.
+        """
         async with self._lock:
             self._failures += 1
             self._probe_in_progress = False
-            settings = get_settings()
+            if config_error:
+                self._open_for = float(get_settings().circuit_config_error_timeout_seconds)
+                # Re-trip even when already OPEN: a failed recovery probe must
+                # restart the long cooldown rather than fall back to the short one.
+                await self._trip('config_error', provider=self.name, cooldown_s=self._open_for)
+                return
+            self._open_for = None
             if self.state == CircuitState.HALF_OPEN:
-                old, self.state = self.state, CircuitState.OPEN
-                self._opened_at = time.monotonic()
-                _record_transition(self.name, old, self.state)
-                logger.warning('circuit_breaker_open_probe_failed')
-            elif self._failures >= settings.circuit_failure_threshold:
-                old, self.state = self.state, CircuitState.OPEN
-                self._opened_at = time.monotonic()
-                _record_transition(self.name, old, self.state)
-                logger.warning(
-                    'circuit_breaker_open',
-                    consecutive_failures=self._failures,
-                )
+                await self._trip('open_probe_failed')
+            elif self._failures >= get_settings().circuit_failure_threshold:
+                await self._trip('open', consecutive_failures=self._failures)
 
     @property
     def is_open(self) -> bool:
@@ -119,8 +137,7 @@ class CircuitBreaker:
         """
         if self.state != CircuitState.OPEN:
             return False
-        settings = get_settings()
-        return (time.monotonic() - self._opened_at) < settings.circuit_reset_timeout_seconds
+        return (time.monotonic() - self._opened_at) < self._reset_timeout()
 
     @property
     def is_probe_in_flight(self) -> bool:

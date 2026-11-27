@@ -42,7 +42,9 @@ class ProviderConfig(BaseModel):
     name: str
     base_url: str
     api_key: str
-    models: dict[str, str]  # {"default": "model-name", "fallback": "model-name"}
+    # {"default": ..., "fallback": ..., "fast": ...} — resolution in
+    # services/llm/tiers.py (fast_model).
+    models: dict[str, str]
     priority: int = 1  # lower = preferred
     cost_weight: float = 0.5  # used for "cheapest" routing
     max_rpm: int = 0  # 0 = unlimited
@@ -124,6 +126,10 @@ class Settings(BaseSettings):
     llm_max_retries: int
     circuit_failure_threshold: int
     circuit_reset_timeout_seconds: int
+    # P9.1: how long a provider stays open after a CONFIGURATION error
+    # (retired model, revoked key) — no retry fixes those, so the short
+    # default reset is far too eager to re-probe.
+    circuit_config_error_timeout_seconds: int = 600
     max_embedding_calls: int
     embedding_enabled: bool = True
     # Embedding provider (any OpenAI-compatible /embeddings). Empty fields
@@ -143,11 +149,14 @@ class Settings(BaseSettings):
     # proposal surface can be disabled without touching read-only tools.
     companion_tool_proposals_enabled: bool = True
 
-    # Planner wall-clock deadline (ms). Default 9s caps pre-first-token
-    # dead air; slow environments (remote DB + cold provider, planner
-    # observed at 23-44s) raise this to keep the tool phase reachable
-    # — the tradeoff is slower first token while the planner runs.
-    companion_tool_plan_timeout_ms: int = 9000
+    # Planner wall-clock deadline (ms). On the fast tier (P9.3) healthy calls
+    # land in 1-3s; 5s caps pre-first-token dead air. Slow environments raise
+    # it to keep the tool phase reachable, trading a slower first token.
+    companion_tool_plan_timeout_ms: int = 5000
+
+    # LLM keyword expansion of the RAG query. Off by default (P9.3): a model
+    # call on every turn's critical path that the retrieval gate never needed.
+    rag_query_expansion_enabled: bool = False
 
     # Ops page path key (/ops/llm?key=...): unlocks the platform-wide
     # LLM metrics view. Empty = ops page disabled entirely.
@@ -155,12 +164,21 @@ class Settings(BaseSettings):
 
     # Multi-provider LLM routing
     llm_providers: str = ''  # JSON array of ProviderConfig dicts
-    # JSON dict: feature -> strategy. Default pins the deadline-bound tool
-    # planner to the stable provider: the planner runs BEFORE the answer's
-    # first token, and on a 429-storming primary its retry ladder burned the
-    # whole 9s deadline (slow 429s ~19s each x 3 attempts), degrading every
-    # fresh-session content question to a no-tools answer (WT4-02, 09-18).
-    llm_feature_routing: str = '{"companion_tool_plan": "mimo"}'
+    # JSON dict: feature -> strategy ('cheapest' | 'best' | 'fastest' | a
+    # provider name). Empty = priority-weighted round robin over healthy
+    # providers. It used to pin the tool planner to a named reasoning
+    # provider (WT4-02, 09-18: the planner is deadline-bound and must not sit
+    # behind a 429-storming primary). That provider retired its model and
+    # every pinned call failed (P9.1); the planner now runs on the fast tier
+    # instead, which addresses the same latency without naming a vendor.
+    llm_feature_routing: str = '{}'
+
+    # Reasoning models (GLM-4.5+) emit hidden `reasoning_content` BEFORE the
+    # first visible token: 11-30s of dead air measured on a chat stream (P9.3).
+    # Fast-tier calls always disable it; this covers the companion answer
+    # stream on vendors that support the toggle. Set False to trade that
+    # dead air for the model's reasoning.
+    llm_stream_disable_thinking: bool = True
 
     # JWT
     jwt_secret: str

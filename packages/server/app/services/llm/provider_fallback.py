@@ -10,6 +10,7 @@ import structlog
 from langchain_core.messages import BaseMessage
 
 from app.services.llm.retry import _invoke_with_retry
+from app.services.llm.tiers import disable_thinking_for, is_config_error, model_for
 
 logger = structlog.get_logger('read-pal.llm')
 
@@ -144,7 +145,8 @@ async def _record_failure(
         error=str(exc),
         provider_attempt_id=provider_attempt_id,
     )
-    await state.circuit.record_failure()
+    # P9.1: a config error (retired model, revoked key) trips a long cooldown.
+    await state.circuit.record_failure(config_error=is_config_error(exc))
     registry.record_latency(provider_name, latency_ms, False)
     _log_call(
         request_id=request_id,
@@ -246,7 +248,7 @@ async def _invoke_and_record_fallback(
             provider=provider_name, error=str(exc)[:300],
             provider_attempt_id=provider_attempt_id,
         )
-        await state.circuit.record_failure()
+        await state.circuit.record_failure(config_error=is_config_error(exc))
         if registry:
             registry.record_latency(provider_name, latency_ms, False)
         _log_call(
@@ -311,7 +313,7 @@ async def _try_next_provider(
         return None
 
     provider_name = next_state.config.name
-    model_used = next_state.config.default_model
+    model_used = model_for(next_state.config)  # tier-aware (P9.3)
 
     if not await next_state.circuit.allow_request():
         if provider_name not in _visited:
@@ -336,7 +338,10 @@ async def _try_next_provider(
         pool_kwargs['temperature'] = temperature
     if max_tokens is not None:
         pool_kwargs['max_tokens'] = max_tokens
-    llm = get_llm(provider=provider_name, **pool_kwargs)
+    if model_used != next_state.config.default_model:
+        pool_kwargs['model'] = model_used
+    llm = get_llm(provider=provider_name, disable_thinking=disable_thinking_for(next_state.config),
+                  **pool_kwargs)
     return await _invoke_and_record_fallback(
         messages, llm, next_state, provider_name, model_used,
         request_id, log_label, registry,
@@ -380,7 +385,8 @@ async def _try_same_provider_fallback(
         pool_kwargs['temperature'] = temperature
     if max_tokens is not None:
         pool_kwargs['max_tokens'] = max_tokens
-    llm = get_llm(provider=provider_name, **pool_kwargs)
+    llm = get_llm(provider=provider_name, disable_thinking=disable_thinking_for(state.config),
+                  **pool_kwargs)
     return await _invoke_and_record_fallback(
         messages, llm, state, provider_name, fallback_model,
         request_id, log_label,

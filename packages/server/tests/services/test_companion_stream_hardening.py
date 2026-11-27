@@ -60,10 +60,10 @@ async def test_streaming_get_llm_receives_explicit_max_tokens():
         async for _ in _run_primary_stream(collected, mock_state):
             pass
 
-    mock_get_llm.assert_called_once_with(
-        provider='mock', max_tokens=_STREAM_MAX_OUTPUT_TOKENS,
-    )
-    assert mock_get_llm.call_args.kwargs['max_tokens'] > 0
+    kwargs = mock_get_llm.call_args.kwargs
+    assert kwargs['provider'] == 'mock'
+    assert kwargs['max_tokens'] == _STREAM_MAX_OUTPUT_TOKENS > 0
+    assert kwargs['max_retries'] == 0, 'the chain hops; the SDK must not retry silently'
 
 
 async def _run_primary_stream(collected: list[str], state: MagicMock):

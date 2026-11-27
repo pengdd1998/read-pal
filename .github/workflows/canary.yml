@@ -1,0 +1,53 @@
+name: Core-loop canary
+
+# One REAL companion turn per hour through the public API (P9).
+#
+# Why: the health probe (/api/v1/health) stayed green for weeks while the
+# product's core loop was degraded — a retired primary model, a rate-limited
+# sibling, a 15s wait before the first frame. Health says the process is up;
+# only a real turn says the companion can answer. On 2026-11-28 the canary's
+# first two runs against the then-current production both FAILED.
+#
+# Failure => ServerChan push (same channel as the Alert workflow).
+
+on:
+  schedule:
+    - cron: '15 * * * *' # hourly at :15, past the top-of-hour schedule crowd
+  workflow_dispatch:
+
+concurrency:
+  group: core-loop-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run one real companion turn
+        env:
+          CANARY_EMAIL: ${{ secrets.CANARY_EMAIL }}
+          CANARY_PASSWORD: ${{ secrets.CANARY_PASSWORD }}
+          CANARY_BOOK_ID: ${{ secrets.CANARY_BOOK_ID }}
+        run: |
+          python ops/observability/core_loop_canary.py > canary.log 2>&1
+          status=$?
+          cat canary.log
+          exit $status
+
+      - name: Notify on failure
+        if: failure()
+        env:
+          SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -s -X POST "https://sctapi.ftqq.com/${SERVERCHAN_SENDKEY}.send" \
+            --data-urlencode "title=🟠 read-pal 闭环金丝雀: 伴读对话异常" \
+            --data-urlencode "desp=$(head -c 1500 canary.log 2>/dev/null)
+
+run: ${RUN_URL}" \
+            >/dev/null || true

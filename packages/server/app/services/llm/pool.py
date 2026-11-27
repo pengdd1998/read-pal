@@ -10,6 +10,7 @@ import structlog
 from langchain_openai import ChatOpenAI
 
 from app.config import get_settings
+from app.services.llm.tiers import current_tier, supports_thinking_toggle
 
 logger = structlog.get_logger('read-pal.llm')
 
@@ -45,6 +46,8 @@ def get_llm(
     provider: str | None = None,
     feature: str | None = None,
     structured_output: bool = False,
+    disable_thinking: bool = False,
+    max_retries: int | None = None,
 ) -> ChatOpenAI:
     """Return a pooled ChatOpenAI instance.
 
@@ -58,11 +61,22 @@ def get_llm(
     ``max_tokens`` value because the ChatOpenAI instance is constructed
     once per pool entry.
 
-    C2: ``structured_output`` adds ``response_format={'type': 'json_object'}``
+    C2: ``structured_output`` adds ``response_format={'type': 'json_object'}`
     via ``model_kwargs``. The pool key includes the flag so the two
     variants get distinct ChatOpenAI instances — otherwise flipping the
     feature on for one caller would mutate the shared instance's kwargs
     for all callers.
+
+    ``max_retries`` is the CLIENT's own retry count (openai SDK). The
+    default (None) keeps ``llm_max_retries`` for ordinary calls and 0 for
+    the fast tier. Callers that own a fallback chain pass 0 explicitly: an
+    SDK that silently retries a 429 holds the caller for seconds before
+    the chain can hop to the model that actually answers (P9.2).
+
+    P9.3: ``disable_thinking`` sends ``thinking: {"type": "disabled"}`` so a
+    reasoning model's hidden chain-of-thought is not emitted before the
+    first visible token. Part of the pool key for the same reason as
+    ``structured_output``; ignored unless the provider supports the toggle.
     """
     from app.services.llm.registry import get_registry
 
@@ -86,7 +100,13 @@ def get_llm(
     model_name = model or state.config.default_model
     state.increment_rpm()
     effective_cap = _cap_for_model(model_name, max_tokens)
-    key = (model_name, temperature, effective_cap, structured_output)
+    extra_body = (
+        {'thinking': {'type': 'disabled'}}
+        if disable_thinking and supports_thinking_toggle(state.config) else None
+    )
+    if max_retries is None:
+        max_retries = 0 if current_tier() == 'fast' else settings.llm_max_retries
+    key = (model_name, temperature, effective_cap, structured_output, extra_body is not None, max_retries)
     if key not in state.pool:
         kwargs: dict[str, Any] = {
             'model': model_name,
@@ -94,9 +114,11 @@ def get_llm(
             'base_url': state.config.base_url,
             'temperature': temperature,
             'max_tokens': effective_cap,
-            'max_retries': settings.llm_max_retries,
+            'max_retries': max_retries,
             'request_timeout': settings.llm_timeout_seconds,
         }
+        if extra_body:
+            kwargs['extra_body'] = extra_body
         if structured_output:
             # OpenAI-compatible providers expose 'json_object' as a
             # broadly-supported mode (vs 'json_schema' which needs a full

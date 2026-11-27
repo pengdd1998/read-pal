@@ -24,6 +24,10 @@ export interface Message {
    * before answering. Set from the tool_status SSE frame; additive,
    * never affects content. */
   toolTrace?: Array<{ tool?: string; ok?: boolean; latency_ms?: number }>;
+  /** GB-11: number of statements the post-stream faithfulness check could
+   * not ground in the book. Rendered as a separate notice under the reply —
+   * it used to be appended into `content` as ordinary answer text. */
+  faithfulnessWarningCount?: number;
   /** v2 action proposals (user-confirmed writes). Ephemeral: not
    * persisted, gone on reload by design. */
   proposals?: Array<{ id?: string; tool?: string; args?: Record<string, unknown>; preview?: string }>;

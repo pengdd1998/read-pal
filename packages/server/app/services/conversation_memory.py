@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from datetime import datetime, UTC
@@ -467,3 +468,61 @@ def _summarize_to_text(data: dict) -> str:
         parts.append(f'Unresolved: {" ".join(questions)}.')
 
     return ' '.join(parts) if parts else json.dumps(data)
+
+
+# ---------------------------------------------------------------------------
+# Turn-time access (P9.3) — the refresh never sits on the answer's path
+# ---------------------------------------------------------------------------
+# Regenerating the summary is a model call. Inline, it ran BEFORE the
+# answer's first token on the default model with the full retry ladder:
+# once a conversation passed the threshold, a rate-limited turn spent its
+# whole 20s budget here before the companion said a word.
+
+_refreshing: set[tuple[str, str]] = set()
+_tasks: set[asyncio.Task[None]] = set()
+
+
+async def current_summary(db: AsyncSession, user_id: UUID, book_id: UUID) -> str:
+    """The stored summary text for this turn, or ``''``. No model call.
+
+    A prompt-version-stale row is ignored: its content was produced under
+    an older schema, and the refresh scheduled alongside replaces it.
+    """
+    existing = await _load_existing_summary(db, user_id, book_id)
+    if existing and not _is_summary_stale(existing):
+        return existing.summary or ''
+    return ''
+
+
+def schedule_summary_refresh(user_id: UUID, book_id: UUID) -> bool:
+    """Refresh the summary in the background. Returns True if scheduled.
+
+    ``get_or_create_summary`` decides on its own (thresholds, staleness)
+    whether work is due, on its own session — the request session is
+    released before the answer streams. Guarded per conversation so quick
+    successive turns schedule one refresh, not one each. The refreshed
+    summary serves the NEXT turn; this one answers from the stored one.
+    """
+    key = (str(user_id), str(book_id))
+    if key in _refreshing:
+        return False
+    _refreshing.add(key)
+
+    async def _run() -> None:
+        try:
+            from app.db import async_session
+
+            async with async_session() as db:
+                await get_or_create_summary(db, user_id, book_id)
+        except Exception:  # noqa: BLE001 — background refresh is best-effort
+            logger.warning(
+                'memory.summary_refresh_failed',
+                user_id=str(user_id), book_id=str(book_id), exc_info=True,
+            )
+        finally:
+            _refreshing.discard(key)
+
+    task = asyncio.create_task(_run())
+    _tasks.add(task)
+    task.add_done_callback(_tasks.discard)
+    return True

@@ -43,10 +43,13 @@ export type SSEProposal = {
 
 export type SSEMeta = {
   request_id?: string;
-  type?: 'metadata' | 'message_id' | 'tool_status' | 'tool_proposals';
+  type?: 'metadata' | 'message_id' | 'tool_status' | 'tool_proposals' | 'faithfulness_warning';
   results?: SSEToolResult[];
   proposals?: SSEProposal[];
   message_id?: string;
+  /** GB-11: the post-stream faithfulness check flagged this many
+   * unsupported statements in the answer. A notice ABOUT the reply. */
+  unsupported_count?: number;
   model?: string;
   fallback_used?: boolean;
   primary_model?: string;
@@ -148,6 +151,7 @@ export function consumeSSEStream(
             books_searched?: number;
             brief?: Record<string, unknown>;
             cancelled?: boolean;
+            unsupported_count?: number;
           };
         // B3: quality-disclosure metadata event. Emitted BEFORE fallback
         // chunks when primary provider failed mid-stream — surfaces the
@@ -176,6 +180,12 @@ export function consumeSSEStream(
             primary_provider: parsed.primary_provider,
           });
         }
+        // GB-11: the faithfulness warning is typed AND carries `content`.
+        // Without this branch it fell through to the token path and the
+        // "may not come from the book" notice was appended INTO the answer.
+        if (parsed.type === 'faithfulness_warning' && onMeta) {
+          onMeta({ type: 'faithfulness_warning', unsupported_count: parsed.unsupported_count });
+        }
         // First-frame request_id so the client can cancel the stream by id.
         if (onMeta && (parsed.request_id !== undefined) && parsed.type !== 'metadata') {
           onMeta({ request_id: parsed.request_id });
@@ -196,7 +206,8 @@ export function consumeSSEStream(
           controller.abort();
           return;
         }
-        const token = parsed.content || parsed.token;
+        // Typed frames are control/metadata; only untyped frames are body text.
+        const token = parsed.type ? undefined : (parsed.content || parsed.token);
         if (token) {
           onToken(token);
         }

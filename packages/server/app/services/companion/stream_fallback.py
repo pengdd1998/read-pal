@@ -13,6 +13,9 @@ from app.services.companion.safety import quick_safety_check
 from app.services.companion.stream_cache import sse_chunk
 from app.services.llm import get_llm
 from app.services.llm.registry import get_registry
+from app.services.companion.stream_cooldown import model_cooling, note_rate_limited
+from app.services.companion.stream_pump import _emit_metadata_with_seq
+from app.services.llm.tiers import is_config_error, is_rate_limited
 from app.utils.i18n import t
 
 logger = structlog.get_logger('read-pal.companion')
@@ -57,8 +60,10 @@ async def _stream_from_fallback_llm(
     sequence so Last-Event-ID reconnect resumes at the right offset even
     if the primary emitted some chunks before failing.
     """
+    from app.services.companion.stream_provider import _stream_llm_kwargs
+
     try:
-        llm_fb = get_llm(provider=provider_name)
+        llm_fb = get_llm(**_stream_llm_kwargs(provider_name, model=model_used))
     except Exception as init_exc:
         logger.error(
             'companion.stream.fallback_provider_init_failed',
@@ -143,6 +148,53 @@ async def _emit_fallback_with_seq(
     return chunk
 
 
+def fallback_candidates(
+    failed_provider_name: str | None,
+    failed_model: str | None,
+) -> list[tuple[Any, str, str]]:
+    """Ordered ``(state, provider, model)`` hops to try after the primary failed.
+
+    The same provider's fallback model goes first (P9.2): a rate-limited
+    default usually leaves its smaller sibling untouched. The chain used to
+    hop PROVIDERS only, so with one healthy provider it re-selected the very
+    model that had just returned 429 and failed the turn a second time. The
+    remaining providers' defaults follow, in the previous order.
+    """
+    chain: list[tuple[Any, str, str]] = []
+    if failed_provider_name:
+        state = get_registry().get_provider_by_name(failed_provider_name)
+        # str check: a provider without a fallback model has None here.
+        fb_model = state.config.fallback_model if state is not None else None
+        if isinstance(fb_model, str) and fb_model and fb_model != failed_model:
+            chain.append((state, failed_provider_name, fb_model))
+    next_state = resolve_fallback_provider('', failed_provider_name)
+    if next_state is not None:
+        # The next provider is tried as a PROVIDER, so both of its models
+        # are hops: a rate-limited default must not end the chain while its
+        # sibling on the same key still answers.
+        for model in _provider_models(next_state):
+            hop = (next_state, next_state.config.name, model)
+            if hop not in chain:
+                chain.append(hop)
+    return chain
+
+
+def _provider_models(state: Any) -> list[str]:
+    models = [state.config.default_model]
+    fallback = state.config.fallback_model
+    if isinstance(fallback, str) and fallback and fallback != models[0]:
+        models.append(fallback)
+    return models
+
+
+def has_fresh_alternative(failed_provider_name: str | None, failed_model: str | None) -> bool:
+    """Whether the fallback chain holds a model outside its rate-limit cooldown."""
+    return any(
+        not model_cooling(provider, model)
+        for _, provider, model in fallback_candidates(failed_provider_name, failed_model)
+    )
+
+
 async def stream_fallback(
     messages: list[Any],
     collected_parts: list[str],
@@ -155,33 +207,56 @@ async def stream_fallback(
     cancelled: asyncio.Event | None = None,
     request: Any = None,
     seq_state: list[int] | None = None,
+    failed_model: str | None = None,
+    primary_model: str | None = None,
+    primary_provider: str | None = None,
 ) -> AsyncGenerator[str, None]:
-    """Try streaming from the next available provider."""
-    next_state = resolve_fallback_provider(lang, failed_provider_name)
-    if next_state is None:
-        yield sse_chunk(t('companion.fallback_error', lang))
-        return
+    """Try streaming from the fallback chain (``fallback_candidates``).
 
-    provider_name = next_state.config.name
-    model_used = next_state.config.default_model
-
-    if not await next_state.circuit.allow_request():
-        yield sse_chunk(t('companion.fallback_error', lang))
-        return
-
-    try:
-        async for chunk in _stream_from_fallback_llm(
-            provider_name, model_used, messages,
-            collected_parts, request_id, next_state,
-            cancelled=cancelled, request=request, seq_state=seq_state,
-        ):
-            yield chunk
-    except Exception as fb_exc:
-        logger.error(
-            'companion.stream.fallback_failed',
-            request_id=request_id,
-            provider=provider_name,
-            error=str(fb_exc)[:500],
+    Each hop that is actually attempted announces itself with the B3
+    metadata event first, so the client's "fallback model took over" notice
+    names the model that really answers. Only a hop that failed BEFORE
+    emitting anything advances the chain: once the reader has seen a hop's
+    partial text, a fresh answer would be glued onto it.
+    """
+    chain = fallback_candidates(failed_provider_name, failed_model)
+    # P9.2: prefer models that are not rate-limited right now; fall back to
+    # the full chain when every candidate is cooling (never refuse a turn).
+    fresh = [hop for hop in chain if not model_cooling(hop[1], hop[2])]
+    for state, provider_name, model_used in (fresh or chain):
+        if not await state.circuit.allow_request():
+            continue
+        yield await _emit_metadata_with_seq(
+            request_id=request_id, model=model_used, fallback_used=True,
+            primary_model=primary_model or failed_model,
+            primary_provider=primary_provider or failed_provider_name,
+            seq_state=seq_state,
         )
-        await next_state.circuit.record_failure()
-        yield sse_chunk(t('companion.fallback_error', lang))
+        emitted, shown_from = False, len(collected_parts)
+        try:
+            async for chunk in _stream_from_fallback_llm(
+                provider_name, model_used, messages,
+                collected_parts, request_id, state,
+                cancelled=cancelled, request=request, seq_state=seq_state,
+            ):
+                emitted = True
+                yield chunk
+            return
+        except Exception as fb_exc:  # noqa: BLE001 — every hop failure degrades, never raises
+            logger.error(
+                'companion.stream.fallback_failed',
+                request_id=request_id,
+                provider=provider_name,
+                model=model_used,
+                error=str(fb_exc)[:500],
+            )
+            await state.circuit.record_failure(config_error=is_config_error(fb_exc))
+            if is_rate_limited(fb_exc):
+                note_rate_limited(provider_name, model_used)
+            if emitted:
+                break
+            # Output is flushed in batches, so a hop can die with text
+            # collected that the reader never saw. Drop it: the next hop
+            # starts clean and the saved answer matches what was shown.
+            del collected_parts[shown_from:]
+    yield sse_chunk(t('companion.fallback_error', lang))

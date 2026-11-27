@@ -18,6 +18,7 @@ from app.services.llm.circuit_fallback import (
 )
 from app.services.llm.observability import _log_cache_hit
 from app.services.llm.text import _repair_json, _strip_markdown_fences, _validate_parsed
+from app.services.llm.tiers import call_in_tier
 
 logger = structlog.get_logger('read-pal.llm')
 
@@ -178,6 +179,7 @@ async def safe_llm_invoke(
     template: Any = None,
     temperature: float | None = None,
     max_tokens: int | None = None,
+    tier: str = 'default',
 ) -> Any:
     """Invoke LLM with circuit breaker, multi-provider fallback, caching, JSON parsing.
 
@@ -186,6 +188,9 @@ async def safe_llm_invoke(
     both is encouraged — explicit kwargs make the call site self-documenting
     and avoid the silent "I set max_tokens on the template but forgot to pass
     template=" trap.
+
+    ``tier='fast'`` routes this call (and its whole fallback chain) to each
+    provider's quick model with hidden reasoning off — see ``tiers.py``.
     """
     from app.services.llm.cache import _cache_key, _cache_set
 
@@ -219,8 +224,9 @@ async def safe_llm_invoke(
         )
         return cached
 
-    response = await _invoke_with_circuit(
-        messages, log_label=log_label,
+    response = await call_in_tier(
+        tier, _invoke_with_circuit,
+        messages=messages, log_label=log_label,
         user_id=user_id, book_id=book_id,
         feature=effective_feature,
         temperature=temperature, max_tokens=max_tokens,
@@ -266,12 +272,13 @@ async def safe_llm_call(
     temperature: float | None = None,
     max_tokens: int | None = None,
     cache_anon: bool = False,
+    tier: str = 'default',
 ) -> str:
     """Invoke LLM with circuit breaker + multi-provider fallback, returning raw text.
 
     Mirrors :func:`safe_llm_invoke`'s ``template`` / ``temperature`` /
     ``max_tokens`` resolution: explicit kwargs win, then template fields,
-    then pool defaults.
+    then pool defaults. ``tier='fast'`` is documented there.
 
     Phase 5.1 (m6): ``cache_anon=True`` opts the call into a user-independent
     cache tier — the cache key uses ``user_id='anon'`` so all users with the
@@ -330,8 +337,9 @@ async def safe_llm_call(
             from app.utils.output_filter import filter_output
             return filter_output(cached, context=log_label)
 
-    response = await _invoke_with_circuit(
-        messages, log_label=log_label,
+    response = await call_in_tier(
+        tier, _invoke_with_circuit,
+        messages=messages, log_label=log_label,
         user_id=user_id, book_id=book_id,
         feature=effective_feature,
         temperature=temperature, max_tokens=max_tokens,

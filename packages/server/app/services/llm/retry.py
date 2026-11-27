@@ -21,6 +21,8 @@ from langchain_openai import ChatOpenAI
 # "retry once on network error" branch below was dead).
 from openai import APIConnectionError, APITimeoutError, RateLimitError
 
+from app.services.llm.tiers import current_tier
+
 logger = structlog.get_logger('read-pal.llm')
 
 # ---------------------------------------------------------------------------
@@ -109,6 +111,15 @@ async def _invoke_with_retry(
             raise
         except RateLimitError as exc:
             last_exc = exc
+            # Fast-tier calls sit under caller deadlines (planner 5s,
+            # expansion 3s): a backoff ladder here only burns the deadline.
+            # Fail now; the provider fallback chain is the recovery path.
+            if current_tier() == 'fast':
+                logger.warning(
+                    'llm_rate_limited', label=log_label, attempt=attempt + 1,
+                    max_attempts=max_attempts, backoff_seconds=0, fast_tier=True,
+                )
+                raise
             if attempt < len(_RATE_LIMIT_BACKOFFS):
                 # Prefer vendor-provided Retry-After, fall back to schedule
                 retry_after = _extract_retry_after(exc)

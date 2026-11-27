@@ -17,6 +17,7 @@ from app.services.llm.provider_fallback import (
     _try_same_provider_fallback,
 )
 from app.services.llm.retry import _invoke_with_retry
+from app.services.llm.tiers import disable_thinking_for, model_for
 
 logger = structlog.get_logger('read-pal.llm')
 
@@ -95,7 +96,10 @@ async def _handle_invoke_failure(
     )
     if response is None:
         fb_model = state.config.fallback_model
-        if fb_model:
+        # P9.3: on the fast tier the quick model usually IS the fallback
+        # model — retrying it under its own name would just repeat the
+        # failure. Only hop when it is a genuinely different model.
+        if fb_model and fb_model != model_used:
             response = await _try_same_provider_fallback(
                 messages, state, fb_model, request_id, log_label,
                 start_time=start,
@@ -167,7 +171,9 @@ async def _invoke_with_circuit(  # noqa: C901, PLR0915 — fallback-chain orches
         )
 
     provider_name = state.config.name
-    model_used = state.config.default_model
+    # P9.3: the active call tier picks the model — 'fast' calls land on the
+    # provider's quick model instead of the reasoning default.
+    model_used = model_for(state.config)
 
     # Resolve pool kwargs: explicit values > defaults
     pool_kwargs: dict[str, Any] = {}
@@ -175,6 +181,8 @@ async def _invoke_with_circuit(  # noqa: C901, PLR0915 — fallback-chain orches
         pool_kwargs['temperature'] = temperature
     if max_tokens is not None:
         pool_kwargs['max_tokens'] = max_tokens
+    if model_used != state.config.default_model:
+        pool_kwargs['model'] = model_used
 
     # Pre-charge the daily token budget (no-op when llm_daily_token_budget == 0).
     settings = get_settings()
@@ -230,7 +238,8 @@ async def _invoke_with_circuit(  # noqa: C901, PLR0915 — fallback-chain orches
             )
 
     try:
-        llm = get_llm(provider=provider_name, structured_output=structured_output, **pool_kwargs)
+        llm = get_llm(provider=provider_name, structured_output=structured_output,
+                     disable_thinking=disable_thinking_for(state.config), **pool_kwargs)
         response = await _invoke_with_retry(llm, messages, log_label)
         await _record_success(
             state=state, provider_name=provider_name, registry=registry,
