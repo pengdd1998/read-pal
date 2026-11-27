@@ -19,6 +19,9 @@ concurrency:
   group: core-loop-canary
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   canary:
     runs-on: ubuntu-latest
@@ -33,9 +36,11 @@ jobs:
           CANARY_EMAIL: ${{ secrets.CANARY_EMAIL }}
           CANARY_PASSWORD: ${{ secrets.CANARY_PASSWORD }}
           CANARY_BOOK_ID: ${{ secrets.CANARY_BOOK_ID }}
+        # `&& status=0 || status=$?` on purpose: run steps use `bash -e`, and a
+        # bare failing command exits the shell before the log is printed —
+        # the run page then shows nothing but "exit code 1".
         run: |
-          python ops/observability/core_loop_canary.py > canary.log 2>&1
-          status=$?
+          python ops/observability/core_loop_canary.py > canary.log 2>&1 && status=0 || status=$?
           cat canary.log
           exit $status
 
