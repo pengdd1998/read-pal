@@ -179,6 +179,8 @@ class Settings(BaseSettings):
     # stream on vendors that support the toggle. Set False to trade that
     # dead air for the model's reasoning.
     llm_stream_disable_thinking: bool = True
+    # Stream-call HTTP timeout: bounds time-to-first-token per attempt (P9.2).
+    llm_stream_timeout_seconds: float = 6.0
 
     # JWT
     jwt_secret: str

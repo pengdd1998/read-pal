@@ -48,6 +48,7 @@ def get_llm(
     structured_output: bool = False,
     disable_thinking: bool = False,
     max_retries: int | None = None,
+    request_timeout: float | None = None,
 ) -> ChatOpenAI:
     """Return a pooled ChatOpenAI instance.
 
@@ -106,7 +107,10 @@ def get_llm(
     )
     if max_retries is None:
         max_retries = 0 if current_tier() == 'fast' else settings.llm_max_retries
-    key = (model_name, temperature, effective_cap, structured_output, extra_body is not None, max_retries)
+    if request_timeout is None:
+        request_timeout = settings.llm_timeout_seconds
+    key = (model_name, temperature, effective_cap, structured_output, extra_body is not None,
+           max_retries, request_timeout)
     if key not in state.pool:
         kwargs: dict[str, Any] = {
             'model': model_name,
@@ -115,7 +119,7 @@ def get_llm(
             'temperature': temperature,
             'max_tokens': effective_cap,
             'max_retries': max_retries,
-            'request_timeout': settings.llm_timeout_seconds,
+            'request_timeout': request_timeout,
         }
         if extra_body:
             kwargs['extra_body'] = extra_body

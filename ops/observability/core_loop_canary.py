@@ -33,7 +33,10 @@ from urllib.parse import urlparse
 
 BASE_URL = os.environ.get('CANARY_BASE_URL', 'https://read.chishenma.top').rstrip('/')
 FRAME_S = float(os.environ.get('CANARY_FRAME_S', '3.0'))
-TTFT_S = float(os.environ.get('CANARY_TTFT_S', '12.0'))
+# Alarm level, deliberately looser than the product target (p50 <= 5s): the
+# canary answers "is the loop healthy", and the logged timings are what the
+# target is measured against over a week.
+TTFT_S = float(os.environ.get('CANARY_TTFT_S', '15.0'))
 TOTAL_S = float(os.environ.get('CANARY_TOTAL_S', '60.0'))
 
 # (question, a token the grounded answer must contain). Facts are from

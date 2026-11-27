@@ -15,12 +15,12 @@ from uuid import UUID
 import structlog
 
 from app.services.companion.safety import persist_stream_log
-from app.services.companion.stream_cooldown import model_cooling, note_rate_limited
+from app.services.companion.stream_cooldown import model_cooling, note_stream_failure
 from app.services.companion.stream_fallback import has_fresh_alternative, stream_fallback
 from app.services.companion.stream_pump import _stream_with_llm
 from app.services.llm import get_llm
 from app.services.llm.registry import get_registry
-from app.services.llm.tiers import is_config_error, is_rate_limited
+from app.services.llm.tiers import is_config_error
 
 logger = structlog.get_logger('read-pal.companion')
 
@@ -43,6 +43,9 @@ def _stream_llm_kwargs(provider_name: str, model: str | None = None) -> dict[str
 
     kwargs: dict[str, Any] = {
         'provider': provider_name, 'max_tokens': _STREAM_MAX_OUTPUT_TOKENS, 'max_retries': 0,
+        # Bounds time-to-first-token per attempt: with no silent retries, a
+        # model that stalls is abandoned here and the chain hops (P9.2).
+        'request_timeout': get_settings().llm_stream_timeout_seconds,
     }
     if model:
         kwargs['model'] = model
@@ -84,9 +87,10 @@ async def _handle_stream_failure(
     )
     # P9.1: a config error (retired model, revoked key) trips a long cooldown.
     await state.circuit.record_failure(config_error=is_config_error(exc))
-    # P9.2: a 429 parks THIS model briefly; the provider's sibling is fine.
-    if is_rate_limited(exc):
-        note_rate_limited(provider_name, model_used)
+    # P9.2: park THIS model; the provider's sibling is fine. A 429 parks it
+    # briefly, a stall until the request timeout for longer (see
+    # stream_cooldown) — both were measured on the production account.
+    note_stream_failure(provider_name, model_used, exc)
     registry = registry if registry is not None else get_registry()
     registry.record_latency(provider_name, latency_ms, False)
     persist_stream_log(

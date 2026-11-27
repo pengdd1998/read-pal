@@ -28,6 +28,7 @@ from app.services.llm.tiers import (
     fast_model,
     is_config_error,
     is_rate_limited,
+    is_timeout,
     model_for,
 )
 
@@ -444,3 +445,35 @@ class TestFastTierSkipsTheBackoffLadder:
                 await call_in_tier(tier, retry._invoke_with_retry, llm=Limited(), messages=[], log_label='L')
         assert len(calls) == attempts
         assert sleeps == ([5, 15] if tier == 'default' else [])
+
+
+class TestTimeoutClassification:
+    def test_sdk_and_httpx_timeouts_are_recognized_by_name(self):
+        for name in ('APITimeoutError', 'ReadTimeout', 'ConnectTimeout', 'TimeoutException'):
+            exc = type(name, (Exception,), {})('timed out')
+            assert is_timeout(exc) is True, name
+        assert is_timeout(TimeoutError()) is True  # asyncio.TimeoutError is the same class
+
+    def test_a_refusal_is_not_a_timeout(self):
+        assert is_timeout(_VendorError(429, 'rate limit')) is False
+        assert is_timeout(RuntimeError('no status')) is False
+
+    def test_an_explicit_request_timeout_reaches_the_vendor_client(self):
+        state = MagicMock()
+        state.config = _cfg()
+        state.pool = {}
+        registry = MagicMock()
+        registry.get_provider_by_name.return_value = state
+        settings = SimpleNamespace(llm_max_retries=2, llm_timeout_seconds=15)
+        with patch('app.services.llm.registry.get_registry', return_value=registry), \
+             patch('app.services.llm.pool.get_settings', return_value=settings), \
+             patch('app.services.llm.pool.ChatOpenAI') as client:
+            from app.services.llm.pool import get_llm
+            get_llm(provider='glm')
+            get_llm(provider='glm', request_timeout=6.0)
+        assert [c.kwargs['request_timeout'] for c in client.call_args_list] == [15, 6.0]
+        assert len(state.pool) == 2
+
+    def test_stream_calls_default_to_six_seconds(self):
+        from app.config import Settings
+        assert Settings.model_fields['llm_stream_timeout_seconds'].default == 6.0

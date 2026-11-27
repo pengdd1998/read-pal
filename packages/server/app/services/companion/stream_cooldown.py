@@ -12,9 +12,14 @@ from __future__ import annotations
 
 import time
 
-# No Retry-After is sent on these 429s. Short enough that a model which
-# recovers is back in rotation within a conversation turn or two.
+# A 429 clears quickly (no Retry-After is sent): short enough that a model
+# which recovers is back in rotation within a conversation turn or two.
 MODEL_COOLDOWN_S = 30.0
+# A model that stalled until the request timeout is a different signal — it
+# was not refused, it accepted the work and produced nothing. On the
+# production account glm-4.7-flash alternated between the two, and with only
+# the 429 handled every stalled turn paid the full timeout again.
+STALL_COOLDOWN_S = 300.0
 
 _rate_limited_until: dict[str, float] = {}  # 'provider/model' -> monotonic deadline
 
@@ -25,6 +30,21 @@ def _key(provider: str, model: str) -> str:
 
 def note_rate_limited(provider: str, model: str, cooldown_s: float = MODEL_COOLDOWN_S) -> None:
     _rate_limited_until[_key(provider, model)] = time.monotonic() + cooldown_s
+
+
+def note_stream_failure(provider: str, model: str, exc: BaseException) -> float:
+    """Park *model* after it failed before the reader saw its output.
+
+    Returns the cooldown applied. A configuration error parks the whole
+    PROVIDER for longer (circuit breaker, P9.1), so nothing is noted here.
+    """
+    from app.services.llm.tiers import is_config_error, is_timeout
+
+    if is_config_error(exc):
+        return 0.0
+    cooldown = STALL_COOLDOWN_S if is_timeout(exc) else MODEL_COOLDOWN_S
+    note_rate_limited(provider, model, cooldown)
+    return cooldown
 
 
 def model_cooling(provider: str, model: str) -> bool:

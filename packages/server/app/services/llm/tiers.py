@@ -78,6 +78,22 @@ def is_rate_limited(exc: BaseException) -> bool:
     return getattr(exc, 'status_code', None) == 429
 
 
+# Vendor/HTTP timeout classes, matched by name: the openai SDK's
+# APITimeoutError and httpx's timeout family do not subclass TimeoutError,
+# and this module must not import them (pool.py imports it at startup).
+_TIMEOUT_CLASS_NAMES = frozenset({
+    'APITimeoutError', 'ReadTimeout', 'ConnectTimeout', 'WriteTimeout',
+    'PoolTimeout', 'TimeoutException',
+})
+
+
+def is_timeout(exc: BaseException) -> bool:
+    """True for a request that ran out of time rather than being refused."""
+    if isinstance(exc, TimeoutError):
+        return True
+    return bool(_TIMEOUT_CLASS_NAMES & {cls.__name__ for cls in type(exc).__mro__})
+
+
 def is_config_error(exc: BaseException) -> bool:
     """True for vendor failures no retry can fix.
 
