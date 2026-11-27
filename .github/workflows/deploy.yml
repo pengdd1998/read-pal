@@ -199,6 +199,27 @@ jobs:
             fi
 
             # -------------------------------------------------------
+            # 2.5 Disk headroom guard. A rebuild transiently needs >1 GB per
+            #     image (new layers + build cache) and postgres/minio share
+            #     this partition. On 2026-11-28 a deploy took it to 0K free.
+            #     Reclaim caches first, then abort loudly instead of filling
+            #     the data volume (a failed deploy alerts; ENOSPC does not).
+            # -------------------------------------------------------
+            free_kb() { df -k / | tail -1 | awk '{print $4}'; }
+            MIN_FREE_KB=${MIN_FREE_KB:-2500000}
+            if [ "$REBUILD_API" = true ] || [ "$REBUILD_WEB" = true ]; then
+              if [ "$(free_kb)" -lt "$MIN_FREE_KB" ]; then
+                echo ">>> Low disk headroom ($(free_kb)K < ${MIN_FREE_KB}K) - reclaiming caches"
+                docker builder prune -f >/dev/null 2>&1 || true
+                docker image prune -f >/dev/null 2>&1 || true
+              fi
+              if [ "$(free_kb)" -lt "$MIN_FREE_KB" ]; then
+                echo "ABORT: only $(free_kb)K free; a rebuild needs ${MIN_FREE_KB}K of headroom and postgres shares this disk."
+                exit 1
+              fi
+            fi
+
+            # -------------------------------------------------------
             # 3. Rebuild only changed containers
             # -------------------------------------------------------
             export DOCKER_BUILDKIT=1

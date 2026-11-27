@@ -77,6 +77,13 @@ every time. The chain still failed turns.
 - Stream calls pass `max_retries=0`: the chain owns recovery.
 - A hop that fails before showing anything is dropped from the saved text.
 
+**Found on the first production canary after the fix:** the primary was
+not refused that time — it accepted the request and produced nothing until
+the 15s client timeout. Only a 429 parked a model, so a stalling primary was
+retried on every turn. Now any failure before the first token parks the
+model: 30s after a 429, five minutes after a stall. Stream requests time out
+at 6s (`llm_stream_timeout_seconds`), so a stalled attempt costs 6s, not 15.
+
 ## P9.3 — Model calls on the critical path of every turn
 
 **Found:** 2026-11-28.
@@ -154,6 +161,15 @@ whose passages RAG already injected. Whether to keep it is a product call.
 Canned text uses the message language (the rule the crisis/boundary replies
 already followed). Typed frames go to `onMeta`; the warning renders as a
 separate localized note under the reply.
+
+## The deploy filled the disk (2026-11-28)
+
+The first deploy of this fix rebuilt both images on a VPS whose root
+partition — shared with postgres and minio — was already at 95%. Free space
+went 2.1 GB → **0 KB** while the web image built. No damage (no ENOSPC in the
+postgres, minio or api logs), but only by luck. `deploy.yml` now checks
+headroom before any rebuild: below 2.5 GB it reclaims caches, and aborts
+loudly if still below.
 
 ## Observability gap closed
 

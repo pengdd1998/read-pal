@@ -220,10 +220,11 @@ class TestStreamFailureRecording:
 
 class TestStreamModelKwargs:
     def test_default_keeps_the_existing_call_shape(self):
-        with patch('app.config.get_settings', return_value=SimpleNamespace(llm_stream_disable_thinking=False)):
+        with patch('app.config.get_settings', return_value=SimpleNamespace(llm_stream_disable_thinking=False, llm_stream_timeout_seconds=6.0)):
             assert stream_provider._stream_llm_kwargs('glm') == {
                 'provider': 'glm', 'max_tokens': stream_provider._STREAM_MAX_OUTPUT_TOKENS,
                 'max_retries': 0,  # the chain hops; the SDK must not retry silently
+                'request_timeout': 6.0,  # bounds time-to-first-token per attempt
             }
 
     def test_shipped_default_disables_hidden_reasoning_on_the_answer_stream(self):
@@ -233,10 +234,11 @@ class TestStreamModelKwargs:
         assert stream_provider._stream_llm_kwargs('glm')['disable_thinking'] is True
 
     def test_opt_in_adds_the_thinking_flag_and_a_hop_model(self):
-        with patch('app.config.get_settings', return_value=SimpleNamespace(llm_stream_disable_thinking=True)):
+        with patch('app.config.get_settings', return_value=SimpleNamespace(llm_stream_disable_thinking=True, llm_stream_timeout_seconds=6.0)):
             assert stream_provider._stream_llm_kwargs('glm', model='small') == {
                 'provider': 'glm', 'max_tokens': stream_provider._STREAM_MAX_OUTPUT_TOKENS,
                 'model': 'small', 'disable_thinking': True, 'max_retries': 0,
+                'request_timeout': 6.0,
             }
 
 
@@ -311,6 +313,32 @@ class TestModelRateLimitCooldown:
             )
         assert stream_cooldown.model_cooling('glm', 'big') is True
         assert stream_cooldown.model_cooling('glm', 'small') is False, 'the sibling is not guilty'
+
+    @pytest.mark.asyncio
+    async def test_a_primary_that_stalled_until_timeout_is_parked_for_minutes(self):
+        """Measured in production: glm-4.7-flash alternated between an instant
+        429 and sitting on the request until the 15s timeout. Only the 429
+        parked it, so every stalled turn paid the full timeout again."""
+        glm = _state('glm', 'big', fallback='small')
+        with patch('app.services.companion.safety.persist_stream_log'), \
+             patch('app.services.llm.registry.get_registry', return_value=MagicMock()):
+            await stream_provider._handle_stream_failure(
+                TimeoutError('Request timed out.'), glm, 'glm', 'big', 'req-t', 0.0, _UID, _BID,
+            )
+        left = stream_cooldown._rate_limited_until['glm/big'] - time.monotonic()
+        assert stream_cooldown.STALL_COOLDOWN_S - 5 < left <= stream_cooldown.STALL_COOLDOWN_S
+        assert stream_cooldown.model_cooling('glm', 'small') is False, 'the sibling is not guilty'
+
+    def test_stall_parks_longer_than_rate_limit_and_config_errors_not_at_all(self):
+        assert stream_cooldown.note_stream_failure('p', 'm', TimeoutError()) == stream_cooldown.STALL_COOLDOWN_S
+        stream_cooldown.reset()
+        assert stream_cooldown.note_stream_failure('p', 'm', _VendorError(429, 'x')) == stream_cooldown.MODEL_COOLDOWN_S
+        stream_cooldown.reset()
+        assert stream_cooldown.note_stream_failure('p', 'm', RuntimeError('x')) == stream_cooldown.MODEL_COOLDOWN_S
+        stream_cooldown.reset()
+        config = _VendorError(400, 'Unsupported model m')
+        assert stream_cooldown.note_stream_failure('p', 'm', config) == 0.0
+        assert stream_cooldown.model_cooling('p', 'm') is False, 'the provider breaker owns this one'
 
     @pytest.mark.asyncio
     async def test_later_turns_skip_the_limited_model_and_do_not_pay_for_it_again(self):

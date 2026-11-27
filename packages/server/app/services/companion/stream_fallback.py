@@ -13,9 +13,9 @@ from app.services.companion.safety import quick_safety_check
 from app.services.companion.stream_cache import sse_chunk
 from app.services.llm import get_llm
 from app.services.llm.registry import get_registry
-from app.services.companion.stream_cooldown import model_cooling, note_rate_limited
+from app.services.companion.stream_cooldown import model_cooling, note_stream_failure
 from app.services.companion.stream_pump import _emit_metadata_with_seq
-from app.services.llm.tiers import is_config_error, is_rate_limited
+from app.services.llm.tiers import is_config_error
 from app.utils.i18n import t
 
 logger = structlog.get_logger('read-pal.companion')
@@ -251,8 +251,7 @@ async def stream_fallback(
                 error=str(fb_exc)[:500],
             )
             await state.circuit.record_failure(config_error=is_config_error(fb_exc))
-            if is_rate_limited(fb_exc):
-                note_rate_limited(provider_name, model_used)
+            note_stream_failure(provider_name, model_used, fb_exc)
             if emitted:
                 break
             # Output is flushed in batches, so a hop can die with text

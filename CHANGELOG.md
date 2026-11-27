@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before any context work; query expansion, tool planning and the
   faithfulness check run on a fast model tier; the conversation-summary
   refresh moved to the background; query expansion is opt-in (P9.3).
+- **A stalling primary no longer costs 15s per turn.** A model that times
+  out before its first token is parked for five minutes (a 429 for 30s), and
+  stream requests time out at 6s.
 - **Failure messages follow the question's language** (P9.4).
 - **Reader chat:** the faithfulness notice renders as a note under the reply
   instead of being appended into the answer (GB-11, P9.4).
