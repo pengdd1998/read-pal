@@ -49,5 +49,5 @@ jobs:
             --data-urlencode "title=🟠 read-pal 闭环金丝雀: 伴读对话异常" \
             --data-urlencode "desp=$(head -c 1500 canary.log 2>/dev/null)
 
-run: ${RUN_URL}" \
+            run: ${RUN_URL}" \
             >/dev/null || true
