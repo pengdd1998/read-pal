@@ -109,6 +109,7 @@ async def check_faithfulness(
                 log_label='companion.faithfulness_check',
                 use_cache=False,
                 max_tokens=200,  # just a JSON array of indices
+                tier='fast',  # P9.3: a sentence-classification job, not reasoning
             ),
             timeout=_TIMEOUT_S,
         )
@@ -125,6 +126,23 @@ async def check_faithfulness(
     except Exception:  # noqa: BLE001 — filter is best-effort
         logger.debug('companion.faithfulness_check_failed')
         return None
+
+
+async def faithfulness_notice(
+    answer: str, messages: list[Any],
+) -> tuple[str, int] | None:
+    """``(annotation, unsupported_count)`` for *answer*, or None when nothing
+    is flagged or the check is unavailable. Never raises — the filter is
+    best-effort and must not block the stream's completion."""
+    try:
+        unsupported = await check_faithfulness(answer, messages)
+        if not unsupported:
+            return None
+        annotation = format_annotation(unsupported, answer)
+    except Exception:  # noqa: BLE001 — filter is best-effort
+        logger.debug('companion.faithfulness_check_error')
+        return None
+    return (annotation, len(unsupported)) if annotation else None
 
 
 def format_annotation(indices: list[int], answer: str) -> str:

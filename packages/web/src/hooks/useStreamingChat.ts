@@ -334,6 +334,18 @@ export function useStreamingChat(options: UseStreamingChatOptions): UseStreaming
               assistantMsgId = realId;
               return;
             }
+            if (meta.type === 'faithfulness_warning') {
+              // GB-11: a note about the answer, never part of it.
+              const count = meta.unsupported_count;
+              if (count) {
+                onMessagesUpdate((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantMsgId ? { ...m, faithfulnessWarningCount: count } : m,
+                  ),
+                );
+              }
+              return;
+            }
             if (meta.type === 'metadata' && meta.fallback_used) {
               streamBuffer = '';
               onMessagesUpdate((prev) =>

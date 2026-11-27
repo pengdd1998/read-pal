@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (core-loop reliability 2026-11-28 — record in `docs/incidents/p9-core-loop-reliability.md`)
+
+- **Companion chat answers, and sooner.** A provider whose model the vendor
+  retired is parked for ten minutes instead of taking a third of every
+  routing pick; the stream fallback chain now tries the failed provider's
+  sibling model and both models of each remaining provider, skips a model
+  that just returned 429, and no longer waits out the client's silent
+  retries (P9.1, P9.2).
+- **First token in seconds, not tens of them.** The request id frame is sent
+  before any context work; query expansion, tool planning and the
+  faithfulness check run on a fast model tier; the conversation-summary
+  refresh moved to the background; query expansion is opt-in (P9.3).
+- **Failure messages follow the question's language** (P9.4).
+- **Reader chat:** the faithfulness notice renders as a note under the reply
+  instead of being appended into the answer (GB-11, P9.4).
+- **Ops:** hourly core-loop canary (`.github/workflows/canary.yml`).
+
 ### Added (engineering-upgrade 2026-09-05 — full record in `docs/engineering-upgrade/`)
 
 - **Observability**: LLM trace JSONL sink (`LLM_TRACE_JSONL_PATH`), opt-in

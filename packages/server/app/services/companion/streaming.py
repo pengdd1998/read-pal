@@ -28,13 +28,13 @@ from app.services.companion.context import (
     _build_messages,
     _prepare_context,
 )
+from app.services.companion.faithfulness import faithfulness_notice
 from app.services.companion.stream_cache import sse_chunk, try_emit_cached
 from app.services.companion.stream_persist import _persist_with_retry, _settle_token_budget
 from app.services.companion.stream_provider import (  # noqa: F401 — re-exported API
     _STREAM_MAX_OUTPUT_TOKENS,
     _get_stream_provider,
     _handle_stream_failure,
-    _resolve_fallback_metadata,
     _stream_from_provider,
 )
 from app.services.companion.stream_pump import (  # noqa: F401 — re-exported API
@@ -68,6 +68,7 @@ async def _stream_via_provider(  # noqa: PLR0915,C901 — single orchestration f
     request_id: str | None = None,
     cancelled: asyncio.Event | None = None,
     request: Any = None,
+    emit_request_id: bool = True,
 ) -> AsyncGenerator[str, None]:
     """Resolve provider, stream response, and persist result.
 
@@ -94,11 +95,11 @@ async def _stream_via_provider(  # noqa: PLR0915,C901 — single orchestration f
     actual_request_id = request_id or uuid.uuid4().hex[:12]
     start_time = time.monotonic()
     registry = get_registry()
-
-    # Always echo the request id as the first frame so the client can issue
-    # a /chat/cancel against it later in the same connection.
-    yield f'data: {json.dumps({"request_id": actual_request_id})}\n\n'
-
+    # P9.4: canned text follows the message language, so a Chinese question
+    # never meets an English error. stream_chat sends the id frame first.
+    canned_lang = _effective_reply_lang(message, lang)
+    if emit_request_id:  # direct callers that have not sent it yet
+        yield f'data: {json.dumps({"request_id": actual_request_id})}\n\n'
     if cancelled is not None and cancelled.is_set():
         logger.info(
             'companion.stream.cancelled_before_start',
@@ -114,7 +115,7 @@ async def _stream_via_provider(  # noqa: PLR0915,C901 — single orchestration f
     # delay the canned reply.
     provider_info = _get_stream_provider(registry, actual_request_id)
     if provider_info is None:
-        yield sse_chunk(t('companion.fallback_error', lang))
+        yield sse_chunk(t('companion.fallback_error', canned_lang))
         yield 'data: [DONE]\n\n'
         # No provider available (e.g. circuit breaker open from sustained
         # rate limiting). Still persist the user's message so it isn't lost —
@@ -149,7 +150,7 @@ async def _stream_via_provider(  # noqa: PLR0915,C901 — single orchestration f
                 user_id=user_id_str,
                 pre_charge=pre_charge, limit=token_limit,
             )
-            yield sse_chunk(t('errors.daily_llm_budget_exceeded', lang))
+            yield sse_chunk(t('errors.daily_llm_budget_exceeded', canned_lang))
             yield 'data: [DONE]\n\n'
             return
 
@@ -163,7 +164,7 @@ async def _stream_via_provider(  # noqa: PLR0915,C901 — single orchestration f
         async for chunk in _stream_from_provider(
             state, provider_name, model_used, messages,
             collected_parts, actual_request_id, start_time,
-            user_id, book_id, lang, cancelled=cancelled,
+            user_id, book_id, canned_lang, cancelled=cancelled,
             billing_state=billing_state, request=request, seq_state=seq_state,
             registry=registry,
         ):
@@ -203,9 +204,16 @@ async def _stream_via_provider(  # noqa: PLR0915,C901 — single orchestration f
             )
         return
 
-    assistant_db_id = await _persist_with_retry(
-        db, user_id, book_id, message, messages,
-        collected_parts, actual_request_id, lang=lang,
+    # P9.3: persistence and the post-stream faithfulness check (2026-09-26)
+    # are independent — run them together so [DONE], and the client's
+    # streaming cursor, no longer wait for their sum.
+    full_answer = ''.join(collected_parts)
+    assistant_db_id, flagged = await asyncio.gather(
+        _persist_with_retry(
+            db, user_id, book_id, message, messages,
+            collected_parts, actual_request_id, lang=lang,
+        ),
+        faithfulness_notice(full_answer, messages),
     )
     # P-D: settlement content capture — success path only, both channels
     # gate themselves; collected_parts is PRE output-filter (triage value).
@@ -216,23 +224,14 @@ async def _stream_via_provider(  # noqa: PLR0915,C901 — single orchestration f
         model=model_used,
         prompt_version=None,
         messages=messages,
-        output_text=''.join(collected_parts),
+        output_text=full_answer,
         user_id=str(user_id),
         book_id=str(book_id) if book_id else None,
     )
-    # Post-stream faithfulness check (2026-09-26): flag unsupported
-    # claims with a user-visible annotation. Best-effort.
-    try:
-        from app.services.companion.faithfulness import check_faithfulness, format_annotation
-        full_answer = ''.join(collected_parts)
-        unsupported = await check_faithfulness(full_answer, messages)
-        if unsupported:
-            annotation = format_annotation(unsupported, full_answer)
-            if annotation:
-                yield f'data: {json.dumps({"type": "faithfulness_warning", "content": annotation, "unsupported_count": len(unsupported)})}\n\n'
-                logger.info('companion.faithfulness_flagged', request_id=actual_request_id, unsupported_count=len(unsupported))
-    except Exception:  # noqa: BLE001 — never block the stream on filter failure
-        logger.debug('companion.faithfulness_check_error')
+    if flagged:
+        annotation, unsupported_count = flagged
+        yield f'data: {json.dumps({"type": "faithfulness_warning", "content": annotation, "unsupported_count": unsupported_count})}\n\n'
+        logger.info('companion.faithfulness_flagged', request_id=actual_request_id, unsupported_count=unsupported_count)
 
     if assistant_db_id is None:
         # Tell the client the streamed response couldn't be saved.
@@ -273,7 +272,6 @@ async def _canned_reply_stream(
     lang: str,
 ) -> AsyncGenerator[str, None]:
     """Emit a fixed response through the normal pipeline (persist + ids)."""
-    yield f'data: {json.dumps({"request_id": request_id})}\n\n'
     yield sse_chunk(canned)
     assistant_db_id = await _persist_with_retry(
         db, user_id, book_id, message, [], [canned],
@@ -303,6 +301,9 @@ async def stream_chat(
 ) -> AsyncGenerator[str, None]:
     """Stream companion chat as SSE chunks with per-provider circuit breaker."""
     actual_request_id = request_id or uuid.uuid4().hex[:12]
+    # P9.3: the id frame precedes context enrichment and the tool phase — it
+    # used to wait behind them, so the response itself only opened ~15s in.
+    yield f'data: {json.dumps({"request_id": actual_request_id})}\n\n'
 
     # Input-side gates — MUST sit before _prepare_context: enrichment (RAG
     # query embedding, summary regeneration) can burn 10s+ on a throttled
@@ -393,5 +394,6 @@ async def stream_chat(
     async for chunk in _stream_via_provider(
         db, user_id, book_id, message, messages, lang,
         request_id=request_id, cancelled=cancelled, request=request,
+        emit_request_id=False,
     ):
         yield chunk

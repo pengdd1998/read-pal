@@ -255,3 +255,38 @@ describe('useStreamingChat — mid-stream fallback (B3)', () => {
     expect(msg?.streaming).toBe(false);
   });
 });
+
+describe('useStreamingChat — faithfulness warning (GB-11)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    attempts = [];
+    idCounter = 0;
+    authFetchMock.mockReset().mockResolvedValue({ ok: true, status: 200 });
+  });
+
+  it('keeps the warning out of the answer and stores it as a separate note', async () => {
+    const { send, allMessages } = setup();
+    await send('这本书的主题是什么？');
+    attempts[0].onToken('答案正文');
+    act(() => { vi.advanceTimersByTime(80); });
+    // Server order: content, faithfulness check, then the persisted id.
+    attempts[0].onMeta({ type: 'faithfulness_warning', unsupported_count: 2 });
+    attempts[0].onMeta({ type: 'message_id', message_id: 'db-1' });
+    attempts[0].onDone();
+
+    const reply = allMessages().find((m) => m.role === 'assistant');
+    expect(reply?.content).toBe('答案正文');
+    expect(reply?.faithfulnessWarningCount).toBe(2);
+    expect(reply?.id).toBe('db-1');
+    expect(reply?.streaming).toBe(false);
+  });
+
+  it('stores nothing when the check flagged no statement', async () => {
+    const { send, allMessages } = setup();
+    await send('q');
+    attempts[0].onToken('答案正文');
+    attempts[0].onMeta({ type: 'faithfulness_warning', unsupported_count: 0 });
+    attempts[0].onDone();
+    expect(allMessages().find((m) => m.role === 'assistant')?.faithfulnessWarningCount).toBeUndefined();
+  });
+});

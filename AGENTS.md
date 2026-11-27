@@ -121,6 +121,12 @@ See `docs/incidents/`. Specifically, read before touching:
   timeouts must heal the shared DB session; secrets never in URLs;
   total-size valves alongside per-entry caps; listener effects rebind on
   target mount.
+- **Footnote chain (reader popover, bare `<p id>` definitions)** →
+  `docs/incidents/p8-crowdtest-footnotes.md` (P8.1–P8.2)
+- **LLM routing, fallback chain, stream critical path** →
+  `docs/incidents/p9-core-loop-reliability.md` (P9.1–P9.4) — read before touching
+  `app/services/llm/` or `companion/stream_*.py`; a model call added before the
+  answer's first token must be on the fast tier, behind a deadline, or off the path
 
 ## When prompts change
 

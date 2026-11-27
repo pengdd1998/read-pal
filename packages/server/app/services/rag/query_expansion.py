@@ -46,6 +46,8 @@ async def expand_rag_query(query: str) -> str:
             use_cache=False,  # Redis cache below suffices; avoid double-cache
             cache_anon=False,
             max_tokens=100,  # keywords only, no long response
+            tier='fast',  # P9.3: on the reasoning default this call thought
+            # for 14s and returned EMPTY — the cap is spent on hidden reasoning.
         )
         expanded = (expanded or '').strip()
         if not expanded or len(expanded) < 3:

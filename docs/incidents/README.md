@@ -56,3 +56,9 @@ high-level navigation map at `/home/ubuntu/projects/read-pal/AGENTS.md`.
 
 ### Derived-cache staleness (`p6-cache-staleness.md`)
 - **P6.1** — Book deletion served the deleted book as "current reading" for a full dashboard-cache TTL (fixed by write-path `invalidate_user_caches`)
+
+### Core-loop reliability (`p9-core-loop-reliability.md`)
+- **P9.1** — A provider whose model the vendor retired stayed in rotation (config-error cooldown)
+- **P9.2** — The stream fallback chain could not reach the model that worked (per-model hops, rate-limit cooldown)
+- **P9.3** — Model calls on the critical path of every turn (fast tier, first frame, background summary)
+- **P9.4** — Failure text in the wrong language; a quality notice rendered as answer text

@@ -15,6 +15,8 @@ search path.
 
 from __future__ import annotations
 
+import time
+
 import httpx
 
 from app.services.rag._constants import _get_http_client, logger
@@ -27,6 +29,13 @@ CANDIDATE_CAP = 30
 # chunks at ~1.6k chars; generous headroom without sending whole chapters.
 _MAX_PASSAGE_CHARS = 2000
 _TIMEOUT_S = 5.0
+# P9.3: a 402/401/403/404 from the vendor is an ops problem (balance, key,
+# model gone) — no retry inside this process fixes it, so stop paying a
+# doomed round trip on every retrieval until the cooldown passes.
+_NON_RETRYABLE_STATUS = frozenset({401, 402, 403, 404})
+_COOLDOWN_S = 900.0
+# Mutable holder: ``rerank_passages`` reads it before the except block writes.
+_cooldown = {'until': 0.0}  # time.monotonic() deadline; process-local
 
 
 async def rerank_passages(query: str, passages: list[str]) -> list[float] | None:
@@ -34,7 +43,7 @@ async def rerank_passages(query: str, passages: list[str]) -> list[float] | None
     from app.config import get_settings
 
     settings = get_settings()
-    if not settings.rerank_api_key:
+    if not settings.rerank_api_key or time.monotonic() < _cooldown['until']:
         return None
 
     docs = [(p or '')[:_MAX_PASSAGE_CHARS] for p in passages]
@@ -61,6 +70,17 @@ async def rerank_passages(query: str, passages: list[str]) -> list[float] | None
             if isinstance(idx, int) and 0 <= idx < len(docs) and isinstance(score, (int, float)):
                 scores[idx] = float(score)
         return scores
+    except httpx.HTTPStatusError as exc:
+        status = exc.response.status_code
+        if status in _NON_RETRYABLE_STATUS:
+            _cooldown['until'] = time.monotonic() + _COOLDOWN_S
+            logger.error(
+                'rag.rerank_paused status=%s cooldown_s=%s — fix the key or '
+                'balance, or unset RERANK_API_KEY to disable rerank', status, _COOLDOWN_S,
+            )
+        else:
+            logger.warning('rag.rerank_failed error=%s', str(exc)[:160])
+        return None
     except (ValueError, KeyError, TypeError, RuntimeError, httpx.HTTPError) as exc:
         logger.warning('rag.rerank_failed error=%s', str(exc)[:160])
         return None

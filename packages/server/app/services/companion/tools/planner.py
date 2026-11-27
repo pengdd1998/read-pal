@@ -22,7 +22,7 @@ logger = structlog.get_logger('read-pal.companion')
 
 # Routing key for LLM_FEATURE_ROUTING. The planner is deadline-bound (runs
 # BEFORE the first answer token), so it must not sit behind a 429-storming
-# primary: the default routing pins it to the stable provider. Keep this
+# primary — the fast tier (P9.3) is what keeps it off that path. Keep this
 # constant decoupled from log_label copy so routing survives label edits.
 PLANNER_FEATURE = 'companion_tool_plan'
 
@@ -83,6 +83,9 @@ async def plan_tool_calls(
         user_id=str(user_id),
         book_id=str(book_id),
         template=TOOL_PLAN_SYSTEM,
+        # P9.3: the plan is a small classification that gates the answer's
+        # first token — 8s and 673 reasoning tokens on the default model.
+        tier='fast',
     )
 
     # Defense in depth: the schema validates shape, the protocol parser

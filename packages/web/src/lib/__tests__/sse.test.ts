@@ -133,4 +133,31 @@ describe('consumeSSEStream', () => {
 
     expect(onMeta).toHaveBeenCalledWith(expect.objectContaining({ cancelled: true }));
   });
+  it('routes the faithfulness warning to onMeta, never to the token path (GB-11)', async () => {
+    const onToken = vi.fn();
+    const onMeta = vi.fn();
+    const response = makeResponse([
+      'data: {"content":"the answer"}\n\n',
+      'data: {"type":"faithfulness_warning","content":"⚠️ 注意：以下内容可能不完全来自书中原文","unsupported_count":2}\n\n',
+      'data: [DONE]\n\n',
+    ]);
+
+    consumeSSEStream(response, onToken, vi.fn(), vi.fn(), undefined, onMeta);
+    await vi.runAllTimersAsync();
+
+    expect(onToken).toHaveBeenCalledTimes(1);
+    expect(onToken).toHaveBeenCalledWith('the answer');
+    expect(onMeta).toHaveBeenCalledWith({ type: 'faithfulness_warning', unsupported_count: 2 });
+  });
+
+  it('never treats a typed frame as body text', async () => {
+    const onToken = vi.fn();
+    const response = makeResponse([
+      'data: {"type":"something_new","content":"control payload"}\n\n',
+      'data: [DONE]\n\n',
+    ]);
+    consumeSSEStream(response, onToken, vi.fn(), vi.fn());
+    await vi.runAllTimersAsync();
+    expect(onToken).not.toHaveBeenCalled();
+  });
 });
