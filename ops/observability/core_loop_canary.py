@@ -39,16 +39,24 @@ FRAME_S = float(os.environ.get('CANARY_FRAME_S', '3.0'))
 TTFT_S = float(os.environ.get('CANARY_TTFT_S', '15.0'))
 TOTAL_S = float(os.environ.get('CANARY_TOTAL_S', '60.0'))
 
-# (question, a token the grounded answer must contain). Facts are from
-# chapter 0 (勒古恩的序) of the canary book, 《路边野餐》.
+# (question, the answer must contain ANY ONE of these tokens — every one of
+# them is a correct answer to that question, a fact from chapter 0 (勒古恩的序)
+# of the canary book, 《路边野餐》).
 QUESTIONS = [
-    ('勒古恩第一次给《路边野餐》写评论是哪一年？', '1977'),
-    ('斯特鲁伽茨基兄弟为什么没有被审查机关镇压？', '意识形态'),
-    ('勒古恩把外星人留下的东西比作什么？', '玻璃纸'),
-    ('序言里说的造访区是怎么来的？', '外星'),
+    ('勒古恩第一次给《路边野餐》写评论是哪一年？', ('1977',)),
+    ('斯特鲁伽茨基兄弟为什么没有被审查机关镇压？', ('意识形态',)),
+    # The preface says 「他们丢下的垃圾」; 玻璃纸 and 啤酒罐 are its examples.
+    # Pinning 玻璃纸 alone failed a correct answer on 2026-11-28.
+    ('勒古恩把外星人留下的东西比作什么？', ('垃圾', '玻璃纸', '啤酒罐')),
+    ('序言里说的造访区是怎么来的？', ('外星',)),
 ]
 # Canned failure strings in both UI languages (app/translations).
 FAILURE_MARKERS = ('AI 服务暂时无法连接', "trouble connecting to my AI service")
+
+
+def grounded(text: str, accepted: tuple[str, ...]) -> bool:
+    """The answer carries at least one of the question's correct facts."""
+    return any(token in text for token in accepted)
 
 
 def _request(method: str, path: str, body: dict | None = None, token: str | None = None,
@@ -128,8 +136,8 @@ def run() -> tuple[bool, list[str], dict]:
     failures: list[str] = []
     index_env = os.environ.get('CANARY_QUESTION_INDEX')
     index = int(index_env) if index_env else random.randrange(len(QUESTIONS))
-    question, expected = QUESTIONS[index % len(QUESTIONS)]
-    turn: dict = {'question': question, 'expected': expected}
+    question, accepted = QUESTIONS[index % len(QUESTIONS)]
+    turn: dict = {'question': question, 'expected': list(accepted)}
 
     try:
         token = login()
@@ -161,8 +169,8 @@ def run() -> tuple[bool, list[str], dict]:
     text = turn.get('text') or ''
     if text and any(marker in text for marker in FAILURE_MARKERS):
         failures.append('canned failure text instead of an answer')
-    elif text and expected not in text:
-        failures.append(f'answer lacks "{expected}" (fact not grounded)')
+    elif text and not grounded(text, accepted):
+        failures.append(f'answer lacks any of {"/".join(accepted)} (fact not grounded)')
     return not failures, failures, turn
 
 

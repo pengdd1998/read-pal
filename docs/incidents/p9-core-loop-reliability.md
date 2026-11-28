@@ -204,6 +204,20 @@ HTTP status, first-frame time, first-token time, error frames, and a fact
 from the book that the answer must contain. Its first two runs against the
 pre-fix production both failed.
 
+**Follow-up, same day.** The canary then failed a *correct* answer: asked
+what Le Guin compares the aliens' leftovers to, the model said 「垃圾」 — the
+preface's own word — while the question pinned 「玻璃纸」, one of its examples.
+Each question now lists every correct fact, and any one of them grounds the
+answer. Chasing that failure found the larger problem. The provider's default
+model, `glm-4.7-flash`, had succeeded on 14 of 63 production calls in 14 days
+(conversation summary 0 of 8, query expansion 3 of 12); `glm-4-flash` on 82 of
+82; `mimo-v2.5` on 0 of 30. With and without the tool phase the two models
+scored 9 of 23 against 24 of 24 on the canary's own questions. Production
+routing was changed in the compose env, no code: `glm-4-flash` is the default,
+`glm-4.7-flash` the fallback, the fast tier is pinned to `glm-4-flash`, and
+`mimo` is gone. Six canary turns after the restart: 6 of 6, none on fallback,
+first token 1.8–4.8s.
+
 ## Regression red flags
 
 - A new model call added before the answer's first token. Put it on the
@@ -216,3 +230,6 @@ pre-fix production both failed.
 - An attribute the code reads off a settings mock is truthy unless pinned.
   Every new flag needs its value set in the tests that exercise the gate
   (`TestPlannerGate._run`), or the "off" branch is never the one under test.
+- A canary expected-token that is one *example* of the correct answer. A check
+  that fails correct answers gets ignored the day it is right. List every
+  correct answer (`tests/ops/test_core_loop_canary.py`).
