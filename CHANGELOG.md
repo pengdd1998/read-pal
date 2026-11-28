@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   before any context work; query expansion, tool planning and the
   faithfulness check run on a fast model tier; the conversation-summary
   refresh moved to the background; query expansion is opt-in (P9.3).
+- **No second search before the answer.** For a book question whose
+  passages are already in the prompt, the companion no longer waits 2–4s
+  for a model to plan a tool call: in a controlled comparison the plan came
+  back empty 40 times out of 44 and, the other 4, returned another book's
+  text, with no answer quality to show for it. Questions retrieval could
+  not reach and "save this" requests still use it;
+  `COMPANION_TOOL_LLM_PLANNER_ENABLED=true` restores the old behaviour.
 - **A stalling primary no longer costs 15s per turn.** A model that times
   out before its first token is parked for five minutes (a 429 for 30s), and
   stream requests time out at 6s.

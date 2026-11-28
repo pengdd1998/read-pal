@@ -97,7 +97,7 @@ at 6s (`llm_stream_timeout_seconds`), so a stalled attempt costs 6s, not 15.
 - `packages/server/app/services/conversation_memory.py` — `current_summary`, `schedule_summary_refresh`
 - `packages/server/app/services/companion/tools/planner.py`, `tools/phase.py`
 - `packages/server/app/services/rag/query_expansion.py`, `rag/rerank.py`
-- Tests: `tests/services/test_p9_critical_path.py`
+- Tests: `tests/services/test_p9_critical_path.py`, `tests/services/test_companion_tools.py::TestPlannerGate`
 
 **What went wrong**
 
@@ -130,11 +130,36 @@ at 6s (`llm_stream_timeout_seconds`), so a stalled attempt costs 6s, not 15.
 - Query expansion is opt-in (`RAG_QUERY_EXPANSION_ENABLED`) and bounded.
 - Rerank pauses for 15 minutes after a non-retryable vendor answer.
 
-**Left as is, deliberately:** the tool phase's model planner still sits
-before the first token for rule-unmatched content questions (2–3s local).
-It is designed, tested behaviour (K-series, G13/G14). Measured on five
-turns it planned `search_book` every time — a second retrieval of a question
-whose passages RAG already injected. Whether to keep it is a product call.
+**Follow-up, same day — the model planner left the critical path.** The
+paragraph that stood here said the planner stays before the first token for
+rule-unmatched content questions and that keeping it is a product call. It
+was settled by a controlled A/B before any code moved: 22 questions on one
+book's opening (19 with an answer in the text, 3 without), 2 runs each, same
+prompt pipeline and answer model, the only difference being the tool phase's
+output; 44 pairs graded blind against rules written down beforehand.
+
+- What the planner added: nothing usable. 40 of 44 tool results were empty.
+  The other 4 were `search_book` with `scope: library`, which returned
+  chapter 1 of *another book in the reader's library* for a question about
+  this one.
+- Answer quality: no difference the study could tell from noise, in either
+  direction. Objective fact hits 29 vs 27 of 38; blinded accuracy 4.61 vs
+  4.45 and groundedness 4.68 vs 4.80 on a 1–5 scale, both 95% intervals
+  spanning zero. All five switch conditions written down beforehand held.
+- The price of keeping it: 1.6–4.1s before the first token on every such
+  turn (production log, 7 turns), for nothing.
+
+So the planner no longer runs for a content turn whose prompt already holds
+the book's passages (`tools/phase.py`, `_llm_plan_worth_it`). It still runs
+when nothing was retrieved — then the tools are the only other way to get
+book text — and when the reader asks to save or memorize something, because
+only a model can write a proposal (`rule_plan.proposal_intent`).
+`COMPANION_TOOL_LLM_PLANNER_ENABLED=true` restores the old behaviour.
+
+**Limits of the evidence:** one reviewer, one book's first three chapters,
+`glm-4-flash` as the answer model, fresh conversations with no history. A
+question retrieval cannot reach is covered by the no-passages branch, not by
+the measurement.
 
 ## P9.4 — Failure text in the wrong language, and a notice rendered as answer text
 
@@ -188,3 +213,6 @@ pre-fix production both failed.
 - A test that mocks `record_failure` without `config_error=` — it hides P9.1.
 - Pool keys must stay hashable (the thinking flag is a dict; keyed by `is not None`).
 - `tier=` belongs on `safe_llm_call`, not on the `wait_for` wrapping it.
+- An attribute the code reads off a settings mock is truthy unless pinned.
+  Every new flag needs its value set in the tests that exercise the gate
+  (`TestPlannerGate._run`), or the "off" branch is never the one under test.
