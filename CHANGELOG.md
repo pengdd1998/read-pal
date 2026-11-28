@@ -32,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Failure messages follow the question's language** (P9.4).
 - **Reader chat:** the faithfulness notice renders as a note under the reply
   instead of being appended into the answer (GB-11, P9.4).
-- **Ops:** hourly core-loop canary (`.github/workflows/canary.yml`).
+- **Ops:** hourly core-loop canary (`.github/workflows/canary.yml`); it accepts
+  every correct answer to its litter question (it had failed a correct one).
 
 ### Added (engineering-upgrade 2026-09-05 — full record in `docs/engineering-upgrade/`)
 
