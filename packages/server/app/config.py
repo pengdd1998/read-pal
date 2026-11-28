@@ -140,19 +140,19 @@ class Settings(BaseSettings):
     embedding_api_key: str = ''
     embedding_model: str = 'embedding-3'
 
-    # Companion tool phase (2026-09-14 v1: 7 read-only tools). Kill switch
-    # for rollout; the phase also self-degrades on every failure.
+    # Companion tool phase (2026-09-14 v1): kill switch; every failure degrades.
     companion_tools_enabled: bool = True
 
     # v2 proposal tools (save_note / create_flashcard): framed for user
-    # confirmation, never executed in-turn. Independent kill switch so the
-    # proposal surface can be disabled without touching read-only tools.
+    # confirmation, never executed in-turn; own kill switch.
     companion_tool_proposals_enabled: bool = True
 
-    # Planner wall-clock deadline (ms). On the fast tier (P9.3) healthy calls
-    # land in 1-3s; 5s caps pre-first-token dead air. Slow environments raise
-    # it to keep the tool phase reachable, trading a slower first token.
+    # Planner deadline (ms). On the fast tier (P9.3) healthy calls land in
+    # 1-3s; 5s caps pre-first-token dead air (raise it on slow hosts).
     companion_tool_plan_timeout_ms: int = 5000
+    # Off by default (A/B 2026-11-28): with the book's passages already in
+    # the prompt the plan only re-searched them and never improved an answer.
+    companion_tool_llm_planner_enabled: bool = False
 
     # LLM keyword expansion of the RAG query. Off by default (P9.3): a model
     # call on every turn's critical path that the retrieval gate never needed.

@@ -52,6 +52,26 @@ _MEMORY_RE = re.compile(
     r'阅读镜像|镜像报告|读后总结册|memory book|reading mirror',
     re.IGNORECASE,
 )
+# Save / memorize requests. No plan can be written for these without a model
+# (the note text, the card's question and answer), so they are NOT a rule —
+# this only tells phase.py that the model planner is wanted even when the
+# prompt already holds the book's passages.
+_PROPOSAL_RE = re.compile(
+    r'记(一下|下来|一记|个?笔记|[到进入]了?笔记|[作为成]笔记)|'
+    r'保存(一下|下来|起来|[到进]了?笔记)|(存|收)[成到进]?(一[个张条篇])?(笔记|卡片)|收藏|'
+    r'(做|生成|创建|制作|新建|加)(成|一?[张个套])?(闪卡|卡片|复习卡|抽认卡|记忆卡)|'
+    r'(帮我|给我|我要|我想)(把.{0,12})?(背|记住)|'
+    r'\b(save|store|jot) (this|that|it|the (?:above|passage))|as a note\b|take a note|'
+    r'note (this|that|it) down|'
+    r'\b(make|create|generate|build)( me)?( an?)? (flashcards?|flash cards?|review cards?|notes?)|'
+    r'(help me|i want to|i need to|i would like to) (memorize|remember|save)',
+    re.IGNORECASE,
+)
+
+
+def proposal_intent(message: str) -> bool:
+    """True when the reader asks to save, record or memorize something."""
+    return bool(message) and _PROPOSAL_RE.search(message) is not None
 
 
 def _plan(name: str, args: dict[str, Any] | None = None) -> list[dict[str, Any]]:

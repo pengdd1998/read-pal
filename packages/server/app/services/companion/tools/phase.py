@@ -8,6 +8,7 @@ the phase may only ever AMEND the turn, never break it.
 
 from __future__ import annotations
 
+import re
 import time
 from typing import Any
 from uuid import UUID
@@ -35,6 +36,41 @@ def _plan_deadline_s() -> float:
     return get_settings().companion_tool_plan_timeout_ms / 1000.0
 
 
+def _has_passages(system_text: str) -> bool:
+    """Whether the prompt carries book passages.
+
+    ``context_prompts.py`` renders the ``<book_passages>`` block only when
+    retrieval returned text, as ``…passages…:\\n{context}\\n</book_passages>``
+    — so a block that is empty or still ends on that header line holds no
+    passages (the sanitizer can empty what retrieval returned).
+    """
+    m = re.search(r'<book_passages>(.*?)</book_passages>', system_text, re.DOTALL)
+    body = m.group(1).strip() if m else ''
+    return bool(body) and not body.endswith((':', '：'))
+
+
+def _llm_plan_worth_it(message: str, has_rag: bool) -> bool:
+    """Whether the model planner may run for a rule-unmatched content turn.
+
+    Off the critical path by default (A/B, 2026-11-28). With the book's
+    passages already in the prompt the plan re-searched what RAG had
+    injected — 40 of 44 runs came back empty, the other 4 returned another
+    book's text — and a blinded review found no answer quality that would
+    pay for its ~2.4s before the first token. The planner still runs when
+    it is the only way to get book text (nothing was retrieved), or when
+    the reader asks to save/memorize something (only a model can write the
+    proposal). ``COMPANION_TOOL_LLM_PLANNER_ENABLED=true`` restores it
+    everywhere.
+    """
+    from app.config import get_settings
+    if get_settings().companion_tool_llm_planner_enabled:
+        return True
+    if not has_rag:
+        return True
+    from app.services.companion.tools.rule_plan import proposal_intent
+    return proposal_intent(message)
+
+
 async def run_tool_phase(
     *,
     db: AsyncSession,
@@ -49,8 +85,9 @@ async def run_tool_phase(
     """Return ``(amended system_text, tool_results, proposals)``.
 
     ``tool_results`` is empty when the phase is disabled, classified out,
-    planned empty, or failed anywhere — in all those cases system_text is
-    returned unchanged and the caller skips the status frame.
+    the planner is gated off, planned empty, or failed anywhere — in all
+    those cases system_text is returned unchanged and the caller skips the
+    status frame.
     """
     from app.config import get_settings
 
@@ -67,7 +104,8 @@ async def run_tool_phase(
     # gate below must not pre-empt it. The LLM planner is deadline-bound and
     # on a bad provider day (glm 429 ladder ≈ 45s, mimo reasoning 15-42s)
     # burned the whole budget before the answer's first token. None means
-    # "no high-confidence rule" → classifier gate → LLM planner.
+    # "no high-confidence rule" → classifier gate → planner gate
+    # (_llm_plan_worth_it) → LLM planner.
     from app.services.companion.tools.rule_plan import rule_plan
     plan_source = 'rules'
     plan = rule_plan(message)
@@ -75,6 +113,9 @@ async def run_tool_phase(
         # Only book-content questions pay the LLM planning hop;
         # skip/general turns keep zero-added-latency behavior.
         if classify_query(message, history_texts) != 'content':
+            return system_text, [], []
+        has_rag = _has_passages(system_text)
+        if not _llm_plan_worth_it(message, has_rag):
             return system_text, [], []
         plan_source = 'llm'
         from app.services.companion.tools.planner import plan_tool_calls
@@ -94,7 +135,7 @@ async def run_tool_phase(
                     book_title=book.title, book_author=book.author,
                     progress=book.progress,
                     status=book.status.value if hasattr(book.status, 'value') else str(book.status),
-                    has_rag=True,  # content-classified turns always ran RAG
+                    has_rag=has_rag,  # the planner is told what the prompt really holds
                     has_annotations=any(t for t in history_texts),
                 ),
                 timeout=deadline_s,

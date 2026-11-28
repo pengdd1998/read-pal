@@ -463,7 +463,128 @@ class TestToolPhase:
         assert out == ('BASE', [], [])
 
 
-class TestToolStatusFrame:
+def _passages_prompt() -> str:
+    """What context assembly produces when retrieval found passages."""
+    return ('BASE\n\n<book_passages>\n依据规则（严格遵守）：\n……\n\n书籍相关段落：\n'
+            '他走出家门，看见的是一片被遗弃的景象。\n</book_passages>')
+
+
+class TestPlannerGate:
+    """A/B 2026-11-28: with the book's passages already in the prompt the
+    model planner re-searched what RAG had injected (40 of 44 runs empty,
+    the other 4 returned ANOTHER book's text) and a blinded review found no
+    answer quality that paid for its ~2.4s before the first token. So by
+    default it no longer runs for those turns. It still runs when it is the
+    only way to get book text, when the reader asks to save something, or
+    when COMPANION_TOOL_LLM_PLANNER_ENABLED switches it back on."""
+
+    QUESTION = '主角和对手的关系后来怎么了？'  # content, no rule match
+    SAVE = '这段关于绿光的象征帮我记一下'  # content (象征), a save request
+
+    async def _run(self, message, system_text, planner, enabled=False):
+        from app.services.companion.tools.phase import run_tool_phase
+        with patch('app.config.get_settings') as ms, patch(
+            'app.services.companion.tools.planner.plan_tool_calls', new=planner,
+        ):
+            ms.return_value.companion_tools_enabled = True
+            ms.return_value.companion_tool_proposals_enabled = True
+            ms.return_value.companion_tool_plan_timeout_ms = 9000
+            # Pinned on purpose: an unpinned attribute of the settings mock
+            # is truthy, which would silently test the "on" branch.
+            ms.return_value.companion_tool_llm_planner_enabled = enabled
+            return await run_tool_phase(
+                db=None, user_id=uuid4(), book_id=uuid4(), message=message,
+                history_texts=[], book=_fake_book(), system_text=system_text,
+                budget=_FakeBudget(),
+            )
+
+    @pytest.mark.asyncio
+    async def test_passages_in_the_prompt_skip_the_planner(self):
+        planner = AsyncMock(return_value=[])
+        out = await self._run(self.QUESTION, _passages_prompt(), planner)
+        planner.assert_not_awaited()
+        assert out == (_passages_prompt(), [], [])
+
+    @pytest.mark.asyncio
+    async def test_switch_on_restores_the_planner(self):
+        planner = AsyncMock(return_value=[])
+        out = await self._run(self.QUESTION, _passages_prompt(), planner, enabled=True)
+        planner.assert_awaited_once()
+        assert planner.await_args.kwargs['has_rag'] is True
+        assert out == (_passages_prompt(), [], [])
+
+    @pytest.mark.asyncio
+    async def test_nothing_retrieved_still_plans(self):
+        """No passages: the tools are the only other way to get book text."""
+        planner = AsyncMock(return_value=[])
+        out = await self._run(self.QUESTION, 'BASE', planner)
+        planner.assert_awaited_once()
+        # Was hardcoded True — the planner was told the prompt held passages.
+        assert planner.await_args.kwargs['has_rag'] is False
+        assert out == ('BASE', [], [])
+
+    @pytest.mark.asyncio
+    async def test_rule_hits_do_not_need_the_model_planner(self):
+        planner = AsyncMock(return_value=[])
+        with patch(
+            'app.services.companion.tools.registry.execute_tool',
+            new=AsyncMock(return_value={'ok': True, 'tool': 'get_flashcards',
+                                        'latency_ms': 1, 'data': {'due_count': 2}}),
+        ):
+            amended, results, _ = await self._run('有哪些闪卡待复习？', _passages_prompt(), planner)
+        planner.assert_not_awaited()
+        assert [r['tool'] for r in results] == ['get_flashcards']
+        assert 'due_count' in amended
+
+    @pytest.mark.asyncio
+    async def test_a_save_request_still_reaches_the_planner(self):
+        """Only a model can write a proposal (the note text, the card Q/A)."""
+        planner = AsyncMock(return_value=[
+            {'name': 'save_note', 'kind': 'proposal',
+             'args': {'content': '绿光象征美国梦', 'preview': '绿光', 'tags': ['象征']}},
+        ])
+        amended, results, proposals = await self._run(self.SAVE, _passages_prompt(), planner)
+        planner.assert_awaited_once()
+        assert planner.await_args.kwargs['has_rag'] is True
+        assert results == []
+        assert [p['tool'] for p in proposals] == ['save_note']
+        assert 'v2_proposal_notice' in amended
+
+    @pytest.mark.asyncio
+    async def test_empty_passages_block_is_treated_as_no_passages(self):
+        """The block only reaches the prompt with content; should that change,
+        an empty one must not read as "passages already there"."""
+        planner = AsyncMock(return_value=[])
+        await self._run(self.QUESTION, 'BASE\n<book_passages>\n\n</book_passages>', planner)
+        planner.assert_awaited_once()
+
+    def test_shipped_default_is_off(self):
+        from app.config import Settings
+        assert Settings.model_fields['companion_tool_llm_planner_enabled'].default is False
+
+
+class TestProposalIntent:
+    """The save/memorize recognizer that keeps proposals reachable."""
+
+    @pytest.mark.parametrize('message', [
+        '这段关于绿光的象征帮我记一下', '帮我把这段保存到笔记里', '这段太好了，记下来',
+        '把这个概念做成闪卡', '生成一张复习卡', '我要背这段', '帮我把这句话记住',
+        '把主角的这段描写收藏', 'Save this as a note', 'make a flashcard from this',
+        'I want to memorize this quote',
+    ])
+    def test_save_requests(self, message):
+        from app.services.companion.tools.rule_plan import proposal_intent
+        assert proposal_intent(message)
+
+    @pytest.mark.parametrize('message', [
+        '勒古恩第一次为《路边野餐》写评论是哪一年？', '主角和对手的关系后来怎么了？',
+        '这本书的主题是什么', '第3章的叙事视角是怎么切换的？', '作者在序言里引用了谁的话',
+        '雷德为什么脾气暴躁', 'why did the author write this preface',
+        'what does the lighthouse symbolize', '', '收到了卡片',
+    ])
+    def test_plain_questions(self, message):
+        from app.services.companion.tools.rule_plan import proposal_intent
+        assert not proposal_intent(message)
     def test_frame_shape_and_no_replay(self):
         from app.services.companion.stream_cache import emit_tool_status_frame
         frame = emit_tool_status_frame(
